@@ -107,7 +107,6 @@ const _layout = () => {
         }}
       />
     </Tabs>
-    
   )
 }
 
