@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "855393255122",
+    "project_id": "scoremychores",
+    "storage_bucket": "scoremychores.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:855393255122:android:8c4882806c070a892ff70b",
+        "android_client_info": {
+          "package_name": "com.anonymous.frontend"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBV-yh_vN1AqFAspir7w9RTMjCV85O0VzI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

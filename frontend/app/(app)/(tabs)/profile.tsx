@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/context/AuthContext';
 
 export default function Profile() {
-  const { user, signout } = useAuth();
+  const { user, logout } = useAuth();
 
   return (
     <SafeAreaView className="flex-1 bg-white" edges={['top']}>
@@ -28,7 +28,7 @@ export default function Profile() {
           </Text>
           
           <TouchableOpacity 
-            onPress={signout}
+            onPress={logout}
             activeOpacity={0.7}
             className="flex-row items-center bg-red-50 p-4 rounded-2xl border border-red-100"
           >
@@ -36,7 +36,6 @@ export default function Profile() {
               <Text className="text-red-600 font-bold text-lg">Sign Out</Text>
               <Text className="text-red-400 text-sm">Log out of mock session</Text>
             </View>
-            {/* You can put a chevron icon here if you have one */}
           </TouchableOpacity>
         </View>
 
