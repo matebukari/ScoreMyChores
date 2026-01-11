@@ -1,17 +1,32 @@
-import React from "react";
+import React, { useState } from "react";
 import { View, Text, StyleSheet, FlatList, TouchableOpacity } from "react-native";
+import * as Haptics from "expo-haptics";
 import { useAuth } from "@/context/AuthContext";
 import { Ionicons } from "@expo/vector-icons";
 
-// Mock data for the UI build
-const MOCK_CHORES = [
-  { id: '1', title: 'Wash the Dishes', points: 50, completed: false },
-  { id: '2', title: 'Vacuum Living Room', points: 100, completed: true },
-  { id: '3', title: 'Take out Trash', points: 20, completed: false },
-];
-
 export default function HomeScreen() {
   const { user } = useAuth();
+
+  // Mock data for the UI build
+  const [chores, setChores] = useState([
+    { id: '1', title: 'Wash the Dishes', points: 50, completed: false },
+    { id: '2', title: 'Vacuum Living Room', points: 100, completed: true },
+    { id: '3', title: 'Take out Trash', points: 20, completed: false },
+  ]);
+
+  const toggleChore = (id: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setChores(prevChores =>
+      prevChores.map(chore =>
+        chore.id === id ? { ...chore, completed: !chore.completed } : chore
+      )
+    );
+  }
+
+  // Calculate score based on completed items
+  const currentScore = chores
+    .filter(c => c.completed)
+    .reduce((sum, chore) => sum + chore.points, 0);
 
   return(
     <View style={styles.container}>
@@ -19,16 +34,22 @@ export default function HomeScreen() {
       <View style={styles.scoreCard}>
         <Text style={styles.greeting}>Hey, {user?.email?.split('@')[0]}!</Text>
         <Text style={styles.scoreTitle}>Current Score</Text>
-        <Text style={styles.scoreValue}>170</Text>
+        <Text style={styles.scoreValue}>{currentScore}</Text>
       </View>
 
       <Text style={styles.sectionTitle}>Daily Chores</Text>
 
       <FlatList
-        data={MOCK_CHORES}
+        data={chores}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <TouchableOpacity style={styles.choreItem}>
+          <TouchableOpacity 
+            style={[
+              styles.choreItem,
+              item.completed && { backgroundColor: '#f0fff4', elevation: 0 }
+            ]}
+            onPress={() => toggleChore(item.id)}
+          >
             {/* Left Side: Title */}
             <Text style={[styles.choreText, item.completed && styles.completedText]}>
               {item.title}
@@ -71,10 +92,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderBottomWidth: 2,
+    borderBottomColor: '#D6D6D6',
+    shadowRadius: 3,
     elevation: 2,
   },
   choreInfo: { flexDirection: 'column', alignItems: 'flex-start' },
