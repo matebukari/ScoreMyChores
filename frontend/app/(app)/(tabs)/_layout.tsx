@@ -65,15 +65,15 @@ const _layout = () => {
         }}
       />
       <Tabs.Screen
-        name="tasks"
+        name="chores"
         options={{ 
-          title: 'Tasks',  
+          title: 'Chores',  
           headerShown: false,
           tabBarIcon: ({ focused }) => (
             <TabIcon 
               focused={focused} 
-              icon={Icons.Tasks} 
-              title="Tasks"
+              icon={Icons.Chores} 
+              title="Chores"
             />
           )
         }}
