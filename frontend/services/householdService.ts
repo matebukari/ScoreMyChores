@@ -33,9 +33,9 @@ export const householdService = {
   // Swich user's active view
   setActiveHouseholdId: async (userId: string, householdId: string) => {
     const userRef = doc(db, "users", userId);
-    await updateDoc(userRef, {
+    await setDoc(userRef, {
       activeHouseholdId: householdId 
-    });
+    }, { merge: true });
   },
 
   // Create new household
@@ -52,10 +52,10 @@ export const householdService = {
 
     // Link User to House
     const userRef = doc(db, "users", userId);
-    await updateDoc(userRef, {
+    await setDoc(userRef, {
       joinedHouseholds: arrayUnion(newHouseRef.id),
       activeHouseholdId: newHouseRef.id
-    });
+    }, { merge: true });
 
     return newHouseRef.id;
   },
@@ -80,10 +80,10 @@ export const householdService = {
 
     // Link household to user
     const userRef = doc(db, "users", userId);
-    await updateDoc(userRef, {
+    await setDoc(userRef, {
       joinedHouseholds: arrayUnion(houseId),
       activeHouseholdId: houseId
-    });
+    }, { merge: true });
 
     return houseId;
   },
