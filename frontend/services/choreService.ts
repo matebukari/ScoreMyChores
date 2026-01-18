@@ -18,9 +18,9 @@ export type Chore = {
   description?: string;
   points: number;
   completed: boolean;
+  inProgress?: boolean;
   householdId: string;
   createdBy: string;
-  assignedTo?: string | null;
 };
 
 export const choreService = {
@@ -36,12 +36,16 @@ export const choreService = {
   },
 
   // Toggle chore completion
-  toggleChore: async (choreId: string, isCompleted: boolean) => {
+  updateChoreStatus: async (choreId: string, status: 'pending' | 'in-progress' | 'completed') => {
     const choreRef = doc(db, "chores", choreId);
-    await updateDoc(choreRef, {
-      completed: !isCompleted,
-      completedAt: !isCompleted ? serverTimestamp() : null
-    });
+    
+    const updates = {
+      completed: status === 'completed',
+      inProgress: status === 'in-progress',
+      completedAt: status === 'completed' ? serverTimestamp() : null
+    }
+
+    await updateDoc(choreRef, updates);
   },
 
   // Delete a chore

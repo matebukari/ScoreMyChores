@@ -15,12 +15,23 @@ import { Ionicons } from "@expo/vector-icons";
 export default function HomeScreen() {
   const { user } = useAuth();
 
-  const { chores, toggleChore, loading } = useChores();
+  const { chores, updateStatus, loading } = useChores();
 
-  const handleToggle = async (chore: any) => {
+  // The Logic: Pending -> In Progress -> Completed -> Pending (Reset)
+  const handleChorePress = async (chore: any) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     try {
-      await toggleChore(chore);
+      if (chore.completed) {
+        // If done, reset to pending (undo)
+        await updateStatus(chore.id, "pending");
+      } else if (chore.inProgress) {
+        // If in progress, finish it!
+        await updateStatus(chore.id, "completed");
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      } else {
+        // If pending, start it!
+        await updateStatus(chore.id, "in-progress");
+      }
     } catch (error) {
       console.error("Failed to toggle:", error);
     }
@@ -30,9 +41,15 @@ export default function HomeScreen() {
   const currentScore = chores
     .filter((c) => c.completed)
     .reduce((sum, chore) => sum + chore.points, 0);
-  // Find the incomplete chore with the highest points
+  // Focus Task Logic: Prioritize "In Progress" tasks, then highest points
   const incompleteChores = chores.filter((c) => !c.completed);
-  const focusTask = incompleteChores.sort((a, b) => b.points - a.points)[0];
+  const focusTask = incompleteChores.sort((a, b) => {
+    // If one is in progress and the other isn't, prioritize the in-progress one
+    if (a.inProgress && !b.inProgress) return -1;
+    if (!a.inProgress && b.inProgress) return 1;
+    // Otherwise sort by points
+    return b.points - a.points;
+  })[0];
 
   // Mock streak data
   const weekDays = ["M", "T", "W", "T", "F", "S", "S"];
@@ -40,7 +57,7 @@ export default function HomeScreen() {
 
   if (loading) {
     return (
-      <View style={[styles.container, { justifyContent: 'center' }]}>
+      <View style={[styles.container, { justifyContent: "center" }]}>
         <ActivityIndicator size="large" color="#6200ee" />
       </View>
     );
@@ -82,26 +99,44 @@ export default function HomeScreen() {
         <View style={styles.focusContainer}>
           <View style={styles.focusHeader}>
             <Ionicons name="rocket" size={18} color="#6200ee" />
-            <Text style={styles.focusLabel}>PRIORITY TASK</Text>
+            <Text style={styles.focusLabel}>
+              {focusTask.inProgress ? "CURRENTLY WORKING ON" : "PRIORITY TASK"}
+            </Text>
           </View>
           <TouchableOpacity
-            style={styles.focusCard}
-            onPress={() => handleToggle(focusTask)}
+            style={[
+              styles.focusCard,
+              focusTask.inProgress && {
+                borderColor: "#4A90E2",
+                borderWidth: 3,
+              },
+            ]}
+            onPress={() => handleChorePress(focusTask)}
           >
-            <Text style={styles.focusTitle}>{focusTask.title}</Text>
+            <View>
+              <Text style={styles.focusTitle}>{focusTask.title}</Text>
+              {focusTask.inProgress && (
+                <Text
+                  style={{ color: "#4A90E2", fontWeight: "bold", fontSize: 12 }}
+                >
+                  IN PROGRESS...
+                </Text>
+              )}
+            </View>
+
             <View style={styles.focusAction}>
               <Text style={styles.focusPointsText}>
                 +{focusTask.points} pts
               </Text>
               <Ionicons
-                name="ellipse-outline"
+                name={focusTask.inProgress ? "play-circle" : "ellipse-outline"}
                 size={32}
-                color="#6200ee"
+                color={focusTask.inProgress ? "#4A90E2" : "#6200ee"}
               />
             </View>
           </TouchableOpacity>
         </View>
-      ): (
+      ) : (
         <View style={styles.focusContainer}>
           <Text style={styles.focusLabel}>ALL CAUGHT UP!</Text>
         </View>
@@ -113,7 +148,7 @@ export default function HomeScreen() {
         data={chores}
         keyExtractor={(item) => item.id}
         ListEmptyComponent={
-          <Text style={{ textAlign: 'center', marginTop: 20, color: '#999' }}>
+          <Text style={{ textAlign: "center", marginTop: 20, color: "#999" }}>
             No chores yet. Add one to get started!
           </Text>
         }
@@ -121,24 +156,65 @@ export default function HomeScreen() {
           <TouchableOpacity
             style={[
               styles.choreItem,
+              // Visual State: Completed
               item.completed && { backgroundColor: "#f0fff4", elevation: 0 },
+              // Visual State: In Progress (Blue Border)
+              item.inProgress && {
+                borderColor: "#4A90E2",
+                borderWidth: 2,
+                backgroundColor: "#f8fbff",
+              },
             ]}
-            onPress={() => handleToggle(item.id)}
+            onPress={() => handleChorePress(item)}
           >
             {/* Left Side: Title */}
-            <Text
-              style={[styles.choreText, item.completed && styles.completedText]}
-            >
-              {item.title}
-            </Text>
+            <View style={styles.choreInfo}>
+              <Text
+                style={[
+                  styles.choreText,
+                  item.completed && styles.completedText,
+                  item.inProgress && { fontWeight: "bold", color: "#4A90E2" },
+                ]}
+              >
+                {item.title}
+              </Text>
+              {item.inProgress && (
+                <Text style={{ fontSize: 10, color: "#4A90E2", marginTop: 2 }}>
+                  IN PROGRESS
+                </Text>
+              )}
+            </View>
 
             {/* Right Side: Points and Icon grouped together */}
             <View style={styles.choreAction}>
-              <Text style={styles.pointsText}>+{item.points} pts</Text>
+              {!item.completed && (
+                <Text
+                  style={[
+                    styles.pointsText,
+                    item.inProgress && { color: "#4A90E2" },
+                  ]}
+                >
+                  +{item.points} pts
+                </Text>
+              )}
+
+              {/* Dynamic Icons based on State */}
               <Ionicons
-                name={item.completed ? "checkmark-circle" : "ellipse-outline"}
-                size={24}
-                color={item.completed ? "#4CAF50" : "#ccc"}
+                name={
+                  item.completed
+                    ? "checkmark-circle" // Done
+                    : item.inProgress
+                      ? "stop-circle-outline" // In Progress (Tap to Stop/Finish)
+                      : "play-circle-outline" // Pending (Tap to Start)
+                }
+                size={28}
+                color={
+                  item.completed
+                    ? "#4CAF50"
+                    : item.inProgress
+                      ? "#4A90E2"
+                      : "#ccc"
+                }
               />
             </View>
           </TouchableOpacity>

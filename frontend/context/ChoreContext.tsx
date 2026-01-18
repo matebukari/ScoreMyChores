@@ -15,7 +15,7 @@ type ChoreContextType = {
   chores: Chore[];
   loading: boolean;
   addChore: (title: string, points: number) => Promise<void>;
-  toggleChore: (chore: Chore) => Promise<void>;
+  updateStatus: (choreId: string, status: 'pending' | 'in-progress' | 'completed') => Promise<void>;
 };
 
 const ChoreContext = createContext<ChoreContextType | undefined>(undefined);
@@ -71,12 +71,12 @@ export function ChoreProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const toggleChore = async (chore: Chore) => {
-    await choreService.toggleChore(chore.id, chore.completed);
-  };
+  const updateStatus = async (choreId: string, status: 'pending' | 'in-progress' | 'completed') => {
+    await choreService.updateChoreStatus(choreId, status);
+  }
 
   return (
-    <ChoreContext.Provider value={{ chores, loading, addChore, toggleChore }}>
+    <ChoreContext.Provider value={{ chores, loading, addChore, updateStatus }}>
       {children}
     </ChoreContext.Provider>
   );
