@@ -72,6 +72,19 @@ export function ChoreProvider({ children }: { children: React.ReactNode }) {
   };
 
   const updateStatus = async (choreId: string, status: 'pending' | 'in-progress' | 'completed') => {
+    // LOGIC: If we are trying to start a task...
+    if (status === 'in-progress') {
+      // Find the chore that is currently running (if any)
+      const currentActiveChore = chores.find(c => c.inProgress);
+
+      // If we found one, and it's NOT the one we just clicked...
+      if (currentActiveChore && currentActiveChore.id !== choreId) {
+        // ...turn it off (set to pending)
+        await choreService.updateChoreStatus(currentActiveChore.id, 'pending');
+      }
+    }
+
+    // Proceed with updating the specific chore we clicked
     await choreService.updateChoreStatus(choreId, status);
   }
 
