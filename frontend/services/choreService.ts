@@ -21,7 +21,17 @@ export type Chore = {
   inProgress?: boolean;
   householdId: string;
   createdBy: string;
+  inProgressBy?: string | null;
+  completedBy?: string | null;
+  inProgressByName?: string | null;
+  completedByName?: string | null;
 };
+
+// Helper for passing user details
+export type UserSnapshot = {
+  uid: string;
+  displayName: string | null;
+}
 
 export const choreService = {
   // Add a new chore
@@ -36,13 +46,19 @@ export const choreService = {
   },
 
   // Toggle chore completion
-  updateChoreStatus: async (choreId: string, status: 'pending' | 'in-progress' | 'completed') => {
+  updateChoreStatus: async (choreId: string, status: 'pending' | 'in-progress' | 'completed', user: UserSnapshot) => {
     const choreRef = doc(db, "chores", choreId);
     
     const updates = {
       completed: status === 'completed',
       inProgress: status === 'in-progress',
-      completedAt: status === 'completed' ? serverTimestamp() : null
+      completedAt: status === 'completed' ? serverTimestamp() : null,
+
+      inProgressBy: status === 'in-progress' ? user.uid : null,
+      inProgressByName: status === 'in-progress' ? user.displayName : null,
+
+      completedBy: status === 'completed' ? user.uid : null,
+      completedByName: status === 'completed' ? user.displayName : null,
     }
 
     await updateDoc(choreRef, updates);

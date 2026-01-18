@@ -68,6 +68,102 @@ export default function ChoresScreen() {
     ]);
   };
 
+  const Avatar = ({ name, color }: { name?: string | null; color: string }) => {
+    const initial = name ? name.charAt(0).toUpperCase() : "?";
+    return (
+      <View style={[styles.avatarContainer, { backgroundColor: color }]}>
+        <Text style={styles.avatarText}>{initial}</Text>
+      </View>
+    );
+  };
+
+  // Helper to render the badges
+  const renderStatusBadge = (item: any) => {
+    const isMe =
+      item.inProgressBy === user?.uid || item.completedBy === user?.uid;
+
+    // In Progress by SOMEONE ELSE
+    // A. In Progress by SOMEONE ELSE
+    if (item.inProgress && !isMe) {
+      return (
+        <View
+          style={[
+            styles.badge,
+            { backgroundColor: "#FFF3E0", borderColor: "#FFB74D" },
+          ]}
+        >
+          <Avatar name={item.inProgressByName} color="#F57C00" />
+          <Text style={[styles.badgeText, { color: "#E65100" }]}>
+            {item.inProgressByName} is working
+          </Text>
+        </View>
+      );
+    }
+
+    // In Progress by ME
+    if (item.inProgress && isMe) {
+      return (
+        <View
+          style={[
+            styles.badge,
+            { backgroundColor: "#E3F2FD", borderColor: "#64B5F6" },
+          ]}
+        >
+          <Ionicons
+            name="person"
+            size={12}
+            color="#1565C0"
+            style={{ marginRight: 4 }}
+          />
+          <Text style={[styles.badgeText, { color: "#1565C0" }]}>
+            Doing Now
+          </Text>
+        </View>
+      );
+    }
+
+    // Completed by SOMEONE ELSE
+    if (item.completed && !isMe) {
+      return (
+        <View
+          style={[
+            styles.badge,
+            { backgroundColor: "#E8F5E9", borderColor: "#81C784" },
+          ]}
+        >
+          <Avatar name={item.completedByName} color="#388E3C" />
+          <Text style={[styles.badgeText, { color: "#2E7D32" }]}>
+            Done by {item.completedByName}
+          </Text>
+        </View>
+      );
+    }
+
+    // Completed by ME
+    if (item.completed && isMe) {
+      return (
+        <View
+          style={[
+            styles.badge,
+            { backgroundColor: "#F3E5F5", borderColor: "#BA68C8" },
+          ]}
+        >
+          <Ionicons
+            name="checkmark-done"
+            size={14}
+            color="#7B1FA2"
+            style={{ marginRight: 4 }}
+          />
+          <Text style={[styles.badgeText, { color: "#7B1FA2" }]}>
+            Done by You
+          </Text>
+        </View>
+      );
+    }
+
+    return null;
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -91,20 +187,33 @@ export default function ChoresScreen() {
           style={{ marginTop: 50 }}
         />
       ) : (
+        // Chores List
         <FlatList
           data={chores}
           keyExtractor={(item) => item.id}
           ListEmptyComponent={
             <Text style={{ textAlign: "center", color: "#888", marginTop: 20 }}>
-              No chores yet.{" "}
+              No chores yet.
               {isAdmin ? "Add one!" : "Ask your admin to add some."}
             </Text>
           }
           renderItem={({ item }) => (
-            <View style={styles.listCard}>
-              <View>
-                <Text style={styles.choreTitle}>{item.title}</Text>
-                <Text style={styles.categoryBadge}>General</Text>
+            <View style={[styles.listCard, item.completed && { opacity: 0.8 }]}>
+              <View style={{ flex: 1 }}>
+                <Text
+                  style={[
+                    styles.choreTitle,
+                    item.completed && {
+                      textDecorationLine: "line-through",
+                      color: "#999",
+                    },
+                  ]}
+                >
+                  {item.title}
+                </Text>
+
+                {/* Dynamic status badge */}
+                <View style={{ marginTop: 8 }}>{renderStatusBadge(item)}</View>
               </View>
 
               <View style={styles.rightActions}>
@@ -168,7 +277,6 @@ export default function ChoresScreen() {
                 )}
               </TouchableOpacity>
             </View>
-            
           </View>
         </View>
       </Modal>
@@ -211,18 +319,33 @@ const styles = StyleSheet.create({
     borderColor: "#eee",
   },
   choreTitle: { fontSize: 16, fontWeight: "600", color: "#333" },
-  categoryBadge: {
-    fontSize: 12,
-    color: "#666",
-    backgroundColor: "#f0f0f0",
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 4,
-    alignSelf: "flex-start",
-    marginTop: 4,
-  },
   rightActions: { flexDirection: "row", alignItems: "center" },
   pointsText: { marginRight: 15, fontWeight: "bold", color: "#6200ee" },
+
+  // Badge & Avatar Styles
+  badge: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 20,
+    alignSelf: "flex-start",
+    borderWidth: 1,
+    gap: 6,
+  },
+  badgeText: { fontSize: 12, fontWeight: "600" },
+  avatarContainer: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  avatarText: {
+    color: "white",
+    fontSize: 10,
+    fontWeight: "bold",
+  },
 
   // Modal Styles
   modalOverlay: {
