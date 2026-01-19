@@ -6,11 +6,7 @@ import {
   doc,
   deleteDoc,
   serverTimestamp,
-  query,
-  where,
-  orderBy
 } from "firebase/firestore";
-import { householdService } from "./householdService";
 
 export type Chore = {
   id: string;
@@ -18,6 +14,7 @@ export type Chore = {
   description?: string;
   points: number;
   completed: boolean;
+  completedAt?: any;
   inProgress?: boolean;
   householdId: string;
   createdBy: string;
