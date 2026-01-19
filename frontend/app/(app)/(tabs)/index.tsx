@@ -33,7 +33,7 @@ export default function HomeScreen() {
   };
 
   const currentScore = chores
-    .filter((c) => c.completed)
+    .filter((c) => c.completed && c.completedBy === user?.uid)
     .reduce((sum, chore) => sum + chore.points, 0);
 
   const incompleteChores = chores.filter((c) => !c.completed);
