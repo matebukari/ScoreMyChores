@@ -14,38 +14,29 @@ import { Ionicons } from "@expo/vector-icons";
 
 /**
  * HomeScreen Component
- * The main dashboard for the application. It displays:
- * 1. The user's current score and weekly streak.
- * 2. A "Focus Task" (the highest priority available task for the specific user).
- * 3. A list of all household chores with real-time status updates.
-*/
+ * The main dashboard that displays user score, the priority "Focus Task",
+ * and the full list of daily chores.
+ */
 export default function HomeScreen() {
   const { user } = useAuth();
   const { chores, updateStatus, loading } = useChores();
 
   /**
-   * Helper: isChoreLocked
-   * Determines if the current user is allowed to interact with a specific chore.
-   * Returns `true` (locked) if:
-   * 1. Someone else is currently working on it (`inProgressBy` !== me).
-   * 2. Someone else has already finished it (`completedBy` !== me).
+   * Checks if a chore is "Locked" (unavailable to the current user).
+   * Prevents users from interfering with tasks started or completed by roommates.
   */
   const isChoreLocked = (chore: any) => {
-    // 1. Locked if someone else is doing it
+    // Locked if in-progress by someone else
     if (chore.inProgress && chore.inProgressBy !== user?.uid) return true;
-    
-    // 2. Locked if someone else completed it
+    // Locked if completed by someone else
     if (chore.completed && chore.completedBy !== user?.uid) return true;
-    
     return false;
   };
 
   /**
-   * Function: handleChorePress
-   * Handles the tap interaction on a chore card.
-   * - First checks `isChoreLocked` to prevent unauthorized changes.
-   * - Cycles the status: Pending -> In Progress -> Completed -> Pending.
-   * - Triggers Haptic feedback for better UX.
+   * Handles the tap interaction on any chore card (Focus or List).
+   * Toggles status: Pending -> In Progress -> Completed -> Pending.
+   * Triggers haptic feedback for better UX.
   */
   const handleChorePress = async (chore: any) => {
     if (isChoreLocked(chore)) return;
@@ -53,63 +44,49 @@ export default function HomeScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     try {
       if (chore.completed) {
-        // Undo completion
-        await updateStatus(chore.id, "pending");
+        await updateStatus(chore.id, "pending"); // Undo
       } else if (chore.inProgress) {
-        // Mark as Done
-        await updateStatus(chore.id, "completed");
+        await updateStatus(chore.id, "completed"); // Finish
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       } else {
-        // Start working
-        await updateStatus(chore.id, "in-progress");
+        await updateStatus(chore.id, "in-progress"); // Start
       }
     } catch (error) {
       console.error("Failed to toggle:", error);
     }
   };
 
-  /**
-   * Calculation: currentScore
-   * Filters the global chore list to calculate points ONLY for the 
-  */
+  // Calculates total points ONLY for the current logged-in user
   const currentScore = chores
     .filter((c) => c.completed && c.completedBy === user?.uid)
-    .reduce((sum, chore) => sum + chore.points, 0)
-  ;
+    .reduce((sum, chore) => sum + chore.points, 0);
 
-  /**
-   * Logic: Focus Task Selection
-   * Identifies the single most important task for the user to do next.
-   * 1. Filters out completed tasks.
-   * 2. Filters out tasks locked by roommates (Anti-Stealing).
-   * 3. Sorts by: Tasks I started > Highest Points.
-  */
+  // Filters out completed tasks and tasks locked by others to find "Available" work
   const availableChores = chores.filter((c) => {
-    // Exclude completed
     if (c.completed) return false;
-    
-    // Exclude tasks started by others
     if (c.inProgress && c.inProgressBy !== user?.uid) return false;
-    
     return true;
   });
 
+  // Sorts available chores to determine the "Focus Task":
+  // Priority 1: Tasks I am already doing.
+  // Priority 2: Highest point value.
   const focusTask = availableChores.sort((a, b) => {
-    // Priority 1: Tasks I am already doing
     if (a.inProgress && !b.inProgress) return -1;
     if (!a.inProgress && b.inProgress) return 1;
-    // Priority 2: High point value
     return b.points - a.points;
   })[0];
 
-  // Helpers for Date & Text Formatting
+  // Date helpers for the weekly streak UI
   const weekDays = ["M", "T", "W", "T", "F", "S", "S"];
   const currentDayIndex = new Date().getDay() - 1;
 
-  const getInitial = (name?: string | null) => name ? name.charAt(0).toUpperCase() : '?';
+  // Formatting helpers for avatars and names
+  const getInitial = (name?: string | null) =>
+    name ? name.charAt(0).toUpperCase() : "?";
   const getDisplayName = (id?: string | null, name?: string | null) => {
-     if (id === user?.uid) return "You";
-     return name || "Member";
+    if (id === user?.uid) return "You";
+    return name || "Member";
   };
 
   if (loading) {
@@ -122,7 +99,7 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Score Card Displays the user's personal score and a visual weekly calendar. */}
+      {/* User Score & Streak */}
       <View style={styles.scoreCard}>
         <Text style={styles.greeting}>Hey, {user?.email?.split("@")[0]}!</Text>
         <Text style={styles.scoreValue}>{currentScore}</Text>
@@ -151,7 +128,7 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      {/* Focus Task Highlighted card for the highest priority available task. */}
+      {/* Focus Task (Priority) */}
       {focusTask ? (
         <View style={styles.focusContainer}>
           <View style={styles.focusHeader}>
@@ -160,31 +137,47 @@ export default function HomeScreen() {
               {focusTask.inProgress ? "CURRENTLY WORKING ON" : "PRIORITY TASK"}
             </Text>
           </View>
-          
+
           <TouchableOpacity
             style={[
               styles.focusCard,
               focusTask.inProgress && { borderColor: "#4A90E2" },
             ]}
             onPress={() => handleChorePress(focusTask)}
-            disabled={isChoreLocked(focusTask)} 
+            disabled={isChoreLocked(focusTask)}
           >
-            <View style={{ flex: 1, paddingRight: 10 }}>
-              <Text style={styles.focusTitle} numberOfLines={2}>
+            <View
+              style={{
+                flex: 1,
+                paddingRight: 10,
+                justifyContent: "center",
+                alignItems: "flex-start",
+              }}
+            >
+              <Text
+                style={[styles.focusTitle, { textAlign: "left" }]}
+                numberOfLines={2}
+              >
                 {focusTask.title}
               </Text>
-              
-              {/* Display user avatar if they have started this task */}
+
+              {/* Badge appears if active */}
               {focusTask.inProgress && (
                 <View style={styles.miniBadge}>
-                   <View style={[styles.miniAvatar, { backgroundColor: '#4A90E2' }]}>
-                      <Text style={styles.miniAvatarText}>
-                        {getInitial(focusTask.inProgressByName)}
-                      </Text>
-                   </View>
-                   <Text style={[styles.miniBadgeText, { color: "#4A90E2" }]}>
-                     Started by {getDisplayName(focusTask.inProgressBy, focusTask.inProgressByName)}
-                   </Text>
+                  <View
+                    style={[styles.miniAvatar, { backgroundColor: "#4A90E2" }]}
+                  >
+                    <Text style={styles.miniAvatarText}>
+                      {getInitial(focusTask.inProgressByName)}
+                    </Text>
+                  </View>
+                  <Text style={[styles.miniBadgeText, { color: "#4A90E2" }]}>
+                    Started by{" "}
+                    {getDisplayName(
+                      focusTask.inProgressBy,
+                      focusTask.inProgressByName,
+                    )}
+                  </Text>
                 </View>
               )}
             </View>
@@ -214,7 +207,7 @@ export default function HomeScreen() {
 
       <Text style={styles.sectionTitle}>Daily Checklist</Text>
 
-      {/* Daily Checklist */}
+      {/* Full Chore List */}
       <FlatList
         data={chores}
         keyExtractor={(item) => item.id}
@@ -224,25 +217,21 @@ export default function HomeScreen() {
           </Text>
         }
         renderItem={({ item }) => {
-          // Check if this specific item is locked for the current user
           const locked = isChoreLocked(item);
-          
+
           return (
             <TouchableOpacity
               style={[
                 styles.choreItem,
-                // Styling for Completed state
                 item.completed && {
                   backgroundColor: "#f0fff4",
                   borderColor: "transparent",
                 },
-                // Styling for In-Progress state
                 item.inProgress && {
                   borderColor: "#4A90E2",
                   backgroundColor: "#f8fbff",
-                  paddingVertical: 12,
                 },
-                locked && { opacity: 0.5 }
+                locked && { opacity: 0.5 },
               ]}
               onPress={() => handleChorePress(item)}
               disabled={locked}
@@ -258,39 +247,48 @@ export default function HomeScreen() {
                   {item.title}
                 </Text>
 
-                {/* Badge: In Progress (shows who is working) */}
+                {/* Badge: In Progress */}
                 {item.inProgress && (
                   <View style={styles.miniBadge}>
-                    <View style={[styles.miniAvatar, { backgroundColor: '#4A90E2' }]}>
-                        <Text style={styles.miniAvatarText}>
-                          {getInitial(item.inProgressByName)}
-                        </Text>
+                    <View
+                      style={[
+                        styles.miniAvatar,
+                        { backgroundColor: "#4A90E2" },
+                      ]}
+                    >
+                      <Text style={styles.miniAvatarText}>
+                        {getInitial(item.inProgressByName)}
+                      </Text>
                     </View>
                     <Text style={[styles.miniBadgeText, { color: "#4A90E2" }]}>
-                      {locked 
-                        ? `${item.inProgressByName} is working` 
-                        : `${getDisplayName(item.inProgressBy, item.inProgressByName)} is working`
-                      }
+                      {locked
+                        ? `${item.inProgressByName} is working`
+                        : `${getDisplayName(item.inProgressBy, item.inProgressByName)} is working`}
                     </Text>
                   </View>
                 )}
 
-                {/* Badge: Completed (shows who finished it) */}
+                {/* Badge: Completed */}
                 {item.completed && (
                   <View style={styles.miniBadge}>
-                      <View style={[styles.miniAvatar, { backgroundColor: '#4CAF50' }]}>
-                        <Text style={styles.miniAvatarText}>
-                          {getInitial(item.completedByName)}
-                        </Text>
-                      </View>
-                      <Text style={[styles.miniBadgeText, { color: "#4CAF50" }]}>
-                        Done by {getDisplayName(item.completedBy, item.completedByName)}
+                    <View
+                      style={[
+                        styles.miniAvatar,
+                        { backgroundColor: "#4CAF50" },
+                      ]}
+                    >
+                      <Text style={styles.miniAvatarText}>
+                        {getInitial(item.completedByName)}
                       </Text>
+                    </View>
+                    <Text style={[styles.miniBadgeText, { color: "#4CAF50" }]}>
+                      Done by{" "}
+                      {getDisplayName(item.completedBy, item.completedByName)}
+                    </Text>
                   </View>
                 )}
               </View>
 
-              {/* Action Button (Play/Stop/Checkmark) */}
               <View style={styles.choreAction}>
                 {!item.completed && (
                   <Text
@@ -349,12 +347,12 @@ const styles = StyleSheet.create({
   },
   choreItem: {
     backgroundColor: "#fff",
-    padding: 18,
+    padding: 10,
     borderRadius: 12,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 20,
+    marginBottom: 10,
     borderWidth: 2,
     borderColor: "#E0E0E0",
     shadowColor: "#000",
@@ -362,33 +360,43 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 2,
     elevation: 1,
+    minHeight: 70,
   },
-  choreInfo: { flexDirection: "column", alignItems: "flex-start", flex: 1 },
-  choreText: { fontSize: 16, color: "#333" },
+  choreInfo: {
+    flexDirection: "column",
+    alignItems: "flex-start",
+    justifyContent: "center",
+    flex: 1,
+  },
+  choreText: {
+    fontSize: 16,
+    color: "#333",
+    textAlign: "left",
+  },
   choreAction: { flexDirection: "row", alignItems: "center" },
   completedText: { textDecorationLine: "line-through", color: "#aaa" },
   pointsText: { fontWeight: "bold", color: "#6200ee", marginRight: 12 },
   miniBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 6,
-    gap: 6
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 2,
+    gap: 6,
   },
   miniAvatar: {
     width: 20,
     height: 20,
     borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center'
+    justifyContent: "center",
+    alignItems: "center",
   },
   miniAvatarText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 10,
-    fontWeight: 'bold'
+    fontWeight: "bold",
   },
   miniBadgeText: {
     fontSize: 12,
-    fontWeight: '600'
+    fontWeight: "600",
   },
   streakRow: {
     flexDirection: "row",
@@ -424,7 +432,7 @@ const styles = StyleSheet.create({
   },
   focusCard: {
     backgroundColor: "#fff",
-    padding: 20,
+    padding: 12,
     borderRadius: 16,
     borderWidth: 2,
     borderColor: "#6200ee",
@@ -436,6 +444,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 4,
+    minHeight: 82,
   },
   focusTitle: {
     fontSize: 18,
