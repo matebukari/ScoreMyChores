@@ -18,15 +18,15 @@ import { choreService } from "@/services/choreService";
 
 export default function ChoresScreen() {
   const { user } = useAuth();
-  const { activeHousehold } = useHousehold(); // get household details
-  const { chores, addChore, loading } = useChores(); // get chores
+  const { activeHousehold } = useHousehold(); 
+  const { chores, addChore, loading } = useChores();
 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [newChoreTitle, setNewChoreTitle] = useState("");
   const [newChorePoints, setNewChorePoints] = useState("");
   const [isAdding, setIsAdding] = useState(false);
 
-  // Define Asmin Permission
+  // Define Admin Permission
   const isAdmin = activeHousehold?.members?.[user?.uid || ""] == "admin";
 
   const handleAddChore = async () => {
@@ -51,10 +51,7 @@ export default function ChoresScreen() {
 
   const handleDeleteChore = (id: string) => {
     if (!isAdmin) {
-      Alert.alert(
-        "Permission Denied",
-        "Only the household admin can delete chores.",
-      );
+      Alert.alert("Permission Denied", "Only the household admin can delete chores.");
       return;
     }
 
@@ -66,6 +63,32 @@ export default function ChoresScreen() {
         onPress: async () => await choreService.deleteChore(id),
       },
     ]);
+  };
+
+  // Handle Delete All
+  const handleDeleteAll = () => {
+    if (!isAdmin || chores.length === 0) return;
+
+    Alert.alert(
+      "Delete ALL Chores",
+      "WARNING: This will remove every single task from the list. This cannot be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete All",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              // Delete all chores in parallel
+              const promises = chores.map((chore) => choreService.deleteChore(chore.id));
+              await Promise.all(promises);
+            } catch (error) {
+              Alert.alert("Error", "Failed to delete all chores.");
+            }
+          },
+        },
+      ]
+    );
   };
 
   const Avatar = ({ name, color }: { name?: string | null; color: string }) => {
@@ -82,16 +105,9 @@ export default function ChoresScreen() {
     const isMe =
       item.inProgressBy === user?.uid || item.completedBy === user?.uid;
 
-    // In Progress by SOMEONE ELSE
-    // A. In Progress by SOMEONE ELSE
     if (item.inProgress && !isMe) {
       return (
-        <View
-          style={[
-            styles.badge,
-            { backgroundColor: "#FFF3E0", borderColor: "#FFB74D" },
-          ]}
-        >
+        <View style={[styles.badge, { backgroundColor: "#FFF3E0", borderColor: "#FFB74D" }]}>
           <Avatar name={item.inProgressByName} color="#F57C00" />
           <Text style={[styles.badgeText, { color: "#E65100" }]}>
             {item.inProgressByName} is working
@@ -100,37 +116,18 @@ export default function ChoresScreen() {
       );
     }
 
-    // In Progress by ME
     if (item.inProgress && isMe) {
       return (
-        <View
-          style={[
-            styles.badge,
-            { backgroundColor: "#E3F2FD", borderColor: "#64B5F6" },
-          ]}
-        >
-          <Ionicons
-            name="person"
-            size={12}
-            color="#1565C0"
-            style={{ marginRight: 4 }}
-          />
-          <Text style={[styles.badgeText, { color: "#1565C0" }]}>
-            Doing Now
-          </Text>
+        <View style={[styles.badge, { backgroundColor: "#E3F2FD", borderColor: "#64B5F6" }]}>
+          <Ionicons name="person" size={12} color="#1565C0" style={{ marginRight: 4 }} />
+          <Text style={[styles.badgeText, { color: "#1565C0" }]}>Doing Now</Text>
         </View>
       );
     }
 
-    // Completed by SOMEONE ELSE
     if (item.completed && !isMe) {
       return (
-        <View
-          style={[
-            styles.badge,
-            { backgroundColor: "#E8F5E9", borderColor: "#81C784" },
-          ]}
-        >
+        <View style={[styles.badge, { backgroundColor: "#E8F5E9", borderColor: "#81C784" }]}>
           <Avatar name={item.completedByName} color="#388E3C" />
           <Text style={[styles.badgeText, { color: "#2E7D32" }]}>
             Done by {item.completedByName}
@@ -139,24 +136,11 @@ export default function ChoresScreen() {
       );
     }
 
-    // Completed by ME
     if (item.completed && isMe) {
       return (
-        <View
-          style={[
-            styles.badge,
-            { backgroundColor: "#F3E5F5", borderColor: "#BA68C8" },
-          ]}
-        >
-          <Ionicons
-            name="checkmark-done"
-            size={14}
-            color="#7B1FA2"
-            style={{ marginRight: 4 }}
-          />
-          <Text style={[styles.badgeText, { color: "#7B1FA2" }]}>
-            Done by You
-          </Text>
+        <View style={[styles.badge, { backgroundColor: "#F3E5F5", borderColor: "#BA68C8" }]}>
+          <Ionicons name="checkmark-done" size={14} color="#7B1FA2" style={{ marginRight: 4 }} />
+          <Text style={[styles.badgeText, { color: "#7B1FA2" }]}>Done by You</Text>
         </View>
       );
     }
@@ -169,14 +153,26 @@ export default function ChoresScreen() {
       <View style={styles.header}>
         <Text style={styles.title}>Manage Chores</Text>
 
-        {/* Only show if Admin */}
+        {/* Only show actions if Admin */}
         {isAdmin && (
-          <TouchableOpacity
-            style={styles.addButton}
-            onPress={() => setIsModalVisible(true)}
-          >
-            <Ionicons name="add" size={28} color="white" />
-          </TouchableOpacity>
+          <View style={styles.headerActions}>
+            {/* Delete All Button */}
+            {chores.length > 0 && (
+                <TouchableOpacity
+                style={styles.deleteAllButton}
+                onPress={handleDeleteAll}
+                >
+                <Ionicons name="trash-bin-outline" size={22} color="white" />
+                </TouchableOpacity>
+            )}
+
+            <TouchableOpacity
+              style={styles.addButton}
+              onPress={() => setIsModalVisible(true)}
+            >
+              <Ionicons name="add" size={28} color="white" />
+            </TouchableOpacity>
+          </View>
         )}
       </View>
 
@@ -199,7 +195,7 @@ export default function ChoresScreen() {
           }
           renderItem={({ item }) => (
             <View style={[styles.listCard, item.completed && { opacity: 0.8 }]}>
-              <View style={{ flex: 1 }}>
+              <View style={styles.cardLeftContent}>
                 <Text
                   style={[
                     styles.choreTitle,
@@ -212,14 +208,12 @@ export default function ChoresScreen() {
                   {item.title}
                 </Text>
 
-                {/* Dynamic status badge */}
-                <View style={{ marginTop: 8 }}>{renderStatusBadge(item)}</View>
+                {renderStatusBadge(item)}
               </View>
 
               <View style={styles.rightActions}>
                 <Text style={styles.pointsText}>{item.points} pts</Text>
 
-                {/* Only show trash can if Admin */}
                 {isAdmin && (
                   <TouchableOpacity onPress={() => handleDeleteChore(item.id)}>
                     <Ionicons name="trash-outline" size={20} color="#FF5252" />
@@ -293,6 +287,11 @@ const styles = StyleSheet.create({
     marginTop: 40,
     marginBottom: 20,
   },
+  // container for buttons on the right
+  headerActions: {
+    flexDirection: "row",
+    gap: 12,
+  },
   title: { fontSize: 28, fontWeight: "bold", color: "#333" },
   addButton: {
     backgroundColor: "#6200ee",
@@ -307,9 +306,25 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 2,
   },
+  // Delete All Button Style
+  deleteAllButton: {
+    backgroundColor: "#FF5252",
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: "center",
+    alignItems: "center",
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+  },
   listCard: {
     backgroundColor: "#fff",
-    padding: 16,
+    padding: 8, 
+    paddingLeft: 10,
+    paddingRight: 10,
     borderRadius: 12,
     flexDirection: "row",
     justifyContent: "space-between",
@@ -317,8 +332,21 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     borderWidth: 1,
     borderColor: "#eee",
+    minHeight: 70, 
   },
-  choreTitle: { fontSize: 16, fontWeight: "600", color: "#333" },
+  cardLeftContent: {
+    flex: 1,
+    flexDirection: "column",
+    justifyContent: "center",
+    alignItems: "flex-start",
+    gap: 4, 
+  },
+  choreTitle: { 
+    fontSize: 16, 
+    fontWeight: "600", 
+    color: "#333",
+    textAlign: "left"
+  },
   rightActions: { flexDirection: "row", alignItems: "center" },
   pointsText: { marginRight: 15, fontWeight: "bold", color: "#6200ee" },
 
@@ -327,23 +355,23 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingVertical: 2,
     borderRadius: 20,
     alignSelf: "flex-start",
     borderWidth: 1,
     gap: 6,
   },
-  badgeText: { fontSize: 12, fontWeight: "600" },
+  badgeText: { fontSize: 11, fontWeight: "600" }, 
   avatarContainer: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
+    width: 16, 
+    height: 16,
+    borderRadius: 8,
     justifyContent: "center",
     alignItems: "center",
   },
   avatarText: {
     color: "white",
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: "bold",
   },
 
