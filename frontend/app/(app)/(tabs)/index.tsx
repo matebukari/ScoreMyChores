@@ -19,7 +19,7 @@ import { Ionicons } from "@expo/vector-icons";
  */
 export default function HomeScreen() {
   const { user } = useAuth();
-  const { chores, updateStatus, loading } = useChores();
+  const { chores, activities, updateStatus, loading } = useChores();
 
   /**
    * Checks if a chore is "Locked" (unavailable to the current user).
@@ -57,9 +57,9 @@ export default function HomeScreen() {
   };
 
   // Calculates total points ONLY for the current logged-in user
-  const currentScore = chores
-    .filter((c) => c.completed && c.completedBy === user?.uid)
-    .reduce((sum, chore) => sum + chore.points, 0);
+  const currentScore = activities
+    .filter((a) => a.userId === user?.uid)
+    .reduce((sum, activity) => sum + activity.points, 0);
 
   // Filters out completed tasks and tasks locked by others to find "Available" work
   const availableChores = chores.filter((c) => {

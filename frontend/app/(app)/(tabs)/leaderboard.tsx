@@ -5,18 +5,16 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
-  Dimensions,
-  Image,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useChores } from "@/context/ChoreContext";
 import { useAuth } from "@/context/AuthContext";
 import { Timestamp } from "firebase/firestore";
-import { getInitialURL } from "expo-router/build/link/linking";
 
 export default function LeaderboardScreen() {
   const { user } = useAuth();
-  const { chores } = useChores();
+  const { activities } = useChores();
+  const { chores } = useChores(); // might have to delete
   const [timeFrame, setTimeFrame] = useState<"weekly" | "monthly">("weekly");
 
   // Calculate Leaderbooard Data
@@ -34,23 +32,25 @@ export default function LeaderboardScreen() {
     // A map to store scores: { userId: { name, score } }
     const scores: Record<string, { name: string; score: number }> = {};
 
-    chores.forEach((chore) => {
+    activities.forEach((activity) => {
       // Only count completed chores
-      if (!chore.completed || !chore.completedAt) return;
+      if (!activity.completedAt) return;
 
       // Check if it happened within the time frame
       // Firestore Timestamps need conversion
       const completedDate =
-        chore.completedAt instanceof Timestamp
-          ? chore.completedAt.toDate()
-          : new Date(chore.completedAt);
+        activity.completedAt instanceof Timestamp
+          ? activity.completedAt.toDate()
+          : new Date(activity.completedAt)
+      ;
+
       if (completedDate < cutoffDate) return;
 
-      const userId = chore.completedBy;
-      const userName = chore.completedByName || "Unknown";
+      const userId = activity.userId;
+      const userName = activity.userName || "Unknown";
 
       // If user isn't in the map yet, add them
-      if (userId && !scores[userId]) {
+      if (!scores[userId]) {
         scores[userId] = {
           name: userName,
           score: 0,
@@ -58,16 +58,14 @@ export default function LeaderboardScreen() {
       }
 
       // Add points
-      if (userId && scores[userId]) {
-        scores[userId].score += chore.points;
-      }
+      scores[userId].score += activity.points;
     });
 
     // Convert map to array and sort descending (Highest Score First)
     return Object.entries(scores)
       .map(([id, data]) => ({ id, ...data }))
       .sort((a, b) => b.score - a.score);
-  }, [chores, timeFrame]);
+  }, [activities, timeFrame]);
 
   // Helper for Medals
   const getRankIcon = (index: number) => {

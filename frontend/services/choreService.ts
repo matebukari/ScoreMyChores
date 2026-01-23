@@ -6,6 +6,10 @@ import {
   doc,
   deleteDoc,
   serverTimestamp,
+  writeBatch,
+  query,
+  where,
+  getDocs
 } from "firebase/firestore";
 
 export type Chore = {
@@ -43,9 +47,14 @@ export const choreService = {
   },
 
   // Toggle chore completion
-  updateChoreStatus: async (choreId: string, status: 'pending' | 'in-progress' | 'completed', user: UserSnapshot) => {
+  updateChoreStatus: async (
+    choreId: string, status: 'pending' | 'in-progress' | 'completed',
+    user: UserSnapshot,
+    choreDetails?: { householdId: string; title: string; points: number }
+  ) => {
     const choreRef = doc(db, "chores", choreId);
     
+    // 1. Prepare Chore Updates
     const updates = {
       completed: status === 'completed',
       inProgress: status === 'in-progress',
@@ -58,7 +67,33 @@ export const choreService = {
       completedByName: status === 'completed' ? user.displayName : null,
     }
 
-    await updateDoc(choreRef, updates);
+    const batch = writeBatch(db);
+    batch.update(choreRef, updates);
+
+    // 2. Handle History (Activities)
+    if (status === 'completed' && choreDetails) {
+      const historyRef = doc(collection(db, "activities"));
+      batch.set(historyRef, {
+        choreId: choreId,
+        householdId: choreDetails.householdId,
+        userId: user.uid,
+        userName: user.displayName,
+        choreTitle: choreDetails.title,
+        points: choreDetails.points,
+        completedAt: serverTimestamp(),
+        type: 'chore_completion'
+      });
+      // If undoing (moving away from completed): Remove from history
+    } else {
+      // Find any existing history for this specific chore and delete it
+      const q = query(collection(db, "activities"), where("choreId", "==", choreId));
+      const historySnapshot = await getDocs(q);
+      historySnapshot.forEach((doc) => {
+        batch.delete(doc.ref);
+      });
+    }
+
+    await batch.commit();
   },
 
   // Delete a chore

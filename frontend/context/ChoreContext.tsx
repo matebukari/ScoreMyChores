@@ -5,14 +5,25 @@ import {
   where,
   onSnapshot,
   orderBy,
+  Timestamp
 } from "firebase/firestore";
 import { db } from '@/config/firebase';
 import { useHousehold } from "./HouseholdContext";
 import { useAuth } from "./AuthContext";
 import { choreService, Chore, UserSnapshot } from "@/services/choreService";
 
+export type Activity = {
+  id: string;
+  userId: string;
+  userName: string;
+  points: number;
+  completedAt: Timestamp;
+  householdId: string;
+};
+
 type ChoreContextType = {
   chores: Chore[];
+  activities: Activity[];
   loading: boolean;
   addChore: (title: string, points: number) => Promise<void>;
   updateStatus: (choreId: string, status: 'pending' | 'in-progress' | 'completed') => Promise<void>;
@@ -24,11 +35,13 @@ export function ChoreProvider({ children }: { children: React.ReactNode }) {
   const { activeHouseholdId } = useHousehold();
   const { user } = useAuth();
   const [chores, setChores] = useState<Chore[]>([]);
+  const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!activeHouseholdId) {
       setChores([]);
+      setActivities([]);
       setLoading(false);
       return;
     }
@@ -36,52 +49,51 @@ export function ChoreProvider({ children }: { children: React.ReactNode }) {
     setLoading(true);
 
     // Query chores that belong to the active household
-    const q = query(
+    const qChores = query(
       collection(db, "chores"),
       where("householdId", "==", activeHouseholdId),
       orderBy("createdAt", "desc")
     );
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const choreList = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Chore[];
+    // Query Activities (For Leaderboard & Score)
+    const qActivities = query(
+      collection(db, "activities"),
+      where("householdId", "==", activeHouseholdId),
+      orderBy("completedAt", "desc")
+    );
 
-      setChores(choreList);
-      setLoading(false);
+    const unsubChores = onSnapshot(qChores, (snapshot) => {
+      setChores(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Chore[]);
     });
 
-    return () => unsubscribe()
+    const unsubActivities = onSnapshot(qActivities, (snapshot) => {
+      setActivities(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Activity[]);
+      setLoading(false);
+    })
+
+    return () => {
+      unsubChores();
+      unsubActivities();
+    }
   }, [activeHouseholdId]);
 
   const addChore = async (title: string, points: number) => {
-    if (!activeHouseholdId || !user) {
-      throw new Error("You must be logged in and in a household to add chores.");
-    }
-
-    try {
-      await choreService.addChore(activeHouseholdId, user.uid, {
-        title,
-        points
-      });
-    } catch (error) {
-      console.error("Failed to add chore:", error);
-      throw error;
-    }
+    if (!activeHouseholdId || !user) throw new Error("No user/household");
+    await choreService.addChore(activeHouseholdId, user.uid, { title, points });
   };
 
   const updateStatus = async (choreId: string, status: 'pending' | 'in-progress' | 'completed') => {
-    if (!user) return;
+    if (!user || !activeHouseholdId) return;
 
     // Create a Snapshot of the user's name
     const cleanName = user.displayName || user.email?.split('@')[0] || 'Member';
+    const userSnapshot: UserSnapshot = { uid: user.uid, displayName: cleanName };
 
-    const userSnapshot: UserSnapshot = {
-      uid: user.uid,
-      displayName: cleanName
-    };
+    // Find the chore object to get its details
+    const targetChore = chores.find(c => c.id === choreId);
+    if (!targetChore) return;
 
+    // Handle "Only one in-progress at a time" logic
     // LOGIC: If we are trying to start a task...
     if (status === 'in-progress') {
       // Find the chore that is currently running (if any)
@@ -93,12 +105,16 @@ export function ChoreProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
-    // Proceed with updating the specific chore we clicked
-    await choreService.updateChoreStatus(choreId, status, userSnapshot);
+    // Update the target chore AND pass details for history creation
+    await choreService.updateChoreStatus(choreId, status, userSnapshot, {
+      householdId: activeHouseholdId,
+      title: targetChore.title,
+      points: targetChore.points
+    });
   }
 
   return (
-    <ChoreContext.Provider value={{ chores, loading, addChore, updateStatus }}>
+    <ChoreContext.Provider value={{ chores, activities, loading, addChore, updateStatus }}>
       {children}
     </ChoreContext.Provider>
   );
