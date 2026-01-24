@@ -18,15 +18,20 @@ import { router } from "expo-router";
 import { householdService } from "@/services/householdService";
 
 export default function ProfileScreen() {
-  const { user, logout } = useAuth();
-  const { activeHousehold, joinedHouseholds, switchHousehold, loading } =
-    useHousehold();
+  const { user, logout, updateName } = useAuth(); // <--- Get updateName
+  const { activeHousehold, joinedHouseholds, switchHousehold, loading } = useHousehold();
 
   const [switching, setSwitching] = useState(false);
-
+  
+  // Join Modal State
   const [isJoinModalVisible, setIsJoinModalVisible] = useState(false);
   const [inviteCode, setInviteCode] = useState("");
   const [joining, setJoining] = useState(false);
+
+  // Edit Name Modal State
+  const [isEditNameVisible, setIsEditNameVisible] = useState(false);
+  const [newName, setNewName] = useState(user?.displayName || "");
+  const [updatingName, setUpdatingName] = useState(false);
 
   const handleSignOut = async () => {
     Alert.alert("Sign Out", "Are you sure?", [
@@ -66,7 +71,6 @@ export default function ProfileScreen() {
     }
   };
 
-  // Handle Joining a House
   const handleJoinHousehold = async () => {
     if (!inviteCode || !user) return;
     try {
@@ -75,7 +79,6 @@ export default function ProfileScreen() {
         user.uid,
         inviteCode.trim().toUpperCase(),
       );
-
       setIsJoinModalVisible(false);
       setInviteCode("");
       Alert.alert("Success", "You have joined the household!");
@@ -86,26 +89,53 @@ export default function ProfileScreen() {
     }
   };
 
+  // Handle Name Update
+  const handleUpdateName = async () => {
+    if (!newName.trim()) return;
+    try {
+      setUpdatingName(true);
+      await updateName(newName.trim());
+      setIsEditNameVisible(false);
+      Alert.alert("Success", "Name updated successfully!");
+    } catch (error) {
+      Alert.alert("Error", "Failed to update name");
+    } finally {
+      setUpdatingName(false);
+    }
+  };
+
+  // Helper to determine what name to show
+  const displayName = user?.displayName || "User";
+  const initial = displayName.charAt(0).toUpperCase();
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Profile</Text>
       </View>
 
-      {/* USER INFO */}
+      {/* USER INFO CARD */}
       <View style={styles.card}>
         <View style={styles.avatarContainer}>
-          <Text style={styles.avatarText}>
-            {user?.email?.charAt(0).toUpperCase() || "U"}
-          </Text>
+          <Text style={styles.avatarText}>{initial}</Text>
         </View>
-        <View>
+        <View style={{ flex: 1 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Text style={styles.nameText}>{displayName}</Text>
+            
+            {/* Edit Name Button */}
+            <TouchableOpacity onPress={() => {
+              setNewName(user?.displayName || "");
+              setIsEditNameVisible(true);
+            }}>
+              <Ionicons name="pencil-sharp" size={16} color="#6200ee" />
+            </TouchableOpacity>
+          </View>
+          
           <Text style={styles.emailText}>{user?.email}</Text>
+          
           <Text style={styles.roleText}>
-            Role:{" "}
-            {activeHousehold?.members[user?.uid || ""] === "admin"
-              ? "Admin"
-              : "Member"}
+            Role: {activeHousehold?.members[user?.uid || ""] === "admin" ? "Admin" : "Member"}
           </Text>
         </View>
       </View>
@@ -143,7 +173,7 @@ export default function ProfileScreen() {
         </Text>
       )}
 
-      {/* JOIN ANOTHER HOUSEHOLD BUTTON */}
+      {/* JOIN BUTTON */}
       <TouchableOpacity
         style={styles.joinButton}
         onPress={() => setIsJoinModalVisible(true)}
@@ -152,7 +182,7 @@ export default function ProfileScreen() {
         <Text style={styles.joinButtonText}>Join Another Household</Text>
       </TouchableOpacity>
 
-      {/* SWITCH HOUSEHOLDS LIST */}
+      {/* SWITCH LIST */}
       {joinedHouseholds.length > 1 && (
         <>
           <Text style={styles.sectionTitle}>Switch Household</Text>
@@ -189,7 +219,9 @@ export default function ProfileScreen() {
 
       <View style={{ height: 50 }} />
 
-      {/* JOIN MODAL */}
+      {/* --- MODALS --- */}
+
+      {/* 1. JOIN MODAL */}
       <Modal
         visible={isJoinModalVisible}
         animationType="slide"
@@ -224,16 +256,52 @@ export default function ProfileScreen() {
                 onPress={handleJoinHousehold}
                 disabled={joining}
               >
-                {joining ? (
-                  <ActivityIndicator color="white" />
-                ) : (
-                  <Text style={styles.buttonText}>Join</Text>
-                )}
+                {joining ? <ActivityIndicator color="white" /> : <Text style={styles.buttonText}>Join</Text>}
               </TouchableOpacity>
             </View>
           </View>
         </View>
       </Modal>
+
+      {/* 2. EDIT NAME MODAL */}
+      <Modal
+        visible={isEditNameVisible}
+        animationType="fade"
+        transparent={true}
+        onRequestClose={() => setIsEditNameVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Change Name</Text>
+            
+            <TextInput
+              style={styles.input}
+              placeholder="Enter your name"
+              value={newName}
+              onChangeText={setNewName}
+              autoCapitalize="words"
+            />
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.button, styles.cancelButton]}
+                onPress={() => setIsEditNameVisible(false)}
+              >
+                <Text style={styles.buttonText}>Cancel</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.button, styles.saveButton]}
+                onPress={handleUpdateName}
+                disabled={updatingName}
+              >
+                {updatingName ? <ActivityIndicator color="white" /> : <Text style={styles.buttonText}>Save</Text>}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
     </ScrollView>
   );
 }
@@ -256,17 +324,18 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   avatarContainer: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     backgroundColor: "#E3F2FD",
     justifyContent: "center",
     alignItems: "center",
     marginRight: 15,
   },
-  avatarText: { fontSize: 24, fontWeight: "bold", color: "#2196F3" },
-  emailText: { fontSize: 16, fontWeight: "600", color: "#333" },
-  roleText: { fontSize: 14, color: "#666", marginTop: 2 },
+  avatarText: { fontSize: 28, fontWeight: "bold", color: "#2196F3" },
+  nameText: { fontSize: 20, fontWeight: "bold", color: "#333" },
+  emailText: { fontSize: 14, color: "#666", marginTop: 2 },
+  roleText: { fontSize: 12, color: "#999", marginTop: 4, textTransform: 'uppercase', letterSpacing: 0.5 },
 
   sectionTitle: {
     fontSize: 18,
@@ -311,7 +380,7 @@ const styles = StyleSheet.create({
   },
   shareButton: { padding: 10, backgroundColor: "#f5f5f5", borderRadius: 8 },
 
-  // New Join Button Style
+  // Buttons
   joinButton: {
     flexDirection: "row",
     alignItems: "center",
