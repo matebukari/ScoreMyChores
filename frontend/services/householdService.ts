@@ -8,7 +8,8 @@ import {
   arrayUnion, 
   query,
   where,
-  getDocs
+  getDocs,
+  Timestamp
 } from "firebase/firestore";
 
 // Types for the data
@@ -17,6 +18,7 @@ export type Household = {
   name: string;
   inviteCode: string;
   members: { [userId: string]: 'admin' | 'member' };
+  lastResetDate?: Timestamp;
 };
 
 export const householdService = {
@@ -47,7 +49,8 @@ export const householdService = {
     await setDoc(newHouseRef, {
       name: householdName, 
       inviteCode,
-      members: { [userId]: 'admin' } // Creater is admin
+      members: { [userId]: 'admin' }, // Creater is admin
+      lastResetDate: Timestamp.now()
     });
 
     // Link User to House
@@ -87,4 +90,12 @@ export const householdService = {
 
     return houseId;
   },
+
+  // Update the last reset date
+  updateLastReset: async (householdId: string) => {
+    const houseRef = doc(db, "households", householdId);
+    await updateDoc(houseRef, {
+      lastResetDate: Timestamp.now()
+    });
+  }
 };

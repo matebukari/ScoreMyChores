@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { act, createContext, useContext, useEffect, useState } from "react";
 import {
   collection,
   query,
@@ -11,6 +11,7 @@ import { db } from '@/config/firebase';
 import { useHousehold } from "./HouseholdContext";
 import { useAuth } from "./AuthContext";
 import { choreService, Chore, UserSnapshot } from "@/services/choreService";
+import { householdService } from "@/services/householdService";
 
 export type Activity = {
   id: string;
@@ -34,11 +35,46 @@ type ChoreContextType = {
 const ChoreContext = createContext<ChoreContextType | undefined>(undefined);
 
 export function ChoreProvider({ children }: { children: React.ReactNode }) {
-  const { activeHouseholdId } = useHousehold();
+  const { activeHousehold, activeHouseholdId } = useHousehold();
   const { user } = useAuth();
   const [chores, setChores] = useState<Chore[]>([]);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Daily reset check logic
+  useEffect(() => {
+    const checkDailyReset = async () => {
+      if (!activeHousehold || !activeHouseholdId) return;
+
+      const now = new Date();
+      // If lastResetDate doesn't exist, assume it's today or yesterday
+      const lastReset = activeHousehold.lastResetDate
+        ? activeHousehold.lastResetDate.toDate()
+        : new Date(0);
+
+      // Check if "Last Reset" was on a different day than "Today"
+      const isSameDay =
+        now.getFullYear() === lastReset.getFullYear() &&
+        now.getMonth() === lastReset.getMonth() &&
+        now.getDate() === lastReset.getDate();
+
+      if (!isSameDay) {
+        console.log("New day detected! Resetting chores...");
+        try {
+          // Reset all chores
+          await choreService.resetAllChores(activeHouseholdId);
+          // Update the last reset date to NOW so it doesn't run again today
+          await householdService.updateLastReset(activeHouseholdId);
+        } catch (error) {
+          console.error("Failed to run daily reset:", error);
+        }
+      }
+    };
+
+    if (activeHouseholdId) {
+      checkDailyReset();
+    }
+  }, [activeHouseholdId, activeHousehold])
 
   useEffect(() => {
     if (!activeHouseholdId) {
