@@ -19,7 +19,7 @@ import { choreService } from "@/services/choreService";
 export default function ChoresScreen() {
   const { user } = useAuth();
   const { activeHousehold } = useHousehold(); 
-  const { chores, addChore, loading } = useChores();
+  const { chores, addChore, loading, resetAll, resetChore } = useChores();
 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [newChoreTitle, setNewChoreTitle] = useState("");
@@ -91,6 +91,22 @@ export default function ChoresScreen() {
     );
   };
 
+  // Handler for Reset All
+  const handleResetAll = () => {
+    Alert.alert("Reset All", "Make all chores 'Pending' again? Points earned will remain.", [
+      { text: "Cancel", style: "cancel" },
+      { text: "Reset", onPress: resetAll }
+    ]);
+  };
+
+  // Handler for individual reset
+  const handleResetSingle = (id: string) => {
+    Alert.alert("Reset Chore", "Make this chore available again?", [
+      { text: "Cancel", style: "cancel" },
+      { text: "Reset", onPress : async () => await resetChore(id) }
+    ]);
+  };
+
   const Avatar = ({ name, color }: { name?: string | null; color: string }) => {
     const initial = name ? name.charAt(0).toUpperCase() : "?";
     return (
@@ -156,14 +172,25 @@ export default function ChoresScreen() {
         {/* Only show actions if Admin */}
         {isAdmin && (
           <View style={styles.headerActions}>
-            {/* Delete All Button */}
+            
             {chores.length > 0 && (
+              <>
+                {/* Reset All Button */}
                 <TouchableOpacity
-                style={styles.deleteAllButton}
-                onPress={handleDeleteAll}
+                  style={styles.resetAllButton}
+                  onPress={handleResetAll}
                 >
-                <Ionicons name="trash-bin-outline" size={22} color="white" />
+                  <Ionicons name="refresh" size={22} color="white" />
                 </TouchableOpacity>
+
+                {/* Delete All Button */}
+                <TouchableOpacity
+                  style={styles.deleteAllButton}
+                  onPress={handleDeleteAll}
+                >
+                  <Ionicons name="trash-bin-outline" size={22} color="white" />
+                </TouchableOpacity>
+              </>
             )}
 
             <TouchableOpacity
@@ -215,9 +242,16 @@ export default function ChoresScreen() {
                 <Text style={styles.pointsText}>{item.points} pts</Text>
 
                 {isAdmin && (
-                  <TouchableOpacity onPress={() => handleDeleteChore(item.id)}>
-                    <Ionicons name="trash-outline" size={20} color="#FF5252" />
-                  </TouchableOpacity>
+                  <View style={styles.adminRow}>
+                     {/* Individual Reset Button */}
+                    <TouchableOpacity onPress={() => handleResetSingle(item.id)}>
+                      <Ionicons name="refresh-circle-outline" size={26} color="#2196F3" />
+                    </TouchableOpacity>
+
+                    <TouchableOpacity onPress={() => handleDeleteChore(item.id)}>
+                      <Ionicons name="trash-outline" size={22} color="#FF5252" />
+                    </TouchableOpacity>
+                  </View>
                 )}
               </View>
             </View>
@@ -320,6 +354,20 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 2,
   },
+  // Reset All Button Style
+  resetAllButton: {
+    backgroundColor: "#2196F3",
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: "center",
+    alignItems: "center",
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+  },
   listCard: {
     backgroundColor: "#fff",
     padding: 8, 
@@ -348,6 +396,7 @@ const styles = StyleSheet.create({
     textAlign: "left"
   },
   rightActions: { flexDirection: "row", alignItems: "center" },
+  adminRow: { flexDirection: "row", alignItems: "center", gap: 10 },
   pointsText: { marginRight: 15, fontWeight: "bold", color: "#6200ee" },
 
   // Badge & Avatar Styles

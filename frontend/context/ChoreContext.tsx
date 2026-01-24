@@ -27,6 +27,8 @@ type ChoreContextType = {
   loading: boolean;
   addChore: (title: string, points: number) => Promise<void>;
   updateStatus: (choreId: string, status: 'pending' | 'in-progress' | 'completed') => Promise<void>;
+  resetChore: (choreId: string) => Promise<void>;
+  resetAll: () => Promise<void>;
 };
 
 const ChoreContext = createContext<ChoreContextType | undefined>(undefined);
@@ -113,8 +115,25 @@ export function ChoreProvider({ children }: { children: React.ReactNode }) {
     });
   }
 
+  const resetChore = async (choreId: string) => {
+    await choreService.resetChore(choreId);
+  };
+
+  const resetAll = async () => {
+    if (!activeHouseholdId) return;
+    await choreService.resetAllChores(activeHouseholdId);
+  }
+
   return (
-    <ChoreContext.Provider value={{ chores, activities, loading, addChore, updateStatus }}>
+    <ChoreContext.Provider value={{
+      chores,
+      activities, 
+      loading, 
+      addChore, 
+      updateStatus,
+      resetChore,
+      resetAll, 
+    }}>
       {children}
     </ChoreContext.Provider>
   );

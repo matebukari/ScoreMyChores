@@ -46,6 +46,43 @@ export const choreService = {
     });
   },
 
+  // Resets a single Chore (preserves History)
+  resetChore: async (choreId: string) => {
+    const choreRef = doc(db, "chores", choreId);
+    await updateDoc(choreRef, {
+      completed: false,
+      inProgress: false,
+      completedAt: null,
+      inProgressBy: null,
+      inProgressByName: null,
+      completedBy: null,
+      completedByName: null,
+    });
+  },
+
+  //Reset all Chores (Preserves history)
+  resetAllChores: async (householdId: string) => {
+    const q = query(collection(db, "chores"), where("householdId", "==", householdId));
+    const snapshot = await getDocs(q);
+
+    const batch = writeBatch(db);
+
+    snapshot.docs.forEach((doc) => {
+      batch.update(doc.ref, {
+        completed: false,
+        inProgress: false,
+        completedAt: null,
+        inProgressBy: null,
+        inProgressByName: null,
+        completedBy: null,
+        completedByName: null,
+      });
+    });
+
+    await batch.commit();
+  },
+  
+
   // Toggle chore completion
   updateChoreStatus: async (
     choreId: string, status: 'pending' | 'in-progress' | 'completed',
