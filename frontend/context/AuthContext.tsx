@@ -1,5 +1,5 @@
 import { useContext, createContext, useState, useEffect, ReactNode } from "react";
-import { auth } from "../config/firebase";
+import { auth, db } from "../config/firebase";
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -9,6 +9,7 @@ import {
   User,
   UserCredential
 } from "firebase/auth";
+import { doc, setDoc } from "firebase/firestore";
 import { useRouter, useSegments } from "expo-router";
 
 interface AuthContextType {
@@ -69,21 +70,47 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }
 
-  // Function to update display name
+  // Update Name in Auth AND Firestore
   const updateName = async (name: string) => {
     if (auth.currentUser) {
-      await updateProfile(auth.currentUser, { displayName: name });
-      setUser({ ...auth.currentUser });
-    }
-  }
+      try {
+        // Update Auth Profile (Local)
+        await updateProfile(auth.currentUser, { displayName: name });
+        
+        // Update Firestore Document (Public)
+        const userRef = doc(db, "users", auth.currentUser.uid);
+        await setDoc(userRef, { displayName: name }, { merge: true });
 
-  // Update avatar
+        // Force Local Refresh
+        await auth.currentUser.reload();
+        setUser({ ...auth.currentUser }); 
+      } catch (error) {
+        console.error("Failed to update name:", error);
+        throw error;
+      }
+    }
+  };
+
+  // Update Avatar in Auth AND Firestore
   const updateAvatar = async (avatar: string) => {
     if (auth.currentUser) {
-      await updateProfile(auth.currentUser, { photoURL: avatar });
-      setUser({ ...auth.currentUser });
+      try {
+        // Update Auth Profile (Local)
+        await updateProfile(auth.currentUser, { photoURL: avatar });
+        
+        // Update Firestore Document (Public)
+        const userRef = doc(db, "users", auth.currentUser.uid);
+        await setDoc(userRef, { photoURL: avatar }, { merge: true });
+
+        // Force Local Refresh
+        await auth.currentUser.reload();
+        setUser({ ...auth.currentUser }); 
+      } catch (error) {
+        console.error("Failed to update avatar:", error);
+        throw error;
+      }
     }
-  }
+  };
 
   const logout = () => signOut(auth);
 

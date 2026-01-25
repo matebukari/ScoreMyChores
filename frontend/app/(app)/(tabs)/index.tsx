@@ -10,6 +10,7 @@ import {
 import * as Haptics from "expo-haptics";
 import { useAuth } from "@/context/AuthContext";
 import { useChores } from "@/context/ChoreContext";
+import { useHousehold } from "@/context/HouseholdContext";
 import { Ionicons } from "@expo/vector-icons";
 
 /**
@@ -20,68 +21,66 @@ import { Ionicons } from "@expo/vector-icons";
 export default function HomeScreen() {
   const { user } = useAuth();
   const { chores, updateStatus, loading } = useChores();
+  const { memberProfiles } = useHousehold();
 
-  /**
-   * Checks if a chore is "Locked" (unavailable to the current user).
-   * Prevents users from interfering with tasks started or completed by roommates.
-  */
+  const getLiveProfile = (
+    userId: string | null | undefined, 
+    snapshotName: string | null | undefined, 
+    snapshotAvatar: string | null | undefined
+  ) => {
+    // 1. Only look up live profile if we have a valid userId
+    const liveUser = userId ? memberProfiles[userId] : null;
+    
+    // 2. Return live data if exists, otherwise fallback to snapshot
+    return {
+      name: liveUser?.displayName || snapshotName || "Unknown",
+      avatar: liveUser?.photoURL || snapshotAvatar || null
+    };
+  };
+
   const isChoreLocked = (chore: any) => {
-    // Locked if in-progress by someone else
     if (chore.inProgress && chore.inProgressBy !== user?.uid) return true;
-    // Locked if completed by someone else
     if (chore.completed && chore.completedBy !== user?.uid) return true;
     return false;
   };
 
-  /**
-   * Handles the tap interaction on any chore card (Focus or List).
-   * Toggles status: Pending -> In Progress -> Completed -> Pending.
-   * Triggers haptic feedback for better UX.
-  */
   const handleChorePress = async (chore: any) => {
     if (isChoreLocked(chore)) return;
 
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     try {
       if (chore.completed) {
-        await updateStatus(chore.id, "pending"); // Undo
+        await updateStatus(chore.id, "pending");
       } else if (chore.inProgress) {
-        await updateStatus(chore.id, "completed"); // Finish
+        await updateStatus(chore.id, "completed");
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       } else {
-        await updateStatus(chore.id, "in-progress"); // Start
+        await updateStatus(chore.id, "in-progress");
       }
     } catch (error) {
       console.error("Failed to toggle:", error);
     }
   };
 
-  // Calculates total points ONLY for the current logged-in user
   const currentScore = chores
     .filter((c) => c.completed && c.completedBy === user?.uid)
     .reduce((sum, chore) => sum + chore.points, 0);
 
-  // Filters out completed tasks and tasks locked by others to find "Available" work
   const availableChores = chores.filter((c) => {
     if (c.completed) return false;
     if (c.inProgress && c.inProgressBy !== user?.uid) return false;
     return true;
   });
 
-  // Sorts available chores to determine the "Focus Task":
-  // Priority 1: Tasks I am already doing.
-  // Priority 2: Highest point value.
   const focusTask = availableChores.sort((a, b) => {
     if (a.inProgress && !b.inProgress) return -1;
     if (!a.inProgress && b.inProgress) return 1;
     return b.points - a.points;
   })[0];
 
-  // Date helpers for the weekly streak UI
   const weekDays = ["M", "T", "W", "T", "F", "S", "S"];
   const currentDayIndex = new Date().getDay() - 1;
 
-  // Formatting helpers for avatars and names
   const getInitial = (name?: string | null) =>
     name ? name.charAt(0).toUpperCase() : "?";
   
@@ -90,7 +89,6 @@ export default function HomeScreen() {
     return name || "Member";
   };
 
-  // NEW: Helper Component for Mini Avatars (Avatars are smaller on this screen)
   const MiniAvatar = ({ name, avatar, color }: { name?: string | null, avatar?: string | null, color: string }) => {
     if (avatar) {
       return (
@@ -183,19 +181,26 @@ export default function HomeScreen() {
               {/* Badge appears if active */}
               {focusTask.inProgress && (
                 <View style={styles.miniBadge}>
-                  {/* UPDATED: Use MiniAvatar */}
-                  <MiniAvatar 
-                    name={focusTask.inProgressByName} 
-                    avatar={focusTask.inProgressByAvatar} 
-                    color="#4A90E2" 
-                  />
-                  <Text style={[styles.miniBadgeText, { color: "#4A90E2" }]}>
-                    Started by{" "}
-                    {getDisplayName(
-                      focusTask.inProgressBy,
-                      focusTask.inProgressByName,
-                    )}
-                  </Text>
+                  {(() => {
+                    const worker = getLiveProfile(
+                      focusTask.inProgressBy, 
+                      focusTask.inProgressByName, 
+                      focusTask.inProgressByAvatar
+                    );
+                    return (
+                      <>
+                        <MiniAvatar 
+                          name={worker.name} 
+                          avatar={worker.avatar} 
+                          color="#4A90E2" 
+                        />
+                        <Text style={[styles.miniBadgeText, { color: "#4A90E2" }]}>
+                          Started by{" "}
+                          {getDisplayName(focusTask.inProgressBy, worker.name)}
+                        </Text>
+                      </>
+                    );
+                  })()}
                 </View>
               )}
             </View>
@@ -268,33 +273,53 @@ export default function HomeScreen() {
                 {/* Badge: In Progress */}
                 {item.inProgress && (
                   <View style={styles.miniBadge}>
-                    {/* UPDATED: Use MiniAvatar */}
-                    <MiniAvatar 
-                      name={item.inProgressByName} 
-                      avatar={item.inProgressByAvatar} 
-                      color="#4A90E2" 
-                    />
-                    <Text style={[styles.miniBadgeText, { color: "#4A90E2" }]}>
-                      {locked
-                        ? `${item.inProgressByName} is working`
-                        : `${getDisplayName(item.inProgressBy, item.inProgressByName)} is working`}
-                    </Text>
+                    {(() => {
+                      const worker = getLiveProfile(
+                        item.inProgressBy, 
+                        item.inProgressByName, 
+                        item.inProgressByAvatar
+                      );
+                      return (
+                        <>
+                          <MiniAvatar 
+                            name={worker.name} 
+                            avatar={worker.avatar} 
+                            color="#4A90E2" 
+                          />
+                          <Text style={[styles.miniBadgeText, { color: "#4A90E2" }]}>
+                            {locked
+                              ? `${worker.name} is working`
+                              : `${getDisplayName(item.inProgressBy, worker.name)} is working`}
+                          </Text>
+                        </>
+                      );
+                    })()}
                   </View>
                 )}
 
                 {/* Badge: Completed */}
                 {item.completed && (
                   <View style={styles.miniBadge}>
-                    {/* UPDATED: Use MiniAvatar */}
-                    <MiniAvatar 
-                      name={item.completedByName} 
-                      avatar={item.completedByAvatar} 
-                      color="#4CAF50" 
-                    />
-                    <Text style={[styles.miniBadgeText, { color: "#4CAF50" }]}>
-                      Done by{" "}
-                      {getDisplayName(item.completedBy, item.completedByName)}
-                    </Text>
+                    {(() => {
+                      const completer = getLiveProfile(
+                        item.completedBy,
+                        item.completedByName, 
+                        item.completedByAvatar
+                      );
+                      return (
+                        <>
+                          <MiniAvatar 
+                            name={completer.name} 
+                            avatar={completer.avatar} 
+                            color="#4CAF50" 
+                          />
+                          <Text style={[styles.miniBadgeText, { color: "#4CAF50" }]}>
+                            Done by{" "}
+                            {getDisplayName(item.completedBy, completer.name)}
+                          </Text>
+                        </>
+                      );
+                    })()}
                   </View>
                 )}
               </View>

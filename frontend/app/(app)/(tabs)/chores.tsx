@@ -18,7 +18,7 @@ import { choreService } from "@/services/choreService";
 
 export default function ChoresScreen() {
   const { user } = useAuth();
-  const { activeHousehold } = useHousehold(); 
+  const { activeHousehold, memberProfiles } = useHousehold();
   const { chores, addChore, loading, resetAll, resetChore } = useChores();
 
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -128,12 +128,27 @@ export default function ChoresScreen() {
   const renderStatusBadge = (item: any) => {
     const isMe = item.inProgressBy === user?.uid || item.completedBy === user?.uid;
 
+    //  Get Live Profile Data
+    const getLiveProfile = (userId: string, snapshotName: string, snapshotAvatar: string) => {
+      // 1. Try to find the user in the live memberProfiles list
+      const liveUser = memberProfiles[userId];
+      
+      // 2. Return live data if exists, otherwise fallback to snapshot
+      return {
+        name: liveUser?.displayName || snapshotName || "Unknown",
+        avatar: liveUser?.photoURL || snapshotAvatar || null
+      };
+    };
+
     if (item.inProgress && !isMe) {
+      // Fetch live profile for the person working
+      const worker = getLiveProfile(item.inProgressBy, item.inProgressByName, item.inProgressByAvatar);
+
       return (
         <View style={[styles.badge, { backgroundColor: "#FFF3E0", borderColor: "#FFB74D" }]}>
-          <Avatar name={item.inProgressByName} avatar={item.inProgressByAvatar} color="#F57C00" />
+          <Avatar name={worker.name} avatar={worker.avatar} color="#F57C00" />
           <Text style={[styles.badgeText, { color: "#E65100" }]}>
-            {item.inProgressByName} is working
+            {worker.name} is working
           </Text>
         </View>
       );
@@ -142,29 +157,33 @@ export default function ChoresScreen() {
     if (item.inProgress && isMe) {
       return (
         <View style={[styles.badge, { backgroundColor: "#E3F2FD", borderColor: "#64B5F6" }]}>
-          {/* Show my current avatar */}
-          <Text style={{fontSize: 12, marginRight: 4}}>{user?.photoURL || "👤"}</Text>
+          <Text style={{fontSize: 14, marginRight: 4}}>{user?.photoURL || "👤"}</Text>
           <Text style={[styles.badgeText, { color: "#1565C0" }]}>Doing Now</Text>
         </View>
       );
     }
 
     if (item.completed && !isMe) {
+      // Fetch live profile for the completer
+      const completer = getLiveProfile(item.completedBy, item.completedByName, item.completedByAvatar);
+
       return (
         <View style={[styles.badge, { backgroundColor: "#E8F5E9", borderColor: "#81C784" }]}>
-          {/* Pass the avatar field */}
-          <Avatar name={item.completedByName} avatar={item.completedByAvatar} color="#388E3C" />
+          <Avatar name={completer.name} avatar={completer.avatar} color="#388E3C" />
           <Text style={[styles.badgeText, { color: "#2E7D32" }]}>
-            Done by {item.completedByName}
+            Done by {completer.name}
           </Text>
         </View>
       );
     }
 
     if (item.completed && isMe) {
+      // Fetch live profile
+      const completer = getLiveProfile(user?.uid || "", item.completedByName, item.completedByAvatar);
+
       return (
         <View style={[styles.badge, { backgroundColor: "#F3E5F5", borderColor: "#BA68C8" }]}>
-          <Text style={{fontSize: 14, marginRight: 4}}>{item.completedByAvatar || user?.photoURL || "✅"}</Text>
+          <Text style={{fontSize: 16, marginRight: 4}}>{completer.avatar || "✅"}</Text>
           <Text style={[styles.badgeText, { color: "#7B1FA2" }]}>Done by You</Text>
         </View>
       );
@@ -423,7 +442,7 @@ const styles = StyleSheet.create({
   avatarContainer: {
     width: 22, 
     height: 22,
-    borderRadius: 8,
+    borderRadius: 11,
     justifyContent: "center",
     alignItems: "center",
   },

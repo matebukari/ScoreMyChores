@@ -10,7 +10,7 @@ import {
   ActivityIndicator,
   Modal,
   TextInput,
-  FlatList, // <--- Import FlatList
+  FlatList,
 } from "react-native";
 import { useAuth } from "@/context/AuthContext";
 import { useHousehold } from "@/context/HouseholdContext";
@@ -25,8 +25,11 @@ const AVATAR_OPTIONS = [
   "💩", "👻", "🦸", "🥷", "🧙", "🧚", "🧜", "🧛"
 ];
 
+// 1. Define the limit constant
+const MAX_NAME_LENGTH = 16;
+
 export default function ProfileScreen() {
-  const { user, logout, updateName, updateAvatar } = useAuth(); // <--- Get updateAvatar
+  const { user, logout, updateName, updateAvatar } = useAuth();
   const { activeHousehold, joinedHouseholds, switchHousehold, loading } = useHousehold();
 
   const [switching, setSwitching] = useState(false);
@@ -90,6 +93,12 @@ export default function ProfileScreen() {
 
   const handleUpdateName = async () => {
     if (!newName.trim()) return;
+    
+    if (newName.length > MAX_NAME_LENGTH) {
+      Alert.alert("Error", `Name must be ${MAX_NAME_LENGTH} characters or less.`);
+      return;
+    }
+
     try {
       setUpdatingName(true);
       await updateName(newName.trim());
@@ -113,7 +122,7 @@ export default function ProfileScreen() {
 
   const displayName = user?.displayName || "User";
   const initial = displayName.charAt(0).toUpperCase();
-  const currentAvatar = user?.photoURL; // Get the emoji avatar
+  const currentAvatar = user?.photoURL;
 
   return (
     <ScrollView style={styles.container}>
@@ -125,7 +134,6 @@ export default function ProfileScreen() {
       <View style={styles.card}>
         <View style={{position: 'relative'}}>
           <View style={styles.avatarContainer}>
-            {/* Show Emoji if selected, else show Initial */}
             {currentAvatar ? (
               <Text style={{ fontSize: 32 }}>{currentAvatar}</Text>
             ) : (
@@ -133,7 +141,6 @@ export default function ProfileScreen() {
             )}
           </View>
           
-          {/* Edit Avatar Badge */}
           <TouchableOpacity 
             style={styles.editAvatarBadge}
             onPress={() => setIsAvatarModalVisible(true)}
@@ -237,12 +244,25 @@ export default function ProfileScreen() {
         </View>
       </Modal>
 
-      {/* 2. EDIT NAME MODAL */}
+      {/* 2. EDIT NAME MODAL (UPDATED) */}
       <Modal visible={isEditNameVisible} animationType="fade" transparent={true} onRequestClose={() => setIsEditNameVisible(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Change Name</Text>
-            <TextInput style={styles.input} placeholder="Enter your name" value={newName} onChangeText={setNewName} autoCapitalize="words" />
+            
+            <TextInput
+              style={styles.input}
+              placeholder="Enter your name"
+              value={newName}
+              onChangeText={setNewName}
+              autoCapitalize="words"
+              maxLength={MAX_NAME_LENGTH}
+            />
+            {/* Character Counter */}
+            <Text style={styles.charCount}>
+              {newName.length}/{MAX_NAME_LENGTH}
+            </Text>
+
             <View style={styles.modalButtons}>
               <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={() => setIsEditNameVisible(false)}>
                 <Text style={styles.buttonText}>Cancel</Text>
@@ -346,13 +366,23 @@ const styles = StyleSheet.create({
   modalTitle: { fontSize: 20, fontWeight: "bold", marginBottom: 15, textAlign: "center" },
   modalSubtitle: { fontSize: 14, color: "#666", marginBottom: 20, textAlign: "center" },
   input: { backgroundColor: "#f0f0f0", padding: 15, borderRadius: 10, marginBottom: 15, fontSize: 16 },
+  
+  // Char count style
+  charCount: {
+    textAlign: 'right',
+    color: '#888',
+    fontSize: 12,
+    marginTop: -10,
+    marginBottom: 20,
+    marginRight: 5
+  },
+
   modalButtons: { flexDirection: "row", justifyContent: "space-between" },
   button: { flex: 1, padding: 15, borderRadius: 10, alignItems: "center", marginHorizontal: 5 },
   cancelButton: { backgroundColor: "#ccc" },
   saveButton: { backgroundColor: "#6200ee" },
   buttonText: { color: "#fff", fontWeight: "bold", fontSize: 16 },
 
-  // Avatar Option Style
   avatarOption: {
     width: 60, height: 60, borderRadius: 30,
     backgroundColor: '#f0f0f0',

@@ -10,11 +10,12 @@ import { Ionicons } from "@expo/vector-icons";
 import { useChores } from "@/context/ChoreContext";
 import { useAuth } from "@/context/AuthContext";
 import { Timestamp } from "firebase/firestore";
+import { useHousehold } from "@/context/HouseholdContext";
 
 export default function LeaderboardScreen() {
   const { user } = useAuth();
   const { activities } = useChores();
-  const { chores } = useChores(); // might have to delete
+  const { memberProfiles } = useHousehold();
   const [timeFrame, setTimeFrame] = useState<"weekly" | "monthly">("weekly");
 
   // Calculate Leaderbooard Data
@@ -29,7 +30,7 @@ export default function LeaderboardScreen() {
       cutoffDate.setDate(now.getDate() - 30);
     }
 
-    // A map to store scores: { userId: { name, score } }
+    // A map to store scores
     const scores: Record<string, { name: string; score: number; avatar?: string }> = {};
 
     activities.forEach((activity) => {
@@ -37,7 +38,6 @@ export default function LeaderboardScreen() {
       if (!activity.completedAt) return;
 
       // Check if it happened within the time frame
-      // Firestore Timestamps need conversion
       const completedDate =
         activity.completedAt instanceof Timestamp
           ? activity.completedAt.toDate()
@@ -47,18 +47,20 @@ export default function LeaderboardScreen() {
       if (completedDate < cutoffDate) return;
 
       const userId = activity.userId;
-      const userName = activity.userName || "Unknown";
+      const liveProfile = memberProfiles[userId];
+      const displayName = liveProfile?.displayName || activity.userName || "Unknown";
+      const displayAvatar = liveProfile?.photoURL || activity.userAvatar;
 
       // If user isn't in the map yet, add them
       if (!scores[userId]) {
         scores[userId] = {
-          name: userName,
+          name: displayName,
           score: 0,
-          avatar: activity.userAvatar
+          avatar: displayAvatar
         };
-      } else {
-        // Update to latest avatar if found
-        if (activity.userAvatar) scores[userId].avatar = activity.userAvatar;
+      } else if (liveProfile) {
+        scores[userId].name = displayName;
+        scores[userId].avatar = displayAvatar;
       }
 
       // Add points
@@ -69,7 +71,7 @@ export default function LeaderboardScreen() {
     return Object.entries(scores)
       .map(([id, data]) => ({ id, ...data }))
       .sort((a, b) => b.score - a.score);
-  }, [activities, timeFrame]);
+  }, [activities, timeFrame, memberProfiles]);
 
   // Helper for Medals
   const getRankIcon = (index: number) => {
@@ -267,7 +269,7 @@ export default function LeaderboardScreen() {
                     </Text>
                   )}
                 </View>
-                
+
                 <View>
                   <Text
                     style={[
