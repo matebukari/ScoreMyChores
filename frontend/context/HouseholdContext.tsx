@@ -1,11 +1,11 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { 
-  doc, 
+import {
+  doc,
   onSnapshot,
   collection,
   query,
   where,
-  documentId
+  documentId,
 } from "firebase/firestore";
 import { db } from "@/config/firebase";
 import { useAuth } from "./AuthContext";
@@ -22,7 +22,7 @@ export type UserProfile = {
 type HouseholdContextType = {
   activeHousehold: Household | null;
   activeHouseholdId: string | null;
-  joinedHouseholds: string[]; // List of IDs
+  joinedHouseholds: string[];
   switchHousehold: (householdId: string) => Promise<void>;
   loading: boolean;
   memberProfiles: Record<string, UserProfile>;
@@ -33,7 +33,7 @@ const HouseholdContext = createContext<HouseholdContextType | undefined>(
 );
 
 export function HouseholdProvider({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth(); // Get logged in user
+  const { user } = useAuth();
   const [activeHousehold, setActiveHousehold] = useState<Household | null>(
     null,
   );
@@ -41,7 +41,9 @@ export function HouseholdProvider({ children }: { children: React.ReactNode }) {
     null,
   );
   const [joinedHouseholds, setJoinedHouseholds] = useState<string[]>([]);
-  const [memberProfiles, setMemberProfiles] = useState<Record<string, UserProfile>>({});
+  const [memberProfiles, setMemberProfiles] = useState<
+    Record<string, UserProfile>
+  >({});
   const [loading, setLoading] = useState(true);
 
   // Listen to the User Document to see what House they are looking at
@@ -112,7 +114,7 @@ export function HouseholdProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    if (!activeHousehold) {
+    if (!user || !activeHousehold) {
       setMemberProfiles({});
       return;
     }
@@ -120,23 +122,30 @@ export function HouseholdProvider({ children }: { children: React.ReactNode }) {
     const memberIds = Object.keys(activeHousehold.members || {});
     if (memberIds.length === 0) return;
 
-    // Firestore 'in' query supports up to 10 items. 
-    // If you have >10 members, you might need to split this, but for now this works.
+    // Firestore 'in' query supports up to 10 items.
     const q = query(
       collection(db, "users"),
-      where(documentId(), "in", memberIds)
+      where(documentId(), "in", memberIds),
     );
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const profiles: Record<string, UserProfile> = {};
-      snapshot.docs.forEach(doc => {
-        profiles[doc.id] = { id: doc.id, ...doc.data() };
-      });
-      setMemberProfiles(profiles);
-    });
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const profiles: Record<string, UserProfile> = {};
+        snapshot.docs.forEach((doc) => {
+          profiles[doc.id] = { id: doc.id, ...doc.data() };
+        });
+        setMemberProfiles(profiles);
+      },
+      (error) => {
+        if (error.code !== "permission-denied") {
+          console.error("Member profile fetch error:", error);
+        }
+      },
+    );
 
     return () => unsubscribe();
-  }, [activeHousehold]);
+  }, [activeHousehold, user]);
 
   return (
     <HouseholdContext.Provider

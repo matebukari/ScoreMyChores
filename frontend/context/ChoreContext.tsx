@@ -78,7 +78,7 @@ export function ChoreProvider({ children }: { children: React.ReactNode }) {
   }, [activeHouseholdId, activeHousehold])
 
   useEffect(() => {
-    if (!activeHouseholdId) {
+    if (!user || !activeHouseholdId) {
       setChores([]);
       setActivities([]);
       setLoading(false);
@@ -114,7 +114,7 @@ export function ChoreProvider({ children }: { children: React.ReactNode }) {
       unsubChores();
       unsubActivities();
     }
-  }, [activeHouseholdId]);
+  }, [activeHouseholdId, user]);
 
   const addChore = async (title: string, points: number) => {
     if (!activeHouseholdId || !user) throw new Error("No user/household");
