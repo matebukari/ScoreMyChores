@@ -30,7 +30,7 @@ export default function LeaderboardScreen() {
     }
 
     // A map to store scores: { userId: { name, score } }
-    const scores: Record<string, { name: string; score: number }> = {};
+    const scores: Record<string, { name: string; score: number; avatar?: string }> = {};
 
     activities.forEach((activity) => {
       // Only count completed chores
@@ -54,7 +54,11 @@ export default function LeaderboardScreen() {
         scores[userId] = {
           name: userName,
           score: 0,
+          avatar: activity.userAvatar
         };
+      } else {
+        // Update to latest avatar if found
+        if (activity.userAvatar) scores[userId].avatar = activity.userAvatar;
       }
 
       // Add points
@@ -134,10 +138,15 @@ export default function LeaderboardScreen() {
         {leaderboardData[1] && (
           <View style={[styles.podiumItem, { marginTop: 20 }]}>
             <View style={styles.avatarCircle}>
-              <Text style={styles.avatarInitial}>
-                {getInitial(leaderboardData[1].name)}
-              </Text>
+              {leaderboardData[1].avatar ? (
+                <Text style={{ fontSize: 20 }}>{leaderboardData[1].avatar}</Text>
+              ) : (
+                <Text style={styles.avatarInitial}>
+                  {getInitial(leaderboardData[1].name)}
+                </Text>
+              )}
             </View>
+
             <Text style={styles.podiumName}>{leaderboardData[1].name}</Text>
             <Text style={styles.podiumScore}>{leaderboardData[1].score}</Text>
             <View
@@ -167,10 +176,15 @@ export default function LeaderboardScreen() {
                 },
               ]}
             >
-              <Text style={[styles.avatarInitial, { color: "#fff" }]}>
-                {getInitial(leaderboardData[0].name)}
-              </Text>
+              {leaderboardData[0].avatar ? (
+                <Text style={{ fontSize: 22 }}>{leaderboardData[0].avatar}</Text>
+              ) : (
+                <Text style={[styles.avatarInitial, { color: "#fff" }]}>
+                  {getInitial(leaderboardData[0].name)}
+                </Text>
+              )}
             </View>
+
             <Text style={styles.podiumName} numberOfLines={1}>
               {leaderboardData[0].name}
             </Text>
@@ -189,10 +203,15 @@ export default function LeaderboardScreen() {
         {leaderboardData[2] && (
           <View style={[styles.podiumItem, { marginTop: 40 }]}>
             <View style={styles.avatarCircle}>
-              <Text style={styles.avatarInitial}>
-                {getInitial(leaderboardData[2].name)}
-              </Text>
+              {leaderboardData[2].avatar ? (
+                <Text style={{ fontSize: 20 }}>{leaderboardData[2].avatar}</Text>
+              ) : (
+                <Text style={styles.avatarInitial}>
+                  {getInitial(leaderboardData[2].name)}
+                </Text>
+              )}
             </View>
+
             <Text style={styles.podiumName} numberOfLines={1}>
               {leaderboardData[2].name}
             </Text>
@@ -234,15 +253,21 @@ export default function LeaderboardScreen() {
                   style={[
                     styles.smallAvatar,
                     {
-                      backgroundColor:
-                        item.id === user?.uid ? "#6200ee" : "#ccc",
+                      backgroundColor: item.avatar
+                        ? 'transparent'
+                        : item.id === user?.uid ? "#6200ee" : "#ccc",
                     },
                   ]}
                 >
-                  <Text style={{ color: "#fff", fontWeight: "bold" }}>
-                    {getInitial(item.name)}
-                  </Text>
+                  {item.avatar ? (
+                    <Text style={{ fontSize: 20 }}>{item.avatar}</Text>
+                  ) : (
+                    <Text style={{ color: "#fff", fontWeight: "bold" }}>
+                      {getInitial(item.name)}
+                    </Text>
+                  )}
                 </View>
+                
                 <View>
                   <Text
                     style={[

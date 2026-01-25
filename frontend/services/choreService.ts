@@ -26,12 +26,17 @@ export type Chore = {
   completedBy?: string | null;
   inProgressByName?: string | null;
   completedByName?: string | null;
+  inProgressByAvatar?: string | null;
+  completedByAvatar?: string | null;
+
+
 };
 
 // Helper for passing user details
 export type UserSnapshot = {
   uid: string;
   displayName: string | null;
+  photoURL: string | null;
 }
 
 export const choreService = {
@@ -55,8 +60,10 @@ export const choreService = {
       completedAt: null,
       inProgressBy: null,
       inProgressByName: null,
+      inProgressByAvatar: null,
       completedBy: null,
       completedByName: null,
+      completedByAvatar: null,
     });
   },
 
@@ -74,8 +81,10 @@ export const choreService = {
         completedAt: null,
         inProgressBy: null,
         inProgressByName: null,
+        inProgressByAvatar: null,
         completedBy: null,
         completedByName: null,
+        completedByAvatar: null,
       });
     });
 
@@ -99,9 +108,11 @@ export const choreService = {
 
       inProgressBy: status === 'in-progress' ? user.uid : null,
       inProgressByName: status === 'in-progress' ? user.displayName : null,
+      inProgressByAvatar: status === 'in-progress' ? user.photoURL : null,
 
       completedBy: status === 'completed' ? user.uid : null,
       completedByName: status === 'completed' ? user.displayName : null,
+      completedByAvatar: status === 'completed' ? user.photoURL : null,
     }
 
     const batch = writeBatch(db);
@@ -115,6 +126,7 @@ export const choreService = {
         householdId: choreDetails.householdId,
         userId: user.uid,
         userName: user.displayName,
+        userAvatar: user.photoURL,
         choreTitle: choreDetails.title,
         points: choreDetails.points,
         completedAt: serverTimestamp(),

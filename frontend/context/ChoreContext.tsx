@@ -17,6 +17,7 @@ export type Activity = {
   id: string;
   userId: string;
   userName: string;
+  userAvatar?: string;
   points: number;
   completedAt: Timestamp;
   householdId: string;
@@ -125,7 +126,7 @@ export function ChoreProvider({ children }: { children: React.ReactNode }) {
 
     // Create a Snapshot of the user's name
     const cleanName = user.displayName || user.email?.split('@')[0] || 'Member';
-    const userSnapshot: UserSnapshot = { uid: user.uid, displayName: cleanName };
+    const userSnapshot: UserSnapshot = { uid: user.uid, displayName: cleanName, photoURL: user.photoURL || null };
 
     // Find the chore object to get its details
     const targetChore = chores.find(c => c.id === choreId);

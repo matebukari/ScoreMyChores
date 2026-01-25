@@ -17,6 +17,7 @@ interface AuthContextType {
   register: (email: string, password: string) => Promise<UserCredential | undefined>,
   logout: () => Promise<void>,
   updateName: (name: string) => Promise<void>,
+  updateAvatar: (avatar: string) => Promise<void>;
   loading: boolean,
 };
 
@@ -76,10 +77,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }
 
+  // Update avatar
+  const updateAvatar = async (avatar: string) => {
+    if (auth.currentUser) {
+      await updateProfile(auth.currentUser, { photoURL: avatar });
+      setUser({ ...auth.currentUser });
+    }
+  }
+
   const logout = () => signOut(auth);
 
   return (
-    <AuthContext.Provider value={{ user, signin, register, logout, updateName, loading }}>
+    <AuthContext.Provider value={{ user, signin, register, logout, updateName, updateAvatar, loading }}>
       {children}
     </AuthContext.Provider>
   );

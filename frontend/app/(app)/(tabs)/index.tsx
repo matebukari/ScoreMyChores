@@ -19,7 +19,7 @@ import { Ionicons } from "@expo/vector-icons";
  */
 export default function HomeScreen() {
   const { user } = useAuth();
-  const { chores, activities, updateStatus, loading } = useChores();
+  const { chores, updateStatus, loading } = useChores();
 
   /**
    * Checks if a chore is "Locked" (unavailable to the current user).
@@ -57,9 +57,9 @@ export default function HomeScreen() {
   };
 
   // Calculates total points ONLY for the current logged-in user
-  const currentScore = activities
-    .filter((a) => a.userId === user?.uid)
-    .reduce((sum, activity) => sum + activity.points, 0);
+  const currentScore = chores
+    .filter((c) => c.completed && c.completedBy === user?.uid)
+    .reduce((sum, chore) => sum + chore.points, 0);
 
   // Filters out completed tasks and tasks locked by others to find "Available" work
   const availableChores = chores.filter((c) => {
@@ -84,9 +84,28 @@ export default function HomeScreen() {
   // Formatting helpers for avatars and names
   const getInitial = (name?: string | null) =>
     name ? name.charAt(0).toUpperCase() : "?";
+  
   const getDisplayName = (id?: string | null, name?: string | null) => {
     if (id === user?.uid) return "You";
     return name || "Member";
+  };
+
+  // NEW: Helper Component for Mini Avatars (Avatars are smaller on this screen)
+  const MiniAvatar = ({ name, avatar, color }: { name?: string | null, avatar?: string | null, color: string }) => {
+    if (avatar) {
+      return (
+        <View style={[styles.miniAvatar, { backgroundColor: 'transparent' }]}>
+          <Text style={{ fontSize: 14 }}>{avatar}</Text>
+        </View>
+      );
+    }
+    return (
+      <View style={[styles.miniAvatar, { backgroundColor: color }]}>
+        <Text style={styles.miniAvatarText}>
+          {getInitial(name)}
+        </Text>
+      </View>
+    );
   };
 
   if (loading) {
@@ -101,7 +120,7 @@ export default function HomeScreen() {
     <View style={styles.container}>
       {/* User Score & Streak */}
       <View style={styles.scoreCard}>
-        <Text style={styles.greeting}>Hey, {user?.email?.split("@")[0]}!</Text>
+        <Text style={styles.greeting}>Hey, {user?.displayName || user?.email?.split("@")[0]}!</Text>
         <Text style={styles.scoreValue}>{currentScore}</Text>
 
         <View style={styles.streakRow}>
@@ -164,13 +183,12 @@ export default function HomeScreen() {
               {/* Badge appears if active */}
               {focusTask.inProgress && (
                 <View style={styles.miniBadge}>
-                  <View
-                    style={[styles.miniAvatar, { backgroundColor: "#4A90E2" }]}
-                  >
-                    <Text style={styles.miniAvatarText}>
-                      {getInitial(focusTask.inProgressByName)}
-                    </Text>
-                  </View>
+                  {/* UPDATED: Use MiniAvatar */}
+                  <MiniAvatar 
+                    name={focusTask.inProgressByName} 
+                    avatar={focusTask.inProgressByAvatar} 
+                    color="#4A90E2" 
+                  />
                   <Text style={[styles.miniBadgeText, { color: "#4A90E2" }]}>
                     Started by{" "}
                     {getDisplayName(
@@ -250,16 +268,12 @@ export default function HomeScreen() {
                 {/* Badge: In Progress */}
                 {item.inProgress && (
                   <View style={styles.miniBadge}>
-                    <View
-                      style={[
-                        styles.miniAvatar,
-                        { backgroundColor: "#4A90E2" },
-                      ]}
-                    >
-                      <Text style={styles.miniAvatarText}>
-                        {getInitial(item.inProgressByName)}
-                      </Text>
-                    </View>
+                    {/* UPDATED: Use MiniAvatar */}
+                    <MiniAvatar 
+                      name={item.inProgressByName} 
+                      avatar={item.inProgressByAvatar} 
+                      color="#4A90E2" 
+                    />
                     <Text style={[styles.miniBadgeText, { color: "#4A90E2" }]}>
                       {locked
                         ? `${item.inProgressByName} is working`
@@ -271,16 +285,12 @@ export default function HomeScreen() {
                 {/* Badge: Completed */}
                 {item.completed && (
                   <View style={styles.miniBadge}>
-                    <View
-                      style={[
-                        styles.miniAvatar,
-                        { backgroundColor: "#4CAF50" },
-                      ]}
-                    >
-                      <Text style={styles.miniAvatarText}>
-                        {getInitial(item.completedByName)}
-                      </Text>
-                    </View>
+                    {/* UPDATED: Use MiniAvatar */}
+                    <MiniAvatar 
+                      name={item.completedByName} 
+                      avatar={item.completedByAvatar} 
+                      color="#4CAF50" 
+                    />
                     <Text style={[styles.miniBadgeText, { color: "#4CAF50" }]}>
                       Done by{" "}
                       {getDisplayName(item.completedBy, item.completedByName)}
