@@ -103,12 +103,16 @@ export function ChoreProvider({ children }: { children: React.ReactNode }) {
 
     const unsubChores = onSnapshot(qChores, (snapshot) => {
       setChores(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Chore[]);
+    }, (error) => {
+      if (error.code !== 'permission-denied') console.error("Chores fetch error:", error);
     });
 
     const unsubActivities = onSnapshot(qActivities, (snapshot) => {
       setActivities(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Activity[]);
       setLoading(false);
-    })
+    }, (error) => {
+      if (error.code !== 'permission-denied') console.error("Activities fetch error:", error);
+    });
 
     return () => {
       unsubChores();
