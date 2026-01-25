@@ -14,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 
 export default function Register() {
+  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -23,7 +24,6 @@ export default function Register() {
   const router = useRouter();
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   
-  // Listen for keyboard to adjust padding
   useEffect(() => {
     const showSub = Keyboard.addListener("keyboardDidShow", () => setKeyboardVisible(true));
     const hideSub = Keyboard.addListener("keyboardDidHide", () => setKeyboardVisible(false));
@@ -34,8 +34,7 @@ export default function Register() {
   }, []);
 
   const handleRegister = async () => {
-
-    if (!email || !password || !confirmPassword) {
+    if (!username || !email || !password || !confirmPassword) {
       alert("Please fill in all fields.");
       return;
     }
@@ -46,13 +45,13 @@ export default function Register() {
     }
 
     if (password.length < 6) {
-      alert("Password must be at least 6 charachters.");
+      alert("Password must be at least 6 characters.");
       return;
     }
 
     try {
       setIsSubmitting(true);
-      await register(email, password);
+      await register(email, password, username);
     } catch (error: any) {
       console.error(error);
     } finally {
@@ -72,17 +71,28 @@ export default function Register() {
             className="flex-1 px-8 pt-12"
             style={{ paddingBottom: keyboardVisible ? 240 : 40 }}
           >
-            {/* Spacer for centering content */}
             <View className="flex-1" />
 
-            {/* Header */}
             <View className="mb-8">
               <Text className="text-4xl font-bold text-gray-900">Create Account</Text>
               <Text className="text-gray-500 mt-2">Join us to start tracking your tasks</Text>
             </View>
 
             <View>
-              {/* Set Email Field */}
+              {/* USERNAME FIELD */}
+              <View className="mb-4">
+                <Text className="text-gray-700 font-medium mb-2">Username</Text>
+                <TextInput
+                  className="w-full h-12 border border-gray-200 rounded-xl px-4 bg-gray-50 text-black"
+                  placeholder="e.g. ChoreMaster99"
+                  placeholderTextColor="#9CA3AF"
+                  value={username}
+                  onChangeText={setUsername}
+                  autoCapitalize="words"
+                />
+              </View>
+
+              {/* Email Field */}
               <View className="mb-4">
                 <Text className="text-gray-700 font-medium mb-2">Email Address</Text>
                 <TextInput
@@ -96,7 +106,7 @@ export default function Register() {
                 />
               </View>
 
-              {/* Set Password Field */}
+              {/* Password Field */}
               <View className="mb-4">
                 <Text className="text-gray-700 font-medium mb-2">Password</Text>
                 <TextInput
@@ -139,7 +149,6 @@ export default function Register() {
               </TouchableOpacity>
             </View>
 
-            {/* Footer */}
             <View className="flex-row justify-center mt-6">
               <Text className="text-gray-600">Already have an account? </Text>
               <TouchableOpacity onPress={() => router.push('/(auth)/signin')}>
@@ -147,7 +156,6 @@ export default function Register() {
               </TouchableOpacity>
             </View>
             
-            {/* Bottom Spacer */}
             <View className="flex-1" />
 
           </View>

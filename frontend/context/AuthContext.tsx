@@ -15,7 +15,7 @@ import { useRouter, useSegments } from "expo-router";
 interface AuthContextType {
   user: User | null,
   signin: (email: string, password: string) => Promise<void>
-  register: (email: string, password: string) => Promise<UserCredential | undefined>,
+  register: (email: string, password: string, userName: string) => Promise<UserCredential | undefined>,
   logout: () => Promise<void>,
   updateName: (name: string) => Promise<void>,
   updateAvatar: (avatar: string) => Promise<void>;
@@ -62,9 +62,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const register = async (email: string, password: string) => {
+  const register = async (email: string, password: string, userName: string) => {
     try {
-      return await createUserWithEmailAndPassword(auth, email, password);
+      // 1. Create Account
+      const credential = await createUserWithEmailAndPassword(auth, email, password);
+      const newUser = credential.user;
+      // 2. Update Auth Profile with the CUSTOM username
+      await updateProfile(newUser, { displayName: userName });
+      // 3. Create Firestore Document
+      await setDoc(doc(db, "users", newUser.uid), {
+        displayName: userName,
+        email: email,
+        photoURL: null,
+      });
+      // 4. Force Local State Update
+      setUser({ ...newUser, displayName: userName });
+
+      return credential;
     } catch (error: any) {
       alert(error.message);
     }
