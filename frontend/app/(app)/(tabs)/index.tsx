@@ -234,6 +234,7 @@ export default function HomeScreen() {
       <FlatList
         data={chores}
         keyExtractor={(item) => item.id}
+        showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           <Text style={{ textAlign: "center", marginTop: 20, color: "#999" }}>
             No chores yet. Add one to get started!

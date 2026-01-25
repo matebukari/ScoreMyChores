@@ -31,7 +31,10 @@ export default function LeaderboardScreen() {
     }
 
     // A map to store scores
-    const scores: Record<string, { name: string; score: number; avatar?: string }> = {};
+    const scores: Record<
+      string,
+      { name: string; score: number; avatar?: string }
+    > = {};
 
     activities.forEach((activity) => {
       // Only count completed chores
@@ -41,14 +44,13 @@ export default function LeaderboardScreen() {
       const completedDate =
         activity.completedAt instanceof Timestamp
           ? activity.completedAt.toDate()
-          : new Date(activity.completedAt)
-      ;
-
+          : new Date(activity.completedAt);
       if (completedDate < cutoffDate) return;
 
       const userId = activity.userId;
       const liveProfile = memberProfiles[userId];
-      const displayName = liveProfile?.displayName || activity.userName || "Unknown";
+      const displayName =
+        liveProfile?.displayName || activity.userName || "Unknown";
       const displayAvatar = liveProfile?.photoURL || activity.userAvatar;
 
       // If user isn't in the map yet, add them
@@ -56,7 +58,7 @@ export default function LeaderboardScreen() {
         scores[userId] = {
           name: displayName,
           score: 0,
-          avatar: displayAvatar
+          avatar: displayAvatar,
         };
       } else if (liveProfile) {
         scores[userId].name = displayName;
@@ -75,16 +77,7 @@ export default function LeaderboardScreen() {
 
   // Helper for Medals
   const getRankIcon = (index: number) => {
-    switch (index) {
-      case 0:
-        return <Ionicons name="trophy" size={24} color="#FFD700" />;
-      case 1:
-        return <Ionicons name="medal" size={24} color="#C0C0C0" />;
-      case 2:
-        return <Ionicons name="medal" size={24} color="#CD7F32" />;
-      default:
-        return <Text style={styles.rankText}>{index + 1}</Text>;
-    }
+    return <Text style={styles.rankText}>{index + 4}</Text>;
   };
 
   const getInitial = (name: string) =>
@@ -141,7 +134,9 @@ export default function LeaderboardScreen() {
           <View style={[styles.podiumItem]}>
             <View style={styles.avatarCircle}>
               {leaderboardData[1].avatar ? (
-                <Text style={{ fontSize: 20 }}>{leaderboardData[1].avatar}</Text>
+                <Text style={{ fontSize: 20 }}>
+                  {leaderboardData[1].avatar}
+                </Text>
               ) : (
                 <Text style={styles.avatarInitial}>
                   {getInitial(leaderboardData[1].name)}
@@ -179,7 +174,9 @@ export default function LeaderboardScreen() {
               ]}
             >
               {leaderboardData[0].avatar ? (
-                <Text style={{ fontSize: 22 }}>{leaderboardData[0].avatar}</Text>
+                <Text style={{ fontSize: 22 }}>
+                  {leaderboardData[0].avatar}
+                </Text>
               ) : (
                 <Text style={[styles.avatarInitial, { color: "#fff" }]}>
                   {getInitial(leaderboardData[0].name)}
@@ -206,7 +203,9 @@ export default function LeaderboardScreen() {
           <View style={[styles.podiumItem]}>
             <View style={styles.avatarCircle}>
               {leaderboardData[2].avatar ? (
-                <Text style={{ fontSize: 20 }}>{leaderboardData[2].avatar}</Text>
+                <Text style={{ fontSize: 20 }}>
+                  {leaderboardData[2].avatar}
+                </Text>
               ) : (
                 <Text style={styles.avatarInitial}>
                   {getInitial(leaderboardData[2].name)}
@@ -232,14 +231,20 @@ export default function LeaderboardScreen() {
       {/* Rank List */}
       <View style={styles.listContainer}>
         <FlatList
-          data={leaderboardData}
+          data={leaderboardData.slice(3)}
+          showsVerticalScrollIndicator={false}
           keyExtractor={(item) => item.id}
           contentContainerStyle={{ paddingBottom: 20 }}
           ListEmptyComponent={
-            <Text style={{ textAlign: "center", color: "#888", marginTop: 20 }}>
-              No chores completed{" "}
-              {timeFrame === "weekly" ? "this week" : "this month"}.
-            </Text>
+            leaderboardData.length <= 3 ? (
+              <Text
+                style={{ textAlign: "center", color: "#888", marginTop: 20 }}
+              >
+                {leaderboardData.length === 0
+                  ? "No chores completed yet."
+                  : "No other members ranked yet."}
+              </Text>
+            ) : null
           }
           renderItem={({ item, index }) => (
             <View
@@ -256,8 +261,10 @@ export default function LeaderboardScreen() {
                     styles.smallAvatar,
                     {
                       backgroundColor: item.avatar
-                        ? 'transparent'
-                        : item.id === user?.uid ? "#6200ee" : "#ccc",
+                        ? "transparent"
+                        : item.id === user?.uid
+                          ? "#6200ee"
+                          : "#ccc",
                     },
                   ]}
                 >

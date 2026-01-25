@@ -241,6 +241,7 @@ export default function ChoresScreen() {
         // Chores List
         <FlatList
           data={chores}
+          showsVerticalScrollIndicator={false}
           keyExtractor={(item) => item.id}
           ListEmptyComponent={
             <Text style={{ textAlign: "center", color: "#888", marginTop: 20 }}>
