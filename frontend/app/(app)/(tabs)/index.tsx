@@ -12,6 +12,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useChores } from "@/context/ChoreContext";
 import { useHousehold } from "@/context/HouseholdContext";
 import { Ionicons } from "@expo/vector-icons";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 /**
  * HomeScreen Component
@@ -22,6 +23,8 @@ export default function HomeScreen() {
   const { user } = useAuth();
   const { chores, updateStatus, loading } = useChores();
   const { memberProfiles } = useHousehold();
+
+  const insets = useSafeAreaInsets();
 
   const getLiveProfile = (
     userId: string | null | undefined, 
@@ -115,7 +118,13 @@ export default function HomeScreen() {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container,
+      { 
+        paddingTop: insets.top,
+        paddingLeft: insets.left + 20,
+        paddingRight: insets.right + 20 
+      }
+    ]}>
       {/* User Score & Streak */}
       <View style={styles.scoreCard}>
         <Text style={styles.greeting}>Hey, {user?.displayName || user?.email?.split("@")[0]}!</Text>
@@ -364,7 +373,7 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f8f9fa", padding: 20 },
+  container: { flex: 1, backgroundColor: "#f8f9fa" },
   scoreCard: {
     backgroundColor: "#6200ee",
     padding: 30,

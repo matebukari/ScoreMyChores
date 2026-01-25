@@ -1,49 +1,38 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  View, 
-  Text, 
-  TextInput, 
-  TouchableOpacity, 
-  ScrollView, 
-  TouchableWithoutFeedback, 
-  Keyboard,
-  ActivityIndicator
-} from 'react-native';
-import { useAuth } from '@/context/AuthContext';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+} from "react-native";
+import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function Register() {
-  const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-
   const { register } = useAuth();
   const router = useRouter();
-  const [keyboardVisible, setKeyboardVisible] = useState(false);
-  
-  useEffect(() => {
-    const showSub = Keyboard.addListener("keyboardDidShow", () => setKeyboardVisible(true));
-    const hideSub = Keyboard.addListener("keyboardDidHide", () => setKeyboardVisible(false));
-    return () => {
-      showSub.remove();
-      hideSub.remove();
-    };
-  }, []);
+  const insets = useSafeAreaInsets();
 
   const handleRegister = async () => {
     if (!username || !email || !password || !confirmPassword) {
       alert("Please fill in all fields.");
       return;
     }
-
     if (password !== confirmPassword) {
       alert("Passwords do not match.");
       return;
     }
-
     if (password.length < 6) {
       alert("Password must be at least 6 characters.");
       return;
@@ -53,114 +42,194 @@ export default function Register() {
       setIsSubmitting(true);
       await register(email, password, username);
     } catch (error: any) {
-      console.error(error);
+      console.log(error);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
-      <ScrollView 
-        contentContainerStyle={{ flexGrow: 1 }} 
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
+    // 3. Apply Dynamic Padding
+    <View 
+      style={[
+        styles.container, 
+        { 
+          paddingTop: insets.top,
+          paddingBottom: insets.bottom,
+          paddingLeft: insets.left,
+          paddingRight: insets.right
+        }
+      ]}
+    >
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={{ flex: 1 }}
       >
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <View 
-            className="flex-1 px-8 pt-12"
-            style={{ paddingBottom: keyboardVisible ? 240 : 40 }}
-          >
-            <View className="flex-1" />
-
-            <View className="mb-8">
-              <Text className="text-4xl font-bold text-gray-900">Create Account</Text>
-              <Text className="text-gray-500 mt-2">Join us to start tracking your tasks</Text>
-            </View>
-
-            <View>
-              {/* USERNAME FIELD */}
-              <View className="mb-4">
-                <Text className="text-gray-700 font-medium mb-2">Username</Text>
-                <TextInput
-                  className="w-full h-12 border border-gray-200 rounded-xl px-4 bg-gray-50 text-black"
-                  placeholder="e.g. ChoreMaster99"
-                  placeholderTextColor="#9CA3AF"
-                  value={username}
-                  onChangeText={setUsername}
-                  autoCapitalize="words"
-                />
-              </View>
-
-              {/* Email Field */}
-              <View className="mb-4">
-                <Text className="text-gray-700 font-medium mb-2">Email Address</Text>
-                <TextInput
-                  className="w-full h-12 border border-gray-200 rounded-xl px-4 bg-gray-50 text-black"
-                  placeholder="newuser@example.com"
-                  placeholderTextColor="#9CA3AF"
-                  value={email}
-                  onChangeText={setEmail}
-                  autoCapitalize="none"
-                  keyboardType="email-address"
-                />
-              </View>
-
-              {/* Password Field */}
-              <View className="mb-4">
-                <Text className="text-gray-700 font-medium mb-2">Password</Text>
-                <TextInput
-                  className="w-full h-12 border border-gray-200 rounded-xl px-4 bg-gray-50"
-                  placeholder="Minimum 6 characters"
-                  placeholderTextColor="#9CA3AF"
-                  secureTextEntry
-                  value={password}
-                  onChangeText={setPassword}
-                />
-              </View>
-
-              {/* Confirm Password Field */}
-              <View className="mb-4">
-                <Text className="text-gray-700 font-medium mb-2">Confirm Password</Text>
-                <TextInput
-                  className="w-full h-12 border border-gray-200 rounded-xl px-4 bg-gray-50 text-black"
-                  placeholder="Re-enter password"
-                  placeholderTextColor="#9CA3AF"
-                  secureTextEntry
-                  value={confirmPassword}
-                  onChangeText={setConfirmPassword}
-                />
-              </View>
-
-              {/* Create Account Button */}
-              <TouchableOpacity 
-                onPress={handleRegister}
-                disabled={isSubmitting}
-                activeOpacity={0.8}
-                className={`w-full h-14 rounded-xl items-center justify-center mt-4 shadow-sm ${
-                  isSubmitting ? "bg-gray-400" : "bg-light-100"
-                }`}
-              >
-                {isSubmitting ? (
-                  <ActivityIndicator color="white" />
-                ) : (
-                  <Text className="text-white font-bold text-lg">Create Account</Text>
-                )}
-              </TouchableOpacity>
-            </View>
-
-            <View className="flex-row justify-center mt-6">
-              <Text className="text-gray-600">Already have an account? </Text>
-              <TouchableOpacity onPress={() => router.push('/(auth)/signin')}>
-                <Text className="text-light-100 font-bold">Sign In</Text>
-              </TouchableOpacity>
-            </View>
-            
-            <View className="flex-1" />
-
+        <ScrollView 
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.headerContainer}>
+            <Text style={styles.title}>Create Account</Text>
+            <Text style={styles.subtitle}>Join us to start tracking your tasks</Text>
           </View>
-        </TouchableWithoutFeedback>
-      </ScrollView>
-    </SafeAreaView>
+
+          <View style={styles.formContainer}>
+            
+            {/* Username */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Username</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="e.g. ChoreMaster99"
+                placeholderTextColor="#9CA3AF"
+                value={username}
+                onChangeText={setUsername}
+                autoCapitalize="words"
+              />
+            </View>
+
+            {/* Email */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Email Address</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="you@example.com"
+                placeholderTextColor="#9CA3AF"
+                value={email}
+                onChangeText={setEmail}
+                autoCapitalize="none"
+                keyboardType="email-address"
+              />
+            </View>
+
+            {/* Password */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Password</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Minimum 6 characters"
+                placeholderTextColor="#9CA3AF"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+              />
+            </View>
+
+            {/* Confirm Password */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Confirm Password</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Re-enter password"
+                placeholderTextColor="#9CA3AF"
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                secureTextEntry
+              />
+            </View>
+
+            <TouchableOpacity
+              style={styles.button}
+              onPress={handleRegister}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.buttonText}>Create Account</Text>
+              )}
+            </TouchableOpacity>
+
+            <View style={styles.footer}>
+              <Text style={styles.footerText}>Already have an account? </Text>
+              <TouchableOpacity onPress={() => router.push("/(auth)/signin")}>
+                <Text style={styles.linkText}>Sign In</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#fff",
+  },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: "center",
+    paddingHorizontal: 24,
+    paddingBottom: 20,
+  },
+  headerContainer: {
+    marginBottom: 32,
+    marginTop: 20,
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: "bold",
+    color: "#1F2937",
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: "#6B7280",
+  },
+  formContainer: {
+    width: "100%",
+  },
+  inputGroup: {
+    marginBottom: 16,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#374151",
+    marginBottom: 8,
+  },
+  input: {
+    backgroundColor: "#F9FAFB",
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 16,
+    color: "#1F2937",
+  },
+  button: {
+    backgroundColor: "#6200ee",
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: "center",
+    marginTop: 10,
+    shadowColor: "#6200ee",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  buttonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  footer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    marginTop: 24,
+  },
+  footerText: {
+    color: "#6B7280",
+    fontSize: 14,
+  },
+  linkText: {
+    color: "#6200ee",
+    fontSize: 14,
+    fontWeight: "bold",
+  },
+});

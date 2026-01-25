@@ -14,6 +14,7 @@ import { useAuth } from "@/context/AuthContext";
 import { householdService } from "@/services/householdService";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function HouseholdSetup() {
   const { user } = useAuth();
@@ -22,6 +23,8 @@ export default function HouseholdSetup() {
   // Form state
   const [houseName, setHouseName] = useState("");
   const [inviteCode, setInviteCode] = useState("");
+
+  const insets = useSafeAreaInsets();
 
   const handleCreate = async () => {
     if (!houseName.trim()) {
@@ -62,7 +65,14 @@ export default function HouseholdSetup() {
   return(
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={styles.container}
+      style={[styles.container,
+        {
+          paddingTop: insets.top + 24,
+          paddingBottom: insets.bottom + 24,
+          paddingLeft: insets.left + 24,
+          paddingRight: insets.right + 24,
+        }
+      ]}
     >
       <View style={styles.header}>
         <Ionicons name="home" size={60} color="#4A90E2" />

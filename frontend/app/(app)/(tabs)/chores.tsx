@@ -15,6 +15,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useHousehold } from "@/context/HouseholdContext";
 import { useChores } from "@/context/ChoreContext";
 import { choreService } from "@/services/choreService";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function ChoresScreen() {
   const { user } = useAuth();
@@ -25,6 +26,8 @@ export default function ChoresScreen() {
   const [newChoreTitle, setNewChoreTitle] = useState("");
   const [newChorePoints, setNewChorePoints] = useState("");
   const [isAdding, setIsAdding] = useState(false);
+
+  const insets = useSafeAreaInsets();
 
   // Define Admin Permission
   const isAdmin = activeHousehold?.members?.[user?.uid || ""] == "admin";
@@ -193,7 +196,13 @@ export default function ChoresScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container,
+      { 
+        paddingTop: insets.top,
+        paddingLeft: insets.left + 20,
+        paddingRight: insets.right + 20 
+      }
+    ]}>
       <View style={styles.header}>
         <Text style={styles.title}>Manage Chores</Text>
 
@@ -342,7 +351,7 @@ export default function ChoresScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f8f9fa", padding: 20 },
+  container: { flex: 1, backgroundColor: "#f8f9fa" },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",

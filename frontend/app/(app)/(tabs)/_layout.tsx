@@ -1,25 +1,36 @@
 import React from 'react';
-import { Text, View } from 'react-native';
+import { Text, View, Platform } from 'react-native';
 import { Tabs } from 'expo-router';
 import { Icons } from '@/constants/icons';
 
 const TabIcon = ({ focused, icon: Icon , title }: any) => {
+  // Use your primary purple for active, gray for inactive
+  const activeColor = "#6200ee"; 
+  const inactiveColor = "#9CA3AF";
 
   if (focused) {
     return(
-      <View className="items-center justify-center w-24">
-        <Icon width={24} height={24} color="#63B995"/>
-        <Text className="text-xs text-light-100 font-semibold text-center"
-        >{title}</Text>
+      <View className="items-center justify-center w-24 mt-2">
+        <Icon width={24} height={24} color={activeColor}/>
+        <Text 
+          className="text-xs font-semibold text-center mt-1" 
+          style={{ color: activeColor }}
+        >
+          {title}
+        </Text>
       </View>
     )
   }
 
   return(
-    <View className="items-center justify-center w-24">
-      <Icon width={24} height={24} color="#9ca3af"/>
-      <Text className="text-xs text-gray-400 font-normal text-center"
-      >{title}</Text>
+    <View className="items-center justify-center w-24 mt-2">
+      <Icon width={24} height={24} color={inactiveColor}/>
+      <Text 
+        className="text-xs font-normal text-center mt-1" 
+        style={{ color: inactiveColor }}
+      >
+        {title}
+      </Text>
     </View>
   )
 }
@@ -30,23 +41,18 @@ const _layout = () => {
       screenOptions={{
         tabBarShowLabel: false,
         tabBarItemStyle: {
-          width: "100%",
-          height: "100%",
           justifyContent: "center",
           alignItems: "center",
+          height: "100%", 
         },
         tabBarStyle: {
-          backgroundColor: "#151312",
-          borderRadius: 25,
-          marginHorizontal: 10,
-          marginBottom: 40,
-          paddingTop: 8,
-          paddingBottom: 5,
-          height: 55,
-          position: "absolute",
-          overflow: "hidden",
-          borderWidth: 1,
-          borderColor: "#151312",
+          backgroundColor: "#FFFFFF", 
+          borderTopWidth: 1,
+          borderTopColor: "#F3F4F6",
+          height: Platform.OS === 'ios' ? 100 : 90,
+          paddingTop: 15,
+          paddingBottom: Platform.OS === 'ios' ? 35 : 30,
+          elevation: 0,
         },
       }}
     >
@@ -56,11 +62,7 @@ const _layout = () => {
           title: 'Home',  
           headerShown: false,
           tabBarIcon: ({ focused }) => (
-            <TabIcon 
-              focused={focused} 
-              icon={Icons.Home} 
-              title="Home"
-            />
+            <TabIcon focused={focused} icon={Icons.Home} title="Home"/>
           )
         }}
       />
@@ -70,11 +72,7 @@ const _layout = () => {
           title: 'Chores',  
           headerShown: false,
           tabBarIcon: ({ focused }) => (
-            <TabIcon 
-              focused={focused} 
-              icon={Icons.Chores} 
-              title="Chores"
-            />
+            <TabIcon focused={focused} icon={Icons.Chores} title="Chores"/>
           )
         }}
       />
@@ -84,11 +82,7 @@ const _layout = () => {
           title: 'Leaderboard',  
           headerShown: false,
           tabBarIcon: ({ focused }) => (
-            <TabIcon 
-              focused={focused} 
-              icon={Icons.Leaderboard} 
-              title="Leaderboard"
-            />
+            <TabIcon focused={focused} icon={Icons.Leaderboard} title="Leaderboard"/>
           )
         }}
       />
@@ -98,11 +92,7 @@ const _layout = () => {
           title: 'Profile',  
           headerShown: false,
           tabBarIcon: ({ focused }) => (
-            <TabIcon 
-              focused={focused} 
-              icon={Icons.Profile} 
-              title="Profile"
-            />
+            <TabIcon focused={focused} icon={Icons.Profile} title="Profile"/>
           )
         }}
       />
@@ -110,4 +100,4 @@ const _layout = () => {
   )
 }
 
-export default _layout
+export default _layout;

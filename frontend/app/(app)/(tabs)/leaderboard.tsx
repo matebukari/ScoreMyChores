@@ -11,12 +11,15 @@ import { useChores } from "@/context/ChoreContext";
 import { useAuth } from "@/context/AuthContext";
 import { Timestamp } from "firebase/firestore";
 import { useHousehold } from "@/context/HouseholdContext";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function LeaderboardScreen() {
   const { user } = useAuth();
   const { activities } = useChores();
   const { memberProfiles } = useHousehold();
   const [timeFrame, setTimeFrame] = useState<"weekly" | "monthly">("weekly");
+
+  const insets = useSafeAreaInsets();
 
   // Calculate Leaderbooard Data
   const leaderboardData = useMemo(() => {
@@ -84,7 +87,13 @@ export default function LeaderboardScreen() {
     name ? name.charAt(0).toUpperCase() : "?";
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container,
+      { 
+        paddingTop: insets.top,
+        paddingLeft: insets.left + 20,
+        paddingRight: insets.right + 20 
+      }
+    ]}>
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.title}>Leaderboard</Text>
@@ -234,7 +243,6 @@ export default function LeaderboardScreen() {
           data={leaderboardData.slice(3)}
           showsVerticalScrollIndicator={false}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={{ paddingBottom: 20 }}
           ListEmptyComponent={
             leaderboardData.length <= 3 ? (
               <Text
@@ -299,7 +307,7 @@ export default function LeaderboardScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f8f9fa" },
+  container: { flex: 1, backgroundColor: "#f8f9fa", paddingHorizontal: 20 },
   header: { padding: 20, paddingTop: 60, backgroundColor: "#fff" },
   title: { fontSize: 28, fontWeight: "bold", color: "#333" },
 

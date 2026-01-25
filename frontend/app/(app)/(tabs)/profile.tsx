@@ -17,6 +17,7 @@ import { useHousehold } from "@/context/HouseholdContext";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { householdService } from "@/services/householdService";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 // List of fun avatars to pick from
 const AVATAR_OPTIONS = [
@@ -44,6 +45,8 @@ export default function ProfileScreen() {
 
   // Edit Avatar State
   const [isAvatarModalVisible, setIsAvatarModalVisible] = useState(false);
+
+  const insets = useSafeAreaInsets();
 
   const handleSignOut = async () => {
     Alert.alert("Sign Out", "Are you sure?", [
@@ -125,7 +128,13 @@ export default function ProfileScreen() {
   const currentAvatar = user?.photoURL;
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={[styles.container,
+      { 
+        paddingTop: insets.top,
+        paddingLeft: insets.left + 20,
+        paddingRight: insets.right + 20 
+      }
+    ]}>
       <View style={styles.header}>
         <Text style={styles.title}>Profile</Text>
       </View>
@@ -306,7 +315,7 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f8f9fa", padding: 20 },
+  container: { flex: 1, backgroundColor: "#f8f9fa", paddingHorizontal: 20 },
   header: { marginTop: 40, marginBottom: 20 },
   title: { fontSize: 28, fontWeight: "bold", color: "#333" },
 
