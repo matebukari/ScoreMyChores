@@ -138,7 +138,7 @@ export default function LeaderboardScreen() {
       <View style={styles.podiumContainer}>
         {/* Rank 2 (Left) */}
         {leaderboardData[1] && (
-          <View style={[styles.podiumItem, { marginTop: 20 }]}>
+          <View style={[styles.podiumItem]}>
             <View style={styles.avatarCircle}>
               {leaderboardData[1].avatar ? (
                 <Text style={{ fontSize: 20 }}>{leaderboardData[1].avatar}</Text>
@@ -152,10 +152,10 @@ export default function LeaderboardScreen() {
             <Text style={styles.podiumName}>{leaderboardData[1].name}</Text>
             <Text style={styles.podiumScore}>{leaderboardData[1].score}</Text>
             <View
-              style={[styles.bar, { height: 60, backgroundColor: "#C0C0C0" }]}
+              style={[styles.bar, { height: 70, backgroundColor: "#C0C0C0" }]}
             />
             {/* Silver Medal Icon */}
-            <View style={{ marginTop: 5 }}>
+            <View style={styles.medalContainer}>
               <Ionicons name="medal" size={20} color="#C0C0C0" />
             </View>
           </View>
@@ -195,7 +195,7 @@ export default function LeaderboardScreen() {
               style={[styles.bar, { height: 100, backgroundColor: "#FFD700" }]}
             />
             {/* Gold Medal Icon */}
-            <View style={{ marginTop: 5 }}>
+            <View style={styles.medalContainer}>
               <Ionicons name="medal" size={24} color="#FFD700" />
             </View>
           </View>
@@ -203,7 +203,7 @@ export default function LeaderboardScreen() {
 
         {/* Rank 3 (Right) */}
         {leaderboardData[2] && (
-          <View style={[styles.podiumItem, { marginTop: 40 }]}>
+          <View style={[styles.podiumItem]}>
             <View style={styles.avatarCircle}>
               {leaderboardData[2].avatar ? (
                 <Text style={{ fontSize: 20 }}>{leaderboardData[2].avatar}</Text>
@@ -219,10 +219,10 @@ export default function LeaderboardScreen() {
             </Text>
             <Text style={styles.podiumScore}>{leaderboardData[2].score}</Text>
             <View
-              style={[styles.bar, { height: 40, backgroundColor: "#CD7F32" }]}
+              style={[styles.bar, { height: 50, backgroundColor: "#CD7F32" }]}
             />
             {/* Bronze Medal Icon */}
-            <View style={{ marginTop: 5 }}>
+            <View style={styles.medalContainer}>
               <Ionicons name="medal" size={20} color="#CD7F32" />
             </View>
           </View>
@@ -317,10 +317,18 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "flex-end",
-    height: 200,
+    height: 240,
     marginBottom: 20,
+    marginTop: 20,
   },
-  podiumItem: { alignItems: "center", width: 80 },
+  podiumItem: { alignItems: "center", width: 90 },
+  medalContainer: {
+    height: 30,
+    width: 30,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 5,
+  },
   bar: {
     width: "100%",
     borderTopLeftRadius: 8,
