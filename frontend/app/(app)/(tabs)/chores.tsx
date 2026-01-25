@@ -186,7 +186,7 @@ export default function ChoresScreen() {
 
       return (
         <View style={[styles.badge, { backgroundColor: "#F3E5F5", borderColor: "#BA68C8" }]}>
-          <Text style={{fontSize: 16, marginRight: 4}}>{completer.avatar || "✅"}</Text>
+          <Avatar name={completer.name} avatar={completer.avatar} color="#7B1FA2"/>
           <Text style={[styles.badgeText, { color: "#7B1FA2" }]}>Done by You</Text>
         </View>
       );
