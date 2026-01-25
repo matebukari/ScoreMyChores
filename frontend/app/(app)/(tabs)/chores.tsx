@@ -243,7 +243,7 @@ export default function ChoresScreen() {
       {loading ? (
         <ActivityIndicator
           size="large"
-          color="#6200ee"
+          color="#63B995"
           style={{ marginTop: 50 }}
         />
       ) : (
@@ -366,7 +366,7 @@ const styles = StyleSheet.create({
   },
   title: { fontSize: 28, fontWeight: "bold", color: "#333" },
   addButton: {
-    backgroundColor: "#6200ee",
+    backgroundColor: "#63B995",
     width: 44,
     height: 44,
     borderRadius: 22,
@@ -435,7 +435,7 @@ const styles = StyleSheet.create({
   },
   rightActions: { flexDirection: "row", alignItems: "center" },
   adminRow: { flexDirection: "row", alignItems: "center", gap: 10 },
-  pointsText: { marginRight: 15, fontWeight: "bold", color: "#6200ee" },
+  pointsText: { marginRight: 15, fontWeight: "bold", color: "#63B995" },
 
   // Badge & Avatar Styles
   badge: {
@@ -498,6 +498,6 @@ const styles = StyleSheet.create({
     marginHorizontal: 5,
   },
   cancelButton: { backgroundColor: "#ccc" },
-  saveButton: { backgroundColor: "#6200ee" },
+  saveButton: { backgroundColor: "#63B995" },
   buttonText: { color: "#fff", fontWeight: "bold", fontSize: 16 },
 });

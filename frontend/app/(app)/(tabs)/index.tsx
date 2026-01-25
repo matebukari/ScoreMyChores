@@ -112,7 +112,7 @@ export default function HomeScreen() {
   if (loading) {
     return (
       <View style={[styles.container, { justifyContent: "center" }]}>
-        <ActivityIndicator size="large" color="#6200ee" />
+        <ActivityIndicator size="large" color="#63B995" />
       </View>
     );
   }
@@ -158,7 +158,7 @@ export default function HomeScreen() {
       {focusTask ? (
         <View style={styles.focusContainer}>
           <View style={styles.focusHeader}>
-            <Ionicons name="rocket" size={18} color="#6200ee" />
+            <Ionicons name="rocket" size={18} color="#63B995" />
             <Text style={styles.focusLabel}>
               {focusTask.inProgress ? "CURRENTLY WORKING ON" : "PRIORITY TASK"}
             </Text>
@@ -226,7 +226,7 @@ export default function HomeScreen() {
                     : "play-circle-outline"
                 }
                 size={32}
-                color={focusTask.inProgress ? "#4A90E2" : "#6200ee"}
+                color={focusTask.inProgress ? "#4A90E2" : "#63B995"}
               />
             </View>
           </TouchableOpacity>
@@ -375,7 +375,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#f8f9fa" },
   scoreCard: {
-    backgroundColor: "#6200ee",
+    backgroundColor: "#63B995",
     padding: 30,
     borderRadius: 20,
     alignItems: "center",
@@ -420,7 +420,7 @@ const styles = StyleSheet.create({
   },
   choreAction: { flexDirection: "row", alignItems: "center" },
   completedText: { textDecorationLine: "line-through", color: "#aaa" },
-  pointsText: { fontWeight: "bold", color: "#6200ee", marginRight: 12 },
+  pointsText: { fontWeight: "bold", color: "#63B995", marginRight: 12 },
   miniBadge: {
     flexDirection: "row",
     alignItems: "center",
@@ -461,7 +461,7 @@ const styles = StyleSheet.create({
   dayActive: { backgroundColor: "#FFD700" },
   dayToday: { borderWidth: 2, borderColor: "#fff" },
   dayText: { color: "rgba(255,255,255,0.6)", fontSize: 12, fontWeight: "bold" },
-  dayTextActive: { color: "#6200ee" },
+  dayTextActive: { color: "#63B995" },
   focusContainer: { marginBottom: 25 },
   focusHeader: {
     flexDirection: "row",
@@ -472,7 +472,7 @@ const styles = StyleSheet.create({
   focusLabel: {
     fontSize: 12,
     fontWeight: "800",
-    color: "#6200ee",
+    color: "#63B995",
     letterSpacing: 1,
   },
   focusCard: {
@@ -480,11 +480,11 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 16,
     borderWidth: 2,
-    borderColor: "#6200ee",
+    borderColor: "#63B995",
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    shadowColor: "#6200ee",
+    shadowColor: "#63B995",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
@@ -498,7 +498,7 @@ const styles = StyleSheet.create({
   },
   focusPointsText: {
     fontWeight: "bold",
-    color: "#6200ee",
+    color: "#63B995",
     marginRight: 12,
     fontSize: 16,
   },

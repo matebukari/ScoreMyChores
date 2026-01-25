@@ -5,7 +5,7 @@ import { Icons } from '@/constants/icons';
 
 const TabIcon = ({ focused, icon: Icon , title }: any) => {
   // Use your primary purple for active, gray for inactive
-  const activeColor = "#6200ee"; 
+  const activeColor = "#63B995"; 
   const inactiveColor = "#9CA3AF";
 
   if (focused) {

@@ -271,7 +271,7 @@ export default function LeaderboardScreen() {
                       backgroundColor: item.avatar
                         ? "transparent"
                         : item.id === user?.uid
-                          ? "#6200ee"
+                          ? "#63B995"
                           : "#ccc",
                     },
                   ]}
@@ -289,7 +289,7 @@ export default function LeaderboardScreen() {
                   <Text
                     style={[
                       styles.userName,
-                      item.id === user?.uid && { color: "#6200ee" },
+                      item.id === user?.uid && { color: "#63B995" },
                     ]}
                   >
                     {item.name} {item.id === user?.uid && "(You)"}
@@ -326,7 +326,7 @@ const styles = StyleSheet.create({
   },
   activeToggle: { backgroundColor: "#fff", elevation: 2 },
   toggleText: { fontWeight: "600", color: "#666" },
-  activeToggleText: { color: "#6200ee" },
+  activeToggleText: { color: "#63B995" },
 
   podiumContainer: {
     flexDirection: "row",
@@ -400,5 +400,5 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   userName: { fontSize: 16, fontWeight: "600", color: "#333" },
-  scoreText: { fontSize: 18, fontWeight: "bold", color: "#6200ee" },
+  scoreText: { fontSize: 18, fontWeight: "bold", color: "#63B995" },
 });

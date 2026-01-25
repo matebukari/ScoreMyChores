@@ -163,12 +163,12 @@ const styles = StyleSheet.create({
     color: "#1F2937",
   },
   button: {
-    backgroundColor: "#6200ee",
+    backgroundColor: "#63B995",
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: "center",
     marginTop: 10,
-    shadowColor: "#6200ee",
+    shadowColor: "#63B995",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
@@ -189,7 +189,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   linkText: {
-    color: "#6200ee",
+    color: "#63B995",
     fontSize: 14,
     fontWeight: "bold",
   },

@@ -165,7 +165,7 @@ export default function ProfileScreen() {
               setNewName(user?.displayName || "");
               setIsEditNameVisible(true);
             }}>
-              <Ionicons name="pencil-sharp" size={16} color="#6200ee" />
+              <Ionicons name="pencil-sharp" size={16} color="#63B995" />
             </TouchableOpacity>
           </View>
           
@@ -180,11 +180,11 @@ export default function ProfileScreen() {
 
       {/* HOUSEHOLD INFO */}
       {loading || switching ? (
-        <ActivityIndicator size="large" color="#6200ee" />
+        <ActivityIndicator size="large" color="#63B995" />
       ) : activeHousehold ? (
         <View style={styles.houseCard}>
           <View style={styles.houseHeader}>
-            <Ionicons name="home" size={24} color="#6200ee" />
+            <Ionicons name="home" size={24} color="#63B995" />
             <Text style={styles.houseName}>{activeHousehold.name}</Text>
           </View>
           <View style={styles.divider} />
@@ -194,7 +194,7 @@ export default function ProfileScreen() {
               <Text style={styles.codeValue}>{activeHousehold.inviteCode}</Text>
             </View>
             <TouchableOpacity onPress={handleShareCode} style={styles.shareButton}>
-              <Ionicons name="share-outline" size={20} color="#6200ee" />
+              <Ionicons name="share-outline" size={20} color="#63B995" />
             </TouchableOpacity>
           </View>
         </View>
@@ -204,7 +204,7 @@ export default function ProfileScreen() {
 
       {/* JOIN BUTTON */}
       <TouchableOpacity style={styles.joinButton} onPress={() => setIsJoinModalVisible(true)}>
-        <Ionicons name="add-circle-outline" size={22} color="#6200ee" />
+        <Ionicons name="add-circle-outline" size={22} color="#63B995" />
         <Text style={styles.joinButtonText}>Join Another Household</Text>
       </TouchableOpacity>
 
@@ -221,7 +221,7 @@ export default function ProfileScreen() {
               <Text style={[styles.switchText, houseId === activeHousehold?.id && styles.activeSwitchText]}>
                 {houseId === activeHousehold?.id ? "Current House" : `House ID: ${houseId.substring(0, 5)}...`}
               </Text>
-              {houseId === activeHousehold?.id && <Ionicons name="checkmark-circle" size={20} color="#6200ee" />}
+              {houseId === activeHousehold?.id && <Ionicons name="checkmark-circle" size={20} color="#63B995" />}
             </TouchableOpacity>
           ))}
         </>
@@ -339,7 +339,7 @@ const styles = StyleSheet.create({
   avatarText: { fontSize: 28, fontWeight: "bold", color: "#2196F3" },
   editAvatarBadge: {
     position: 'absolute', bottom: 0, right: -4,
-    backgroundColor: '#6200ee', width: 24, height: 24, borderRadius: 12,
+    backgroundColor: '#63B995', width: 24, height: 24, borderRadius: 12,
     justifyContent: 'center', alignItems: 'center',
     borderWidth: 2, borderColor: '#fff'
   },
@@ -358,13 +358,13 @@ const styles = StyleSheet.create({
   codeValue: { fontSize: 24, fontWeight: "bold", color: "#333", marginTop: 4, letterSpacing: 2 },
   shareButton: { padding: 10, backgroundColor: "#f5f5f5", borderRadius: 8 },
 
-  joinButton: { flexDirection: "row", alignItems: "center", justifyContent: "center", backgroundColor: "#fff", padding: 15, borderRadius: 12, marginBottom: 25, borderWidth: 1, borderColor: "#6200ee", borderStyle: "dashed" },
-  joinButtonText: { color: "#6200ee", fontWeight: "600", marginLeft: 8 },
+  joinButton: { flexDirection: "row", alignItems: "center", justifyContent: "center", backgroundColor: "#fff", padding: 15, borderRadius: 12, marginBottom: 25, borderWidth: 1, borderColor: "#63B995", borderStyle: "dashed" },
+  joinButtonText: { color: "#63B995", fontWeight: "600", marginLeft: 8 },
 
   switchButton: { backgroundColor: "#fff", padding: 15, borderRadius: 12, marginBottom: 10, flexDirection: "row", justifyContent: "space-between", alignItems: "center", borderWidth: 1, borderColor: "#eee" },
-  activeSwitchButton: { borderColor: "#6200ee", backgroundColor: "#F3E5F5" },
+  activeSwitchButton: { borderColor: "#63B995", backgroundColor: "#F3E5F5" },
   switchText: { color: "#666", fontWeight: "500" },
-  activeSwitchText: { color: "#6200ee", fontWeight: "bold" },
+  activeSwitchText: { color: "#63B995", fontWeight: "bold" },
 
   logoutButton: { backgroundColor: "#ffebee", padding: 15, borderRadius: 12, alignItems: "center", marginTop: 10 },
   logoutText: { color: "#d32f2f", fontWeight: "bold", fontSize: 16 },
@@ -389,7 +389,7 @@ const styles = StyleSheet.create({
   modalButtons: { flexDirection: "row", justifyContent: "space-between" },
   button: { flex: 1, padding: 15, borderRadius: 10, alignItems: "center", marginHorizontal: 5 },
   cancelButton: { backgroundColor: "#ccc" },
-  saveButton: { backgroundColor: "#6200ee" },
+  saveButton: { backgroundColor: "#63B995" },
   buttonText: { color: "#fff", fontWeight: "bold", fontSize: 16 },
 
   avatarOption: {
