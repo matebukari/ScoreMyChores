@@ -9,6 +9,7 @@ import {
   Modal,
   TextInput,
   ActivityIndicator,
+  ScrollView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "@/context/AuthContext";
@@ -16,6 +17,9 @@ import { useHousehold } from "@/context/HouseholdContext";
 import { useChores } from "@/context/ChoreContext";
 import { choreService } from "@/services/choreService";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+// Preselected options for dropdown
+const POINT_OPTIONS = ["10", "20", "30", "50", "100"];
 
 export default function ChoresScreen() {
   const { user } = useAuth();
@@ -26,6 +30,7 @@ export default function ChoresScreen() {
   const [newChoreTitle, setNewChoreTitle] = useState("");
   const [newChorePoints, setNewChorePoints] = useState("");
   const [isAdding, setIsAdding] = useState(false);
+  const [showPointOptions, setShowPointOptions] = useState(false);
 
   const insets = useSafeAreaInsets();
 
@@ -44,6 +49,7 @@ export default function ChoresScreen() {
 
       setNewChoreTitle("");
       setNewChorePoints("");
+      setShowPointOptions(false);
       setIsModalVisible(false);
     } catch (error) {
       Alert.alert("Error", "Failed to add chore");
@@ -54,7 +60,10 @@ export default function ChoresScreen() {
 
   const handleDeleteChore = (id: string) => {
     if (!isAdmin) {
-      Alert.alert("Permission Denied", "Only the household admin can delete chores.");
+      Alert.alert(
+        "Permission Denied",
+        "Only the household admin can delete chores.",
+      );
       return;
     }
 
@@ -68,7 +77,6 @@ export default function ChoresScreen() {
     ]);
   };
 
-  // Handle Delete All
   const handleDeleteAll = () => {
     if (!isAdmin || chores.length === 0) return;
 
@@ -82,43 +90,56 @@ export default function ChoresScreen() {
           style: "destructive",
           onPress: async () => {
             try {
-              // Delete all chores in parallel
-              const promises = chores.map((chore) => choreService.deleteChore(chore.id));
+              const promises = chores.map((chore) =>
+                choreService.deleteChore(chore.id),
+              );
               await Promise.all(promises);
             } catch (error) {
               Alert.alert("Error", "Failed to delete all chores.");
             }
           },
         },
-      ]
+      ],
     );
   };
 
-  // Handler for Reset All
   const handleResetAll = () => {
-    Alert.alert("Reset All", "Make all chores 'Pending' again? Points earned will remain.", [
-      { text: "Cancel", style: "cancel" },
-      { text: "Reset", onPress: resetAll }
-    ]);
+    Alert.alert(
+      "Reset All",
+      "Make all chores 'Pending' again? Points earned will remain.",
+      [
+        { text: "Cancel", style: "cancel" },
+        { text: "Reset", onPress: resetAll },
+      ],
+    );
   };
 
-  // Handler for individual reset
   const handleResetSingle = (id: string) => {
     Alert.alert("Reset Chore", "Make this chore available again?", [
       { text: "Cancel", style: "cancel" },
-      { text: "Reset", onPress : async () => await resetChore(id) }
+      { text: "Reset", onPress: async () => await resetChore(id) },
     ]);
   };
 
-  const Avatar = ({ name, avatar, color }: { name?: string | null; avatar?: string | null; color: string }) => {
+  const Avatar = ({
+    name,
+    avatar,
+    color,
+  }: {
+    name?: string | null;
+    avatar?: string | null;
+    color: string;
+  }) => {
     if (avatar) {
       return (
-        <View style={[styles.avatarContainer, { backgroundColor: 'transparent' }]}>
+        <View
+          style={[styles.avatarContainer, { backgroundColor: "transparent" }]}
+        >
           <Text style={{ fontSize: 14 }}>{avatar}</Text>
         </View>
       );
     }
-    
+
     const initial = name ? name.charAt(0).toUpperCase() : "?";
     return (
       <View style={[styles.avatarContainer, { backgroundColor: color }]}>
@@ -127,28 +148,37 @@ export default function ChoresScreen() {
     );
   };
 
-  // Helper to render the badges
   const renderStatusBadge = (item: any) => {
-    const isMe = item.inProgressBy === user?.uid || item.completedBy === user?.uid;
+    const isMe =
+      item.inProgressBy === user?.uid || item.completedBy === user?.uid;
 
-    //  Get Live Profile Data
-    const getLiveProfile = (userId: string, snapshotName: string, snapshotAvatar: string) => {
-      // 1. Try to find the user in the live memberProfiles list
+    const getLiveProfile = (
+      userId: string,
+      snapshotName: string,
+      snapshotAvatar: string,
+    ) => {
       const liveUser = memberProfiles[userId];
-      
-      // 2. Return live data if exists, otherwise fallback to snapshot
+
       return {
         name: liveUser?.displayName || snapshotName || "Unknown",
-        avatar: liveUser?.photoURL || snapshotAvatar || null
+        avatar: liveUser?.photoURL || snapshotAvatar || null,
       };
     };
 
     if (item.inProgress && !isMe) {
-      // Fetch live profile for the person working
-      const worker = getLiveProfile(item.inProgressBy, item.inProgressByName, item.inProgressByAvatar);
+      const worker = getLiveProfile(
+        item.inProgressBy,
+        item.inProgressByName,
+        item.inProgressByAvatar,
+      );
 
       return (
-        <View style={[styles.badge, { backgroundColor: "#FFF3E0", borderColor: "#FFB74D" }]}>
+        <View
+          style={[
+            styles.badge,
+            { backgroundColor: "#FFF3E0", borderColor: "#FFB74D" },
+          ]}
+        >
           <Avatar name={worker.name} avatar={worker.avatar} color="#F57C00" />
           <Text style={[styles.badgeText, { color: "#E65100" }]}>
             {worker.name} is working
@@ -159,20 +189,41 @@ export default function ChoresScreen() {
 
     if (item.inProgress && isMe) {
       return (
-        <View style={[styles.badge, { backgroundColor: "#E3F2FD", borderColor: "#64B5F6" }]}>
-          <Text style={{fontSize: 14, marginRight: 4}}>{user?.photoURL || "👤"}</Text>
-          <Text style={[styles.badgeText, { color: "#1565C0" }]}>Doing Now</Text>
+        <View
+          style={[
+            styles.badge,
+            { backgroundColor: "#E3F2FD", borderColor: "#64B5F6" },
+          ]}
+        >
+          <Text style={{ fontSize: 14, marginRight: 4 }}>
+            {user?.photoURL || "👤"}
+          </Text>
+          <Text style={[styles.badgeText, { color: "#1565C0" }]}>
+            Doing Now
+          </Text>
         </View>
       );
     }
 
     if (item.completed && !isMe) {
-      // Fetch live profile for the completer
-      const completer = getLiveProfile(item.completedBy, item.completedByName, item.completedByAvatar);
+      const completer = getLiveProfile(
+        item.completedBy,
+        item.completedByName,
+        item.completedByAvatar,
+      );
 
       return (
-        <View style={[styles.badge, { backgroundColor: "#E8F5E9", borderColor: "#81C784" }]}>
-          <Avatar name={completer.name} avatar={completer.avatar} color="#388E3C" />
+        <View
+          style={[
+            styles.badge,
+            { backgroundColor: "#E8F5E9", borderColor: "#81C784" },
+          ]}
+        >
+          <Avatar
+            name={completer.name}
+            avatar={completer.avatar}
+            color="#388E3C"
+          />
           <Text style={[styles.badgeText, { color: "#2E7D32" }]}>
             Done by {completer.name}
           </Text>
@@ -181,13 +232,27 @@ export default function ChoresScreen() {
     }
 
     if (item.completed && isMe) {
-      // Fetch live profile
-      const completer = getLiveProfile(user?.uid || "", item.completedByName, item.completedByAvatar);
+      const completer = getLiveProfile(
+        user?.uid || "",
+        item.completedByName,
+        item.completedByAvatar,
+      );
 
       return (
-        <View style={[styles.badge, { backgroundColor: "#F3E5F5", borderColor: "#BA68C8" }]}>
-          <Avatar name={completer.name} avatar={completer.avatar} color="#7B1FA2"/>
-          <Text style={[styles.badgeText, { color: "#7B1FA2" }]}>Done by You</Text>
+        <View
+          style={[
+            styles.badge,
+            { backgroundColor: "#F3E5F5", borderColor: "#BA68C8" },
+          ]}
+        >
+          <Avatar
+            name={completer.name}
+            avatar={completer.avatar}
+            color="#7B1FA2"
+          />
+          <Text style={[styles.badgeText, { color: "#7B1FA2" }]}>
+            Done by You
+          </Text>
         </View>
       );
     }
@@ -196,23 +261,23 @@ export default function ChoresScreen() {
   };
 
   return (
-    <View style={[styles.container,
-      { 
-        paddingTop: insets.top,
-        paddingLeft: insets.left + 20,
-        paddingRight: insets.right + 20 
-      }
-    ]}>
+    <View
+      style={[
+        styles.container,
+        {
+          paddingTop: insets.top,
+          paddingLeft: insets.left + 20,
+          paddingRight: insets.right + 20,
+        },
+      ]}
+    >
       <View style={styles.header}>
         <Text style={styles.title}>Manage Chores</Text>
 
-        {/* Only show actions if Admin */}
         {isAdmin && (
           <View style={styles.headerActions}>
-            
             {chores.length > 0 && (
               <>
-                {/* Reset All Button */}
                 <TouchableOpacity
                   style={styles.resetAllButton}
                   onPress={handleResetAll}
@@ -220,7 +285,6 @@ export default function ChoresScreen() {
                   <Ionicons name="refresh" size={22} color="white" />
                 </TouchableOpacity>
 
-                {/* Delete All Button */}
                 <TouchableOpacity
                   style={styles.deleteAllButton}
                   onPress={handleDeleteAll}
@@ -247,7 +311,6 @@ export default function ChoresScreen() {
           style={{ marginTop: 50 }}
         />
       ) : (
-        // Chores List
         <FlatList
           data={chores}
           showsVerticalScrollIndicator={false}
@@ -272,22 +335,30 @@ export default function ChoresScreen() {
                 >
                   {item.title}
                 </Text>
-
                 {renderStatusBadge(item)}
               </View>
 
               <View style={styles.rightActions}>
                 <Text style={styles.pointsText}>{item.points} pts</Text>
-
                 {isAdmin && (
                   <View style={styles.adminRow}>
-                     {/* Individual Reset Button */}
-                    <TouchableOpacity onPress={() => handleResetSingle(item.id)}>
-                      <Ionicons name="refresh-circle-outline" size={26} color="#2196F3" />
+                    <TouchableOpacity
+                      onPress={() => handleResetSingle(item.id)}
+                    >
+                      <Ionicons
+                        name="refresh-circle-outline"
+                        size={26}
+                        color="#2196F3"
+                      />
                     </TouchableOpacity>
-
-                    <TouchableOpacity onPress={() => handleDeleteChore(item.id)}>
-                      <Ionicons name="trash-outline" size={22} color="#FF5252" />
+                    <TouchableOpacity
+                      onPress={() => handleDeleteChore(item.id)}
+                    >
+                      <Ionicons
+                        name="trash-outline"
+                        size={22}
+                        color="#FF5252"
+                      />
                     </TouchableOpacity>
                   </View>
                 )}
@@ -306,43 +377,84 @@ export default function ChoresScreen() {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Add New Chore</Text>
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+            >
+              <Text style={styles.modalTitle}>Add New Chore</Text>
 
-            <TextInput
-              style={styles.input}
-              placeholder="Chore Name (e.g. Fold Laundry)"
-              value={newChoreTitle}
-              onChangeText={setNewChoreTitle}
-            />
+              <TextInput
+                style={styles.input}
+                placeholder="Chore Name (e.g. Fold Laundry)"
+                value={newChoreTitle}
+                onChangeText={setNewChoreTitle}
+              />
 
-            <TextInput
-              style={styles.input}
-              placeholder="Points (e.g. 50)"
-              value={newChorePoints}
-              onChangeText={setNewChorePoints}
-              keyboardType="numeric"
-            />
+              {/* Points dropdown */}
+              <View style={styles.dropdownContainer}>
+                <View style={styles.inputRow}>
+                  <TextInput
+                    style={styles.inputFlex}
+                    placeholder="Points (e.g. 50)"
+                    value={newChorePoints}
+                    onChangeText={setNewChorePoints}
+                    keyboardType="numeric"
+                  />
+                  <TouchableOpacity
+                    style={styles.dropdownToggle}
+                    onPress={() => setShowPointOptions(!showPointOptions)}
+                  >
+                    <Ionicons
+                      name={showPointOptions ? "chevron-up" : "chevron-down"}
+                      size={24}
+                      color="#666"
+                    />
+                  </TouchableOpacity>
+                </View>
 
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.button, styles.cancelButton]}
-                onPress={() => setIsModalVisible(false)}
-              >
-                <Text style={styles.buttonText}>Cancel</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.button, styles.saveButton]}
-                onPress={handleAddChore}
-                disabled={isAdding}
-              >
-                {isAdding ? (
-                  <ActivityIndicator color="white" />
-                ) : (
-                  <Text style={styles.buttonText}>Add Task</Text>
+                {showPointOptions && (
+                  <ScrollView
+                    style={styles.dropdownList}
+                    nestedScrollEnabled={true}
+                    keyboardShouldPersistTaps="handled"
+                  >
+                    {POINT_OPTIONS.map((opt) => (
+                      <TouchableOpacity
+                        key={opt}
+                        style={styles.dropdownItem}
+                        onPress={() => {
+                          setNewChorePoints(opt);
+                          setShowPointOptions(false);
+                        }}
+                      >
+                        <Text style={styles.dropDownItemText}>{opt} pts</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
                 )}
-              </TouchableOpacity>
-            </View>
+              </View>
+
+              <View style={styles.modalButtons}>
+                <TouchableOpacity
+                  style={[styles.button, styles.cancelButton]}
+                  onPress={() => setIsModalVisible(false)}
+                >
+                  <Text style={styles.buttonText}>Cancel</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.button, styles.saveButton]}
+                  onPress={handleAddChore}
+                  disabled={isAdding}
+                >
+                  {isAdding ? (
+                    <ActivityIndicator color="white" />
+                  ) : (
+                    <Text style={styles.buttonText}>Add Task</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
           </View>
         </View>
       </Modal>
@@ -359,11 +471,7 @@ const styles = StyleSheet.create({
     marginTop: 40,
     marginBottom: 20,
   },
-  // container for buttons on the right
-  headerActions: {
-    flexDirection: "row",
-    gap: 12,
-  },
+  headerActions: { flexDirection: "row", gap: 12 },
   title: { fontSize: 28, fontWeight: "bold", color: "#333" },
   addButton: {
     backgroundColor: "#63B995",
@@ -378,7 +486,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 2,
   },
-  // Delete All Button Style
   deleteAllButton: {
     backgroundColor: "#FF5252",
     width: 44,
@@ -392,7 +499,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 2,
   },
-  // Reset All Button Style
   resetAllButton: {
     backgroundColor: "#2196F3",
     width: 44,
@@ -408,7 +514,7 @@ const styles = StyleSheet.create({
   },
   listCard: {
     backgroundColor: "#fff",
-    padding: 8, 
+    padding: 8,
     paddingLeft: 10,
     paddingRight: 10,
     borderRadius: 12,
@@ -418,26 +524,24 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     borderWidth: 1,
     borderColor: "#eee",
-    minHeight: 70, 
+    minHeight: 70,
   },
   cardLeftContent: {
     flex: 1,
     flexDirection: "column",
     justifyContent: "center",
     alignItems: "flex-start",
-    gap: 4, 
+    gap: 4,
   },
-  choreTitle: { 
-    fontSize: 16, 
-    fontWeight: "600", 
+  choreTitle: {
+    fontSize: 16,
+    fontWeight: "600",
     color: "#333",
-    textAlign: "left"
+    textAlign: "left",
   },
   rightActions: { flexDirection: "row", alignItems: "center" },
   adminRow: { flexDirection: "row", alignItems: "center", gap: 10 },
   pointsText: { marginRight: 15, fontWeight: "bold", color: "#63B995" },
-
-  // Badge & Avatar Styles
   badge: {
     flexDirection: "row",
     alignItems: "center",
@@ -448,21 +552,16 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     gap: 6,
   },
-  badgeText: { fontSize: 11, fontWeight: "600" }, 
+  badgeText: { fontSize: 11, fontWeight: "600" },
   avatarContainer: {
-    width: 22, 
+    width: 22,
     height: 22,
     borderRadius: 11,
     justifyContent: "center",
     alignItems: "center",
   },
-  avatarText: {
-    color: "white",
-    fontSize: 9,
-    fontWeight: "bold",
-  },
+  avatarText: { color: "white", fontSize: 9, fontWeight: "bold" },
 
-  // Modal Styles
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.5)",
@@ -475,6 +574,7 @@ const styles = StyleSheet.create({
     padding: 25,
     borderRadius: 20,
     elevation: 5,
+    maxHeight: "80%",
   },
   modalTitle: {
     fontSize: 20,
@@ -482,6 +582,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     textAlign: "center",
   },
+
   input: {
     backgroundColor: "#f0f0f0",
     padding: 15,
@@ -489,7 +590,50 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     fontSize: 16,
   },
-  modalButtons: { flexDirection: "row", justifyContent: "space-between" },
+
+  dropdownContainer: {
+    marginBottom: 15,
+  },
+  inputRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#f0f0f0",
+    borderRadius: 10,
+  },
+  inputFlex: {
+    flex: 1,
+    padding: 15,
+    fontSize: 16,
+    color: "#333",
+  },
+  dropdownToggle: {
+    padding: 15,
+    borderLeftWidth: 1,
+    borderLeftColor: "#ddd",
+  },
+  dropdownList: {
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#eee",
+    borderRadius: 10,
+    marginTop: 5,
+    maxHeight: 135,
+  },
+  dropdownItem: {
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f8f8f8",
+  },
+  dropDownItemText: {
+    fontSize: 16,
+    color: "#333",
+  },
+
+  modalButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 10,
+  },
   button: {
     flex: 1,
     padding: 15,
