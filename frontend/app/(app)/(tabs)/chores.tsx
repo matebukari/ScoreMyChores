@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -10,32 +10,119 @@ import {
   TextInput,
   ActivityIndicator,
   ScrollView,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import * as Haptics from "expo-haptics";
 import { useAuth } from "@/context/AuthContext";
 import { useHousehold } from "@/context/HouseholdContext";
 import { useChores } from "@/context/ChoreContext";
 import { choreService } from "@/services/choreService";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-// Preselected options for dropdown
+// --- Constants ---
 const POINT_OPTIONS = ["10", "20", "30", "50", "100"];
+const MONTHS = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
 
+const ITEM_HEIGHT = 50;
+const WHEEL_WIDTH = 65; // Fixed width ensures centering stability
+const VISIBLE_ITEMS = 3;
+const WHEEL_HEIGHT = ITEM_HEIGHT * VISIBLE_ITEMS; // 150px total height
+
+/**
+ * Screen for managing household chores.
+ * Allows users to view, add, delete, and schedule chores.
+ */
 export default function ChoresScreen() {
   const { user } = useAuth();
   const { activeHousehold, memberProfiles } = useHousehold();
   const { chores, addChore, loading, resetAll, resetChore } = useChores();
 
+  // Modal & Form State
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [newChoreTitle, setNewChoreTitle] = useState("");
   const [newChorePoints, setNewChorePoints] = useState("");
   const [isAdding, setIsAdding] = useState(false);
   const [showPointOptions, setShowPointOptions] = useState(false);
 
-  const insets = useSafeAreaInsets();
+  // Scheduler State
+  const [showScheduler, setShowScheduler] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [selectedHour, setSelectedHour] = useState(new Date().getHours());
+  const [selectedMinute, setSelectedMinute] = useState(new Date().getMinutes());
 
-  // Define Admin Permission
-  const isAdmin = activeHousehold?.members?.[user?.uid || ""] == "admin";
+  // Scroll Refs
+  const hourScrollRef = useRef<ScrollView>(null);
+  const minuteScrollRef = useRef<ScrollView>(null);
+
+  // Refs for tracking haptic triggers
+  const lastHourIndex = useRef(new Date().getHours());
+  const lastMinuteIndex = useRef(new Date().getMinutes());
+
+  const insets = useSafeAreaInsets();
+  const isAdmin = activeHousehold?.members?.[user?.uid || ""] === "admin";
+
+  /**
+   * Auto-scrolls the time picker to the currently selected time
+   * when the scheduler is opened.
+   */
+  useEffect(() => {
+    if (showScheduler) {
+      setTimeout(() => {
+        if (hourScrollRef.current) {
+          hourScrollRef.current.scrollTo({
+            y: selectedHour * ITEM_HEIGHT,
+            animated: false,
+          });
+        }
+        if (minuteScrollRef.current) {
+          minuteScrollRef.current.scrollTo({
+            y: selectedMinute * ITEM_HEIGHT,
+            animated: false,
+          });
+        }
+      }, 100);
+    }
+  }, [showScheduler]);
+
+  /**
+   * Handles scroll events for the time picker wheels.
+   * Calculates the selected index based on offset and triggers haptics on change.
+   */
+  const handleScroll = (
+    event: NativeSyntheticEvent<NativeScrollEvent>,
+    setValue: (val: number) => void,
+    lastValRef: { current: number },
+    max: number,
+  ) => {
+    const offsetY = event.nativeEvent.contentOffset.y;
+    let index = Math.round(offsetY / ITEM_HEIGHT);
+
+    // Clamp values to valid range
+    if (index < 0) index = 0;
+    if (index > max) index = max;
+
+    if (index !== lastValRef.current) {
+      Haptics.selectionAsync();
+      setValue(index);
+      lastValRef.current = index;
+    }
+  };
 
   const handleAddChore = async () => {
     if (!newChoreTitle || !newChorePoints) {
@@ -45,11 +132,21 @@ export default function ChoresScreen() {
 
     try {
       setIsAdding(true);
+
+      let scheduledFor = null;
+      if (showScheduler) {
+        scheduledFor = new Date(selectedDate);
+        scheduledFor.setHours(selectedHour);
+        scheduledFor.setMinutes(selectedMinute);
+      }
+
+      // Note: Pass scheduledFor to your addChore service if supported
       await addChore(newChoreTitle, parseInt(newChorePoints));
 
       setNewChoreTitle("");
       setNewChorePoints("");
       setShowPointOptions(false);
+      setShowScheduler(false);
       setIsModalVisible(false);
     } catch (error) {
       Alert.alert("Error", "Failed to add chore");
@@ -66,7 +163,6 @@ export default function ChoresScreen() {
       );
       return;
     }
-
     Alert.alert("Delete Chore", "Are you sure you want to remove this chore?", [
       { text: "Cancel", style: "cancel" },
       {
@@ -79,10 +175,9 @@ export default function ChoresScreen() {
 
   const handleDeleteAll = () => {
     if (!isAdmin || chores.length === 0) return;
-
     Alert.alert(
       "Delete ALL Chores",
-      "WARNING: This will remove every single task from the list. This cannot be undone.",
+      "WARNING: This will remove every single task.",
       [
         { text: "Cancel", style: "cancel" },
         {
@@ -104,14 +199,10 @@ export default function ChoresScreen() {
   };
 
   const handleResetAll = () => {
-    Alert.alert(
-      "Reset All",
-      "Make all chores 'Pending' again? Points earned will remain.",
-      [
-        { text: "Cancel", style: "cancel" },
-        { text: "Reset", onPress: resetAll },
-      ],
-    );
+    Alert.alert("Reset All", "Make all chores 'Pending' again?", [
+      { text: "Cancel", style: "cancel" },
+      { text: "Reset", onPress: resetAll },
+    ]);
   };
 
   const handleResetSingle = (id: string) => {
@@ -121,16 +212,179 @@ export default function ChoresScreen() {
     ]);
   };
 
-  const Avatar = ({
-    name,
-    avatar,
-    color,
-  }: {
-    name?: string | null;
-    avatar?: string | null;
-    color: string;
-  }) => {
-    if (avatar) {
+  // --- Calendar Helpers ---
+  const getDaysInMonth = (year: number, month: number) =>
+    new Date(year, month + 1, 0).getDate();
+  const getFirstDayOfMonth = (year: number, month: number) =>
+    new Date(year, month, 1).getDay();
+
+  /**
+   * Renders the monthly calendar grid.
+   */
+  const renderCalendar = () => {
+    const year = currentMonth.getFullYear();
+    const month = currentMonth.getMonth();
+    const daysInMonth = getDaysInMonth(year, month);
+    const firstDay = getFirstDayOfMonth(year, month);
+
+    const slots = [];
+    for (let i = 0; i < firstDay; i++) {
+      slots.push(<View key={`empty-${i}`} style={styles.calDay} />);
+    }
+    for (let i = 1; i <= daysInMonth; i++) {
+      const isSelected =
+        selectedDate.getDate() === i &&
+        selectedDate.getMonth() === month &&
+        selectedDate.getFullYear() === year;
+
+      slots.push(
+        <TouchableOpacity
+          key={i}
+          style={[styles.calDay, isSelected && styles.calDaySelected]}
+          onPress={() => setSelectedDate(new Date(year, month, i))}
+        >
+          <Text
+            style={[styles.calDayText, isSelected && styles.calDayTextSelected]}
+          >
+            {i}
+          </Text>
+        </TouchableOpacity>,
+      );
+    }
+
+    return (
+      <View style={styles.calendarContainer}>
+        <View style={styles.calHeader}>
+          <TouchableOpacity
+            onPress={() => setCurrentMonth(new Date(year, month - 1, 1))}
+          >
+            <Ionicons name="chevron-back" size={24} color="#666" />
+          </TouchableOpacity>
+          <Text style={styles.calTitle}>
+            {MONTHS[month]} {year}
+          </Text>
+          <TouchableOpacity
+            onPress={() => setCurrentMonth(new Date(year, month + 1, 1))}
+          >
+            <Ionicons name="chevron-forward" size={24} color="#666" />
+          </TouchableOpacity>
+        </View>
+        <View style={styles.calGrid}>
+          {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((d) => (
+            <View key={d} style={styles.calDay}>
+              <Text style={styles.calHeadText}>{d}</Text>
+            </View>
+          ))}
+          {slots}
+        </View>
+      </View>
+    );
+  };
+
+  /**
+   * Renders the custom Time Picker.
+   * Uses `snapToOffsets` with deterministic calculation to prevent scrolling drift.
+   * Uses Spacer views instead of padding to ensure compatibility with ScrollView offsets.
+   */
+  const renderTimePicker = () => {
+    const hoursData = Array.from({ length: 24 }, (_, i) => i);
+    const minutesData = Array.from({ length: 60 }, (_, i) => i);
+
+    // Calculate exact pixel offsets for snapping
+    const hourSnapOffsets = hoursData.map((_, i) => i * ITEM_HEIGHT);
+    const minuteSnapOffsets = minutesData.map((_, i) => i * ITEM_HEIGHT);
+
+    // Padding Height to center the first item
+    const spacerHeight = (WHEEL_HEIGHT - ITEM_HEIGHT) / 2;
+
+    return (
+      <View style={styles.timePickerContainer}>
+        <Text style={styles.timeLabel}>Time available:</Text>
+        <View style={styles.wheelsRow}>
+          {/* Hour Wheel */}
+          <View style={styles.wheelWrapper}>
+            <Text style={styles.wheelLabel}>Hour</Text>
+            <View style={styles.wheelContainer}>
+              <View style={styles.selectionOverlay} pointerEvents="none" />
+              <ScrollView
+                ref={hourScrollRef}
+                style={styles.wheel}
+                nestedScrollEnabled={true}
+                showsVerticalScrollIndicator={false}
+                snapToOffsets={hourSnapOffsets}
+                snapToAlignment="start"
+                decelerationRate="fast"
+                scrollEventThrottle={16}
+                onScroll={(e) =>
+                  handleScroll(e, setSelectedHour, lastHourIndex, 23)
+                }
+              >
+                <View style={{ height: spacerHeight }} />
+                {hoursData.map((h) => (
+                  <View key={`h-${h}`} style={styles.wheelItem}>
+                    <Text
+                      style={[
+                        styles.wheelText,
+                        selectedHour === h && styles.wheelTextSelected,
+                      ]}
+                    >
+                      {h.toString().padStart(2, "0")}
+                    </Text>
+                  </View>
+                ))}
+                <View style={{ height: spacerHeight }} />
+              </ScrollView>
+            </View>
+          </View>
+
+          {/* Centered Colon */}
+          <View style={styles.colonWrapper}>
+            <Text style={styles.timeColon}>:</Text>
+          </View>
+
+          {/* Minute Wheel */}
+          <View style={styles.wheelWrapper}>
+            <Text style={styles.wheelLabel}>Min</Text>
+            <View style={styles.wheelContainer}>
+              <View style={styles.selectionOverlay} pointerEvents="none" />
+              <ScrollView
+                ref={minuteScrollRef}
+                style={styles.wheel}
+                nestedScrollEnabled={true}
+                showsVerticalScrollIndicator={false}
+                snapToOffsets={minuteSnapOffsets}
+                snapToAlignment="start"
+                decelerationRate="fast"
+                scrollEventThrottle={16}
+                onScroll={(e) =>
+                  handleScroll(e, setSelectedMinute, lastMinuteIndex, 59)
+                }
+              >
+                <View style={{ height: spacerHeight }} />
+                {minutesData.map((m) => (
+                  <View key={`m-${m}`} style={styles.wheelItem}>
+                    <Text
+                      style={[
+                        styles.wheelText,
+                        selectedMinute === m && styles.wheelTextSelected,
+                      ]}
+                    >
+                      {m.toString().padStart(2, "0")}
+                    </Text>
+                  </View>
+                ))}
+                <View style={{ height: spacerHeight }} />
+              </ScrollView>
+            </View>
+          </View>
+        </View>
+      </View>
+    );
+  };
+
+  // --- Sub-components ---
+  const Avatar = ({ name, avatar, color }: any) => {
+    if (avatar)
       return (
         <View
           style={[styles.avatarContainer, { backgroundColor: "transparent" }]}
@@ -138,8 +392,6 @@ export default function ChoresScreen() {
           <Text style={{ fontSize: 14 }}>{avatar}</Text>
         </View>
       );
-    }
-
     const initial = name ? name.charAt(0).toUpperCase() : "?";
     return (
       <View style={[styles.avatarContainer, { backgroundColor: color }]}>
@@ -151,27 +403,23 @@ export default function ChoresScreen() {
   const renderStatusBadge = (item: any) => {
     const isMe =
       item.inProgressBy === user?.uid || item.completedBy === user?.uid;
-
     const getLiveProfile = (
       userId: string,
       snapshotName: string,
       snapshotAvatar: string,
     ) => {
       const liveUser = memberProfiles[userId];
-
       return {
         name: liveUser?.displayName || snapshotName || "Unknown",
         avatar: liveUser?.photoURL || snapshotAvatar || null,
       };
     };
-
     if (item.inProgress && !isMe) {
       const worker = getLiveProfile(
         item.inProgressBy,
         item.inProgressByName,
         item.inProgressByAvatar,
       );
-
       return (
         <View
           style={[
@@ -186,8 +434,7 @@ export default function ChoresScreen() {
         </View>
       );
     }
-
-    if (item.inProgress && isMe) {
+    if (item.inProgress && isMe)
       return (
         <View
           style={[
@@ -203,15 +450,12 @@ export default function ChoresScreen() {
           </Text>
         </View>
       );
-    }
-
     if (item.completed && !isMe) {
       const completer = getLiveProfile(
         item.completedBy,
         item.completedByName,
         item.completedByAvatar,
       );
-
       return (
         <View
           style={[
@@ -230,14 +474,12 @@ export default function ChoresScreen() {
         </View>
       );
     }
-
     if (item.completed && isMe) {
       const completer = getLiveProfile(
         user?.uid || "",
         item.completedByName,
         item.completedByAvatar,
       );
-
       return (
         <View
           style={[
@@ -256,7 +498,6 @@ export default function ChoresScreen() {
         </View>
       );
     }
-
     return null;
   };
 
@@ -273,7 +514,6 @@ export default function ChoresScreen() {
     >
       <View style={styles.header}>
         <Text style={styles.title}>Manage Chores</Text>
-
         {isAdmin && (
           <View style={styles.headerActions}>
             {chores.length > 0 && (
@@ -284,7 +524,6 @@ export default function ChoresScreen() {
                 >
                   <Ionicons name="refresh" size={22} color="white" />
                 </TouchableOpacity>
-
                 <TouchableOpacity
                   style={styles.deleteAllButton}
                   onPress={handleDeleteAll}
@@ -293,7 +532,6 @@ export default function ChoresScreen() {
                 </TouchableOpacity>
               </>
             )}
-
             <TouchableOpacity
               style={styles.addButton}
               onPress={() => setIsModalVisible(true)}
@@ -317,7 +555,7 @@ export default function ChoresScreen() {
           keyExtractor={(item) => item.id}
           ListEmptyComponent={
             <Text style={{ textAlign: "center", color: "#888", marginTop: 20 }}>
-              No chores yet.
+              No chores yet.{" "}
               {isAdmin ? "Add one!" : "Ask your admin to add some."}
             </Text>
           }
@@ -337,7 +575,6 @@ export default function ChoresScreen() {
                 </Text>
                 {renderStatusBadge(item)}
               </View>
-
               <View style={styles.rightActions}>
                 <Text style={styles.pointsText}>{item.points} pts</Text>
                 {isAdmin && (
@@ -382,7 +619,6 @@ export default function ChoresScreen() {
               keyboardShouldPersistTaps="handled"
             >
               <Text style={styles.modalTitle}>Add New Chore</Text>
-
               <TextInput
                 style={styles.input}
                 placeholder="Chore Name (e.g. Fold Laundry)"
@@ -411,7 +647,6 @@ export default function ChoresScreen() {
                     />
                   </TouchableOpacity>
                 </View>
-
                 {showPointOptions && (
                   <ScrollView
                     style={styles.dropdownList}
@@ -434,6 +669,25 @@ export default function ChoresScreen() {
                 )}
               </View>
 
+              {/* Schedule Link */}
+              <TouchableOpacity
+                style={styles.scheduleLink}
+                onPress={() => setShowScheduler(!showScheduler)}
+              >
+                <Ionicons name="calendar-outline" size={16} color="#63B995" />
+                <Text style={styles.scheduleLinkText}>
+                  {showScheduler ? "Hide Scheduler" : "Schedule for later?"}
+                </Text>
+              </TouchableOpacity>
+
+              {/* Scheduler UI */}
+              {showScheduler && (
+                <View style={styles.schedulerContainer}>
+                  {renderCalendar()}
+                  {renderTimePicker()}
+                </View>
+              )}
+
               <View style={styles.modalButtons}>
                 <TouchableOpacity
                   style={[styles.button, styles.cancelButton]}
@@ -441,7 +695,6 @@ export default function ChoresScreen() {
                 >
                   <Text style={styles.buttonText}>Cancel</Text>
                 </TouchableOpacity>
-
                 <TouchableOpacity
                   style={[styles.button, styles.saveButton]}
                   onPress={handleAddChore}
@@ -562,6 +815,7 @@ const styles = StyleSheet.create({
   },
   avatarText: { color: "white", fontSize: 9, fontWeight: "bold" },
 
+  // Modal Styles
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.5)",
@@ -574,7 +828,7 @@ const styles = StyleSheet.create({
     padding: 25,
     borderRadius: 20,
     elevation: 5,
-    maxHeight: "80%",
+    maxHeight: "85%",
   },
   modalTitle: {
     fontSize: 20,
@@ -582,7 +836,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     textAlign: "center",
   },
-
   input: {
     backgroundColor: "#f0f0f0",
     padding: 15,
@@ -590,27 +843,15 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     fontSize: 16,
   },
-
-  dropdownContainer: {
-    marginBottom: 15,
-  },
+  dropdownContainer: { marginBottom: 10 },
   inputRow: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#f0f0f0",
     borderRadius: 10,
   },
-  inputFlex: {
-    flex: 1,
-    padding: 15,
-    fontSize: 16,
-    color: "#333",
-  },
-  dropdownToggle: {
-    padding: 15,
-    borderLeftWidth: 1,
-    borderLeftColor: "#ddd",
-  },
+  inputFlex: { flex: 1, padding: 15, fontSize: 16, color: "#333" },
+  dropdownToggle: { padding: 15, borderLeftWidth: 1, borderLeftColor: "#ddd" },
   dropdownList: {
     backgroundColor: "#fff",
     borderWidth: 1,
@@ -624,15 +865,11 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#f8f8f8",
   },
-  dropDownItemText: {
-    fontSize: 16,
-    color: "#333",
-  },
-
+  dropDownItemText: { fontSize: 16, color: "#333" },
   modalButtons: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 10,
+    marginTop: 20,
   },
   button: {
     flex: 1,
@@ -644,4 +881,109 @@ const styles = StyleSheet.create({
   cancelButton: { backgroundColor: "#ccc" },
   saveButton: { backgroundColor: "#63B995" },
   buttonText: { color: "#fff", fontWeight: "bold", fontSize: 16 },
+
+  // Scheduler Styles
+  scheduleLink: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 10,
+    gap: 6,
+  },
+  scheduleLinkText: { color: "#63B995", fontWeight: "600", fontSize: 14 },
+  schedulerContainer: {
+    marginTop: 10,
+    borderWidth: 1,
+    borderColor: "#f0f0f0",
+    borderRadius: 12,
+    padding: 10,
+    backgroundColor: "#fafafa",
+  },
+  calendarContainer: { marginBottom: 15 },
+  calHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  calTitle: { fontWeight: "bold", fontSize: 16, color: "#333" },
+  calGrid: { flexDirection: "row", flexWrap: "wrap" },
+  calDay: {
+    width: "14.28%",
+    aspectRatio: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  calHeadText: { fontSize: 12, color: "#999", fontWeight: "bold" },
+  calDayText: { fontSize: 14, color: "#333" },
+  calDaySelected: { backgroundColor: "#63B995", borderRadius: 15 },
+  calDayTextSelected: { color: "#fff", fontWeight: "bold" },
+
+  // Time Picker Styles
+  timePickerContainer: {
+    borderTopWidth: 1,
+    borderTopColor: "#eee",
+    paddingTop: 15,
+  },
+  timeLabel: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#666",
+    marginBottom: 10,
+    textAlign: "center",
+  },
+  wheelsRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "flex-start",
+  },
+  wheelWrapper: { width: WHEEL_WIDTH, alignItems: "center" },
+  wheelContainer: {
+    height: WHEEL_HEIGHT,
+    width: WHEEL_WIDTH,
+    overflow: "hidden",
+  },
+  wheelLabel: {
+    fontSize: 10,
+    color: "#999",
+    marginBottom: 5,
+    height: 15,
+    textAlignVertical: "center",
+    textAlign: "center",
+    width: "100%",
+  },
+  wheel: { width: WHEEL_WIDTH },
+  wheelItem: {
+    height: ITEM_HEIGHT,
+    width: WHEEL_WIDTH,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  wheelText: { fontSize: 16, color: "#ccc", textAlign: "center" },
+  wheelTextSelected: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#63B995",
+    textAlign: "center",
+  },
+  colonWrapper: {
+    height: WHEEL_HEIGHT,
+    justifyContent: "center",
+    alignItems: "center",
+    width: 20,
+    marginTop: 20,
+  },
+  timeColon: { fontSize: 24, fontWeight: "bold", color: "#333" },
+  selectionOverlay: {
+    position: "absolute",
+    top: ITEM_HEIGHT,
+    left: 0,
+    right: 0,
+    height: ITEM_HEIGHT,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: "#E0E0E0",
+    backgroundColor: "rgba(99, 185, 149, 0.1)",
+    zIndex: 10,
+  },
 });
