@@ -28,7 +28,7 @@ export type Chore = {
   completedByName?: string | null;
   inProgressByAvatar?: string | null;
   completedByAvatar?: string | null;
-
+  scheduledFor?: any;
 
 };
 

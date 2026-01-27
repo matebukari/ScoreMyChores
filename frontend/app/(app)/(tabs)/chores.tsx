@@ -39,14 +39,10 @@ const MONTHS = [
 ];
 
 const ITEM_HEIGHT = 50;
-const WHEEL_WIDTH = 65; // Fixed width ensures centering stability
+const WHEEL_WIDTH = 65;
 const VISIBLE_ITEMS = 3;
-const WHEEL_HEIGHT = ITEM_HEIGHT * VISIBLE_ITEMS; // 150px total height
+const WHEEL_HEIGHT = ITEM_HEIGHT * VISIBLE_ITEMS;
 
-/**
- * Screen for managing household chores.
- * Allows users to view, add, delete, and schedule chores.
- */
 export default function ChoresScreen() {
   const { user } = useAuth();
   const { activeHousehold, memberProfiles } = useHousehold();
@@ -70,17 +66,12 @@ export default function ChoresScreen() {
   const hourScrollRef = useRef<ScrollView>(null);
   const minuteScrollRef = useRef<ScrollView>(null);
 
-  // Refs for tracking haptic triggers
   const lastHourIndex = useRef(new Date().getHours());
   const lastMinuteIndex = useRef(new Date().getMinutes());
 
   const insets = useSafeAreaInsets();
   const isAdmin = activeHousehold?.members?.[user?.uid || ""] === "admin";
 
-  /**
-   * Auto-scrolls the time picker to the currently selected time
-   * when the scheduler is opened.
-   */
   useEffect(() => {
     if (showScheduler) {
       setTimeout(() => {
@@ -100,10 +91,6 @@ export default function ChoresScreen() {
     }
   }, [showScheduler]);
 
-  /**
-   * Handles scroll events for the time picker wheels.
-   * Calculates the selected index based on offset and triggers haptics on change.
-   */
   const handleScroll = (
     event: NativeSyntheticEvent<NativeScrollEvent>,
     setValue: (val: number) => void,
@@ -112,8 +99,6 @@ export default function ChoresScreen() {
   ) => {
     const offsetY = event.nativeEvent.contentOffset.y;
     let index = Math.round(offsetY / ITEM_HEIGHT);
-
-    // Clamp values to valid range
     if (index < 0) index = 0;
     if (index > max) index = max;
 
@@ -138,16 +123,29 @@ export default function ChoresScreen() {
         scheduledFor = new Date(selectedDate);
         scheduledFor.setHours(selectedHour);
         scheduledFor.setMinutes(selectedMinute);
+
+        // --- NEW VALIDATION: Check for past time ---
+        const now = new Date();
+        if (scheduledFor < now) {
+          Alert.alert("Invalid Time", "You cannot schedule a task for the past.");
+          setIsAdding(false);
+          return;
+        }
+        // -------------------------------------------
       }
 
-      // Note: Pass scheduledFor to your addChore service if supported
-      await addChore(newChoreTitle, parseInt(newChorePoints));
+      await addChore(newChoreTitle, parseInt(newChorePoints), scheduledFor);
 
       setNewChoreTitle("");
       setNewChorePoints("");
       setShowPointOptions(false);
       setShowScheduler(false);
       setIsModalVisible(false);
+      // Reset scheduler to "now" for next time
+      const now = new Date();
+      setSelectedDate(now);
+      setSelectedHour(now.getHours());
+      setSelectedMinute(now.getMinutes());
     } catch (error) {
       Alert.alert("Error", "Failed to add chore");
     } finally {
@@ -157,45 +155,32 @@ export default function ChoresScreen() {
 
   const handleDeleteChore = (id: string) => {
     if (!isAdmin) {
-      Alert.alert(
-        "Permission Denied",
-        "Only the household admin can delete chores.",
-      );
+      Alert.alert("Permission Denied", "Only the household admin can delete chores.");
       return;
     }
     Alert.alert("Delete Chore", "Are you sure you want to remove this chore?", [
       { text: "Cancel", style: "cancel" },
-      {
-        text: "Delete",
-        style: "destructive",
-        onPress: async () => await choreService.deleteChore(id),
-      },
+      { text: "Delete", style: "destructive", onPress: async () => await choreService.deleteChore(id) },
     ]);
   };
 
   const handleDeleteAll = () => {
     if (!isAdmin || chores.length === 0) return;
-    Alert.alert(
-      "Delete ALL Chores",
-      "WARNING: This will remove every single task.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete All",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              const promises = chores.map((chore) =>
-                choreService.deleteChore(chore.id),
-              );
-              await Promise.all(promises);
-            } catch (error) {
-              Alert.alert("Error", "Failed to delete all chores.");
-            }
-          },
+    Alert.alert("Delete ALL Chores", "WARNING: This will remove every single task.", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Delete All",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            const promises = chores.map((chore) => choreService.deleteChore(chore.id));
+            await Promise.all(promises);
+          } catch (error) {
+            Alert.alert("Error", "Failed to delete all chores.");
+          }
         },
-      ],
-    );
+      },
+    ]);
   };
 
   const handleResetAll = () => {
@@ -218,14 +203,15 @@ export default function ChoresScreen() {
   const getFirstDayOfMonth = (year: number, month: number) =>
     new Date(year, month, 1).getDay();
 
-  /**
-   * Renders the monthly calendar grid.
-   */
   const renderCalendar = () => {
     const year = currentMonth.getFullYear();
     const month = currentMonth.getMonth();
     const daysInMonth = getDaysInMonth(year, month);
     const firstDay = getFirstDayOfMonth(year, month);
+
+    // Get "Today" at 00:00:00 for comparison
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
     const slots = [];
     for (let i = 0; i < firstDay; i++) {
@@ -237,15 +223,30 @@ export default function ChoresScreen() {
         selectedDate.getMonth() === month &&
         selectedDate.getFullYear() === year;
 
+      // Check if this day is in the past
+      const thisDate = new Date(year, month, i);
+      const isPast = thisDate < today;
+
       slots.push(
         <TouchableOpacity
           key={i}
           style={styles.calDay}
+          disabled={isPast}
           onPress={() => setSelectedDate(new Date(year, month, i))}
         >
-          <View style={[styles.dayBubble, isSelected && styles.dayBubbleSelected]}>
+          <View
+            style={[
+              styles.dayBubble,
+              isSelected && styles.dayBubbleSelected,
+              isPast && { opacity: 0.8 }
+            ]}
+          >
             <Text
-              style={[styles.calDayText, isSelected && styles.calDayTextSelected]}
+              style={[
+                styles.calDayText,
+                isSelected && styles.calDayTextSelected,
+                isPast && { color: "#ccc" }
+              ]}
             >
               {i}
             </Text>
@@ -257,17 +258,13 @@ export default function ChoresScreen() {
     return (
       <View style={styles.calendarContainer}>
         <View style={styles.calHeader}>
-          <TouchableOpacity
-            onPress={() => setCurrentMonth(new Date(year, month - 1, 1))}
-          >
+          <TouchableOpacity onPress={() => setCurrentMonth(new Date(year, month - 1, 1))}>
             <Ionicons name="chevron-back" size={24} color="#666" />
           </TouchableOpacity>
           <Text style={styles.calTitle}>
             {MONTHS[month]} {year}
           </Text>
-          <TouchableOpacity
-            onPress={() => setCurrentMonth(new Date(year, month + 1, 1))}
-          >
+          <TouchableOpacity onPress={() => setCurrentMonth(new Date(year, month + 1, 1))}>
             <Ionicons name="chevron-forward" size={24} color="#666" />
           </TouchableOpacity>
         </View>
@@ -283,20 +280,12 @@ export default function ChoresScreen() {
     );
   };
 
-  /**
-   * Renders the custom Time Picker.
-   * Uses `snapToOffsets` with deterministic calculation to prevent scrolling drift.
-   * Uses Spacer views instead of padding to ensure compatibility with ScrollView offsets.
-   */
   const renderTimePicker = () => {
     const hoursData = Array.from({ length: 24 }, (_, i) => i);
     const minutesData = Array.from({ length: 60 }, (_, i) => i);
 
-    // Calculate exact pixel offsets for snapping
     const hourSnapOffsets = hoursData.map((_, i) => i * ITEM_HEIGHT);
     const minuteSnapOffsets = minutesData.map((_, i) => i * ITEM_HEIGHT);
-
-    // Padding Height to center the first item
     const spacerHeight = (WHEEL_HEIGHT - ITEM_HEIGHT) / 2;
 
     return (
@@ -317,19 +306,12 @@ export default function ChoresScreen() {
                 snapToAlignment="start"
                 decelerationRate="fast"
                 scrollEventThrottle={16}
-                onScroll={(e) =>
-                  handleScroll(e, setSelectedHour, lastHourIndex, 23)
-                }
+                onScroll={(e) => handleScroll(e, setSelectedHour, lastHourIndex, 23)}
               >
                 <View style={{ height: spacerHeight }} />
                 {hoursData.map((h) => (
                   <View key={`h-${h}`} style={styles.wheelItem}>
-                    <Text
-                      style={[
-                        styles.wheelText,
-                        selectedHour === h && styles.wheelTextSelected,
-                      ]}
-                    >
+                    <Text style={[styles.wheelText, selectedHour === h && styles.wheelTextSelected]}>
                       {h.toString().padStart(2, "0")}
                     </Text>
                   </View>
@@ -358,19 +340,12 @@ export default function ChoresScreen() {
                 snapToAlignment="start"
                 decelerationRate="fast"
                 scrollEventThrottle={16}
-                onScroll={(e) =>
-                  handleScroll(e, setSelectedMinute, lastMinuteIndex, 59)
-                }
+                onScroll={(e) => handleScroll(e, setSelectedMinute, lastMinuteIndex, 59)}
               >
                 <View style={{ height: spacerHeight }} />
                 {minutesData.map((m) => (
                   <View key={`m-${m}`} style={styles.wheelItem}>
-                    <Text
-                      style={[
-                        styles.wheelText,
-                        selectedMinute === m && styles.wheelTextSelected,
-                      ]}
-                    >
+                    <Text style={[styles.wheelText, selectedMinute === m && styles.wheelTextSelected]}>
                       {m.toString().padStart(2, "0")}
                     </Text>
                   </View>
@@ -384,13 +359,11 @@ export default function ChoresScreen() {
     );
   };
 
-  // --- Sub-components ---
+  // --- Sub-components (Avatar, Badge) ---
   const Avatar = ({ name, avatar, color }: any) => {
     if (avatar)
       return (
-        <View
-          style={[styles.avatarContainer, { backgroundColor: "transparent" }]}
-        >
+        <View style={[styles.avatarContainer, { backgroundColor: "transparent" }]}>
           <Text style={{ fontSize: 14 }}>{avatar}</Text>
         </View>
       );
@@ -403,13 +376,8 @@ export default function ChoresScreen() {
   };
 
   const renderStatusBadge = (item: any) => {
-    const isMe =
-      item.inProgressBy === user?.uid || item.completedBy === user?.uid;
-    const getLiveProfile = (
-      userId: string,
-      snapshotName: string,
-      snapshotAvatar: string,
-    ) => {
+    const isMe = item.inProgressBy === user?.uid || item.completedBy === user?.uid;
+    const getLiveProfile = (userId: string, snapshotName: string, snapshotAvatar: string) => {
       const liveUser = memberProfiles[userId];
       return {
         name: liveUser?.displayName || snapshotName || "Unknown",
@@ -417,86 +385,36 @@ export default function ChoresScreen() {
       };
     };
     if (item.inProgress && !isMe) {
-      const worker = getLiveProfile(
-        item.inProgressBy,
-        item.inProgressByName,
-        item.inProgressByAvatar,
-      );
+      const worker = getLiveProfile(item.inProgressBy, item.inProgressByName, item.inProgressByAvatar);
       return (
-        <View
-          style={[
-            styles.badge,
-            { backgroundColor: "#FFF3E0", borderColor: "#FFB74D" },
-          ]}
-        >
+        <View style={[styles.badge, { backgroundColor: "#FFF3E0", borderColor: "#FFB74D" }]}>
           <Avatar name={worker.name} avatar={worker.avatar} color="#F57C00" />
-          <Text style={[styles.badgeText, { color: "#E65100" }]}>
-            {worker.name} is working
-          </Text>
+          <Text style={[styles.badgeText, { color: "#E65100" }]}>{worker.name} is working</Text>
         </View>
       );
     }
     if (item.inProgress && isMe)
       return (
-        <View
-          style={[
-            styles.badge,
-            { backgroundColor: "#E3F2FD", borderColor: "#64B5F6" },
-          ]}
-        >
-          <Text style={{ fontSize: 14, marginRight: 4 }}>
-            {user?.photoURL || "👤"}
-          </Text>
-          <Text style={[styles.badgeText, { color: "#1565C0" }]}>
-            Doing Now
-          </Text>
+        <View style={[styles.badge, { backgroundColor: "#E3F2FD", borderColor: "#64B5F6" }]}>
+          <Text style={{ fontSize: 14, marginRight: 4 }}>{user?.photoURL || "👤"}</Text>
+          <Text style={[styles.badgeText, { color: "#1565C0" }]}>Doing Now</Text>
         </View>
       );
     if (item.completed && !isMe) {
-      const completer = getLiveProfile(
-        item.completedBy,
-        item.completedByName,
-        item.completedByAvatar,
-      );
+      const completer = getLiveProfile(item.completedBy, item.completedByName, item.completedByAvatar);
       return (
-        <View
-          style={[
-            styles.badge,
-            { backgroundColor: "#E8F5E9", borderColor: "#81C784" },
-          ]}
-        >
-          <Avatar
-            name={completer.name}
-            avatar={completer.avatar}
-            color="#388E3C"
-          />
-          <Text style={[styles.badgeText, { color: "#2E7D32" }]}>
-            Done by {completer.name}
-          </Text>
+        <View style={[styles.badge, { backgroundColor: "#E8F5E9", borderColor: "#81C784" }]}>
+          <Avatar name={completer.name} avatar={completer.avatar} color="#388E3C" />
+          <Text style={[styles.badgeText, { color: "#2E7D32" }]}>Done by {completer.name}</Text>
         </View>
       );
     }
     if (item.completed && isMe) {
-      const completer = getLiveProfile(
-        user?.uid || "",
-        item.completedByName,
-        item.completedByAvatar,
-      );
+      const completer = getLiveProfile(user?.uid || "", item.completedByName, item.completedByAvatar);
       return (
-        <View
-          style={[
-            styles.badge,
-            { backgroundColor: "#F3E5F5", borderColor: "#BA68C8" },
-          ]}
-        >
-          <Avatar
-            name={completer.name}
-            avatar={completer.avatar}
-            color="#7B1FA2"
-          />
-          <Text style={[styles.badgeText, { color: "#7B1FA2" }]}>
-            Done by You
-          </Text>
+        <View style={[styles.badge, { backgroundColor: "#F3E5F5", borderColor: "#BA68C8" }]}>
+          <Avatar name={completer.name} avatar={completer.avatar} color="#7B1FA2" />
+          <Text style={[styles.badgeText, { color: "#7B1FA2" }]}>Done by You</Text>
         </View>
       );
     }
@@ -504,40 +422,22 @@ export default function ChoresScreen() {
   };
 
   return (
-    <View
-      style={[
-        styles.container,
-        {
-          paddingTop: insets.top,
-          paddingLeft: insets.left + 20,
-          paddingRight: insets.right + 20,
-        },
-      ]}
-    >
+    <View style={[styles.container, { paddingTop: insets.top, paddingLeft: insets.left + 20, paddingRight: insets.right + 20 }]}>
       <View style={styles.header}>
         <Text style={styles.title}>Manage Chores</Text>
         {isAdmin && (
           <View style={styles.headerActions}>
             {chores.length > 0 && (
               <>
-                <TouchableOpacity
-                  style={styles.resetAllButton}
-                  onPress={handleResetAll}
-                >
+                <TouchableOpacity style={styles.resetAllButton} onPress={handleResetAll}>
                   <Ionicons name="refresh" size={22} color="white" />
                 </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.deleteAllButton}
-                  onPress={handleDeleteAll}
-                >
+                <TouchableOpacity style={styles.deleteAllButton} onPress={handleDeleteAll}>
                   <Ionicons name="trash-bin-outline" size={22} color="white" />
                 </TouchableOpacity>
               </>
             )}
-            <TouchableOpacity
-              style={styles.addButton}
-              onPress={() => setIsModalVisible(true)}
-            >
+            <TouchableOpacity style={styles.addButton} onPress={() => setIsModalVisible(true)}>
               <Ionicons name="add" size={28} color="white" />
             </TouchableOpacity>
           </View>
@@ -545,11 +445,7 @@ export default function ChoresScreen() {
       </View>
 
       {loading ? (
-        <ActivityIndicator
-          size="large"
-          color="#63B995"
-          style={{ marginTop: 50 }}
-        />
+        <ActivityIndicator size="large" color="#63B995" style={{ marginTop: 50 }} />
       ) : (
         <FlatList
           data={chores}
@@ -557,22 +453,13 @@ export default function ChoresScreen() {
           keyExtractor={(item) => item.id}
           ListEmptyComponent={
             <Text style={{ textAlign: "center", color: "#888", marginTop: 20 }}>
-              No chores yet.{" "}
-              {isAdmin ? "Add one!" : "Ask your admin to add some."}
+              No chores yet. {isAdmin ? "Add one!" : "Ask your admin to add some."}
             </Text>
           }
           renderItem={({ item }) => (
             <View style={[styles.listCard, item.completed && { opacity: 0.8 }]}>
               <View style={styles.cardLeftContent}>
-                <Text
-                  style={[
-                    styles.choreTitle,
-                    item.completed && {
-                      textDecorationLine: "line-through",
-                      color: "#999",
-                    },
-                  ]}
-                >
+                <Text style={[styles.choreTitle, item.completed && { textDecorationLine: "line-through", color: "#999" }]}>
                   {item.title}
                 </Text>
                 {renderStatusBadge(item)}
@@ -581,23 +468,11 @@ export default function ChoresScreen() {
                 <Text style={styles.pointsText}>{item.points} pts</Text>
                 {isAdmin && (
                   <View style={styles.adminRow}>
-                    <TouchableOpacity
-                      onPress={() => handleResetSingle(item.id)}
-                    >
-                      <Ionicons
-                        name="refresh-circle-outline"
-                        size={26}
-                        color="#2196F3"
-                      />
+                    <TouchableOpacity onPress={() => handleResetSingle(item.id)}>
+                      <Ionicons name="refresh-circle-outline" size={26} color="#2196F3" />
                     </TouchableOpacity>
-                    <TouchableOpacity
-                      onPress={() => handleDeleteChore(item.id)}
-                    >
-                      <Ionicons
-                        name="trash-outline"
-                        size={22}
-                        color="#FF5252"
-                      />
+                    <TouchableOpacity onPress={() => handleDeleteChore(item.id)}>
+                      <Ionicons name="trash-outline" size={22} color="#FF5252" />
                     </TouchableOpacity>
                   </View>
                 )}
@@ -608,18 +483,10 @@ export default function ChoresScreen() {
       )}
 
       {/* ADD CHORE MODAL */}
-      <Modal
-        visible={isModalVisible}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setIsModalVisible(false)}
-      >
+      <Modal visible={isModalVisible} animationType="slide" transparent={true} onRequestClose={() => setIsModalVisible(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <ScrollView
-              showsVerticalScrollIndicator={false}
-              keyboardShouldPersistTaps="handled"
-            >
+            <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
               <Text style={styles.modalTitle}>Add New Chore</Text>
               <TextInput
                 style={styles.input}
@@ -638,23 +505,12 @@ export default function ChoresScreen() {
                     onChangeText={setNewChorePoints}
                     keyboardType="numeric"
                   />
-                  <TouchableOpacity
-                    style={styles.dropdownToggle}
-                    onPress={() => setShowPointOptions(!showPointOptions)}
-                  >
-                    <Ionicons
-                      name={showPointOptions ? "chevron-up" : "chevron-down"}
-                      size={24}
-                      color="#666"
-                    />
+                  <TouchableOpacity style={styles.dropdownToggle} onPress={() => setShowPointOptions(!showPointOptions)}>
+                    <Ionicons name={showPointOptions ? "chevron-up" : "chevron-down"} size={24} color="#666" />
                   </TouchableOpacity>
                 </View>
                 {showPointOptions && (
-                  <ScrollView
-                    style={styles.dropdownList}
-                    nestedScrollEnabled={true}
-                    keyboardShouldPersistTaps="handled"
-                  >
+                  <ScrollView style={styles.dropdownList} nestedScrollEnabled={true} keyboardShouldPersistTaps="handled">
                     {POINT_OPTIONS.map((opt) => (
                       <TouchableOpacity
                         key={opt}
@@ -672,14 +528,9 @@ export default function ChoresScreen() {
               </View>
 
               {/* Schedule Link */}
-              <TouchableOpacity
-                style={styles.scheduleLink}
-                onPress={() => setShowScheduler(!showScheduler)}
-              >
+              <TouchableOpacity style={styles.scheduleLink} onPress={() => setShowScheduler(!showScheduler)}>
                 <Ionicons name="calendar-outline" size={16} color="#63B995" />
-                <Text style={styles.scheduleLinkText}>
-                  {showScheduler ? "Hide Scheduler" : "Schedule for later?"}
-                </Text>
+                <Text style={styles.scheduleLinkText}>{showScheduler ? "Hide Scheduler" : "Schedule for later?"}</Text>
               </TouchableOpacity>
 
               {/* Scheduler UI */}
@@ -691,10 +542,7 @@ export default function ChoresScreen() {
               )}
 
               <View style={styles.modalButtons}>
-                <TouchableOpacity
-                  style={[styles.button, styles.cancelButton]}
-                  onPress={() => setIsModalVisible(false)}
-                >
+                <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={() => setIsModalVisible(false)}>
                   <Text style={styles.buttonText}>Cancel</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -702,11 +550,7 @@ export default function ChoresScreen() {
                   onPress={handleAddChore}
                   disabled={isAdding}
                 >
-                  {isAdding ? (
-                    <ActivityIndicator color="white" />
-                  ) : (
-                    <Text style={styles.buttonText}>Add Task</Text>
-                  )}
+                  {isAdding ? <ActivityIndicator color="white" /> : <Text style={styles.buttonText}>Add Task</Text>}
                 </TouchableOpacity>
               </View>
             </ScrollView>
@@ -816,7 +660,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   avatarText: { color: "white", fontSize: 9, fontWeight: "bold" },
-
   // Modal Styles
   modalOverlay: {
     flex: 1,
@@ -883,7 +726,6 @@ const styles = StyleSheet.create({
   cancelButton: { backgroundColor: "#ccc" },
   saveButton: { backgroundColor: "#63B995" },
   buttonText: { color: "#fff", fontWeight: "bold", fontSize: 16 },
-
   // Scheduler Styles
   scheduleLink: {
     flexDirection: "row",
@@ -931,7 +773,6 @@ const styles = StyleSheet.create({
   calHeadText: { fontSize: 12, color: "#999", fontWeight: "bold" },
   calDayText: { fontSize: 14, color: "#333" },
   calDayTextSelected: { color: "#fff", fontWeight: "bold" },
-
   // Time Picker Styles
   timePickerContainer: {
     borderTopWidth: 1,

@@ -1,4 +1,4 @@
-import React, { act, createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 import {
   collection,
   query,
@@ -27,7 +27,7 @@ type ChoreContextType = {
   chores: Chore[];
   activities: Activity[];
   loading: boolean;
-  addChore: (title: string, points: number) => Promise<void>;
+  addChore: (title: string, points: number, scheduledFor?: Date | null) => Promise<void>;
   updateStatus: (choreId: string, status: 'pending' | 'in-progress' | 'completed') => Promise<void>;
   resetChore: (choreId: string) => Promise<void>;
   resetAll: () => Promise<void>;
@@ -38,7 +38,12 @@ const ChoreContext = createContext<ChoreContextType | undefined>(undefined);
 export function ChoreProvider({ children }: { children: React.ReactNode }) {
   const { activeHousehold, activeHouseholdId } = useHousehold();
   const { user } = useAuth();
-  const [chores, setChores] = useState<Chore[]>([]);
+  
+  // 'allChores' stores everything from the database (including future tasks)
+  const [allChores, setAllChores] = useState<Chore[]>([]);
+  // 'displayedChores' stores only what should be visible now
+  const [displayedChores, setDisplayedChores] = useState<Chore[]>([]);
+  
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -77,9 +82,11 @@ export function ChoreProvider({ children }: { children: React.ReactNode }) {
     }
   }, [activeHouseholdId, activeHousehold])
 
+  // 1. Fetch Data Listener
   useEffect(() => {
     if (!user || !activeHouseholdId) {
-      setChores([]);
+      setAllChores([]);
+      setDisplayedChores([]);
       setActivities([]);
       setLoading(false);
       return;
@@ -101,8 +108,10 @@ export function ChoreProvider({ children }: { children: React.ReactNode }) {
       orderBy("completedAt", "desc")
     );
 
+    // Fetch raw list into 'allChores'
     const unsubChores = onSnapshot(qChores, (snapshot) => {
-      setChores(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Chore[]);
+      const rawList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Chore[];
+      setAllChores(rawList);
     }, (error) => {
       if (error.code !== 'permission-denied') console.error("Chores fetch error:", error);
     });
@@ -120,9 +129,47 @@ export function ChoreProvider({ children }: { children: React.ReactNode }) {
     }
   }, [activeHouseholdId, user]);
 
-  const addChore = async (title: string, points: number) => {
+  // 2. Time-based Filter (Runs on data change AND every 10 seconds)
+  useEffect(() => {
+    const updateVisibleChores = () => {
+      const now = new Date();
+      
+      const visible = allChores.filter(chore => {
+        // If there is no schedule, show it immediately
+        if (!chore.scheduledFor) return true;
+
+        // Handle Firestore Timestamp vs Date object
+        const scheduledDate = chore.scheduledFor.toDate 
+          ? chore.scheduledFor.toDate() 
+          : new Date(chore.scheduledFor);
+
+        // Only show if the time has passed (schedule <= now)
+        return scheduledDate <= now;
+      });
+
+      setDisplayedChores(visible);
+    };
+
+    // Run immediately when 'allChores' changes
+    updateVisibleChores();
+
+    // Run periodically to reveal tasks that just became due
+    const interval = setInterval(updateVisibleChores, 10000); // Check every 10s
+
+    return () => clearInterval(interval);
+  }, [allChores]);
+
+  const addChore = async (title: string, points: number, scheduledFor?: Date | null) => {
     if (!activeHouseholdId || !user) throw new Error("No user/household");
-    await choreService.addChore(activeHouseholdId, user.uid, { title, points });
+    
+    // Create the data object with optional schedule
+    const choreData: Partial<Chore> = { title, points };
+    if (scheduledFor) {
+      choreData.scheduledFor = scheduledFor;
+    }
+
+    // Pass the complete object to the service
+    await choreService.addChore(activeHouseholdId, user.uid, choreData);
   };
 
   const updateStatus = async (choreId: string, status: 'pending' | 'in-progress' | 'completed') => {
@@ -132,15 +179,14 @@ export function ChoreProvider({ children }: { children: React.ReactNode }) {
     const cleanName = user.displayName || user.email?.split('@')[0] || 'Member';
     const userSnapshot: UserSnapshot = { uid: user.uid, displayName: cleanName, photoURL: user.photoURL || null };
 
-    // Find the chore object to get its details
-    const targetChore = chores.find(c => c.id === choreId);
+    // Find the chore object to get its details (look in displayedChores)
+    const targetChore = displayedChores.find(c => c.id === choreId);
     if (!targetChore) return;
 
     // Handle "Only one in-progress at a time" logic
-    // LOGIC: If we are trying to start a task...
     if (status === 'in-progress') {
       // Find the chore that is currently running (if any)
-      const myActiveChore = chores.find(c => c.inProgress && c.inProgressBy === user.uid);
+      const myActiveChore = displayedChores.find(c => c.inProgress && c.inProgressBy === user.uid);
       // If we found one, and it's NOT the one we just clicked...
       if (myActiveChore && myActiveChore.id !== choreId) {
         // ...turn it off (set to pending)
@@ -167,7 +213,7 @@ export function ChoreProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <ChoreContext.Provider value={{
-      chores,
+      chores: displayedChores, // Map internal 'displayedChores' to public 'chores'
       activities, 
       loading, 
       addChore, 
