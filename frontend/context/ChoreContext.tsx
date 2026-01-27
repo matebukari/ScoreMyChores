@@ -36,7 +36,7 @@ type ChoreContextType = {
 const ChoreContext = createContext<ChoreContextType | undefined>(undefined);
 
 export function ChoreProvider({ children }: { children: React.ReactNode }) {
-  const { activeHousehold, activeHouseholdId } = useHousehold();
+  const { activeHouseholdId } = useHousehold();
   const { user } = useAuth();
   
   // 'allChores' stores everything from the database (including future tasks)
@@ -46,41 +46,6 @@ export function ChoreProvider({ children }: { children: React.ReactNode }) {
   
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
-
-  // Daily reset check logic
-  useEffect(() => {
-    const checkDailyReset = async () => {
-      if (!activeHousehold || !activeHouseholdId) return;
-
-      const now = new Date();
-      // If lastResetDate doesn't exist, assume it's today or yesterday
-      const lastReset = activeHousehold.lastResetDate
-        ? activeHousehold.lastResetDate.toDate()
-        : new Date(0);
-
-      // Check if "Last Reset" was on a different day than "Today"
-      const isSameDay =
-        now.getFullYear() === lastReset.getFullYear() &&
-        now.getMonth() === lastReset.getMonth() &&
-        now.getDate() === lastReset.getDate();
-
-      if (!isSameDay) {
-        console.log("New day detected! Resetting chores...");
-        try {
-          // Reset all chores
-          await choreService.resetAllChores(activeHouseholdId);
-          // Update the last reset date to NOW so it doesn't run again today
-          await householdService.updateLastReset(activeHouseholdId);
-        } catch (error) {
-          console.error("Failed to run daily reset:", error);
-        }
-      }
-    };
-
-    if (activeHouseholdId) {
-      checkDailyReset();
-    }
-  }, [activeHouseholdId, activeHousehold])
 
   // 1. Fetch Data Listener
   useEffect(() => {
