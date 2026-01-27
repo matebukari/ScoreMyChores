@@ -13,7 +13,7 @@ import {
   FlatList,
 } from "react-native";
 import { useAuth } from "@/context/AuthContext";
-import { useHousehold } from "@/context/HouseholdContext";
+import { useHousehold, UserProfile } from "@/context/HouseholdContext";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { householdService } from "@/services/householdService";
@@ -31,7 +31,7 @@ const MAX_NAME_LENGTH = 16;
 
 export default function ProfileScreen() {
   const { user, logout, updateName, updateAvatar } = useAuth();
-  const { activeHousehold, joinedHouseholds, switchHousehold, loading } = useHousehold();
+  const { activeHousehold, joinedHouseholds, switchHousehold, loading, memberProfiles } = useHousehold();
 
   const [switching, setSwitching] = useState(false);
   const [isJoinModalVisible, setIsJoinModalVisible] = useState(false);
@@ -45,6 +45,12 @@ export default function ProfileScreen() {
 
   // Edit Avatar State
   const [isAvatarModalVisible, setIsAvatarModalVisible] = useState(false);
+
+  // Manage Members State
+  const [isManageMemberVisible, setIsManageMemberVisible] = useState(false);
+  const [updatingRole, setUpdatingRole] = useState<string | null>(null);
+
+  const isAdmin = activeHousehold?.members?.[user?.uid || ""] === "admin";
 
   const insets = useSafeAreaInsets();
 
@@ -123,9 +129,73 @@ export default function ProfileScreen() {
     }
   };
 
+  const handleUpdateRole = async (targetUserId: string, currentRole: 'admin' | 'member') => {
+    if (!activeHousehold) return;
+    const newRole = currentRole === 'admin' ? 'member' : 'admin';
+    const action = newRole === 'admin' ? "Promote to Admin" : "Demote to Member";
+
+    Alert.alert(action, `Are you sure you want to change this user's role?`, [
+      {text: "Cancel", style: "cancel" },
+      {
+        text: "Confirm",
+        onPress: async () => {
+          try {
+            setUpdatingRole(targetUserId);
+            await householdService.updateMemberRole(activeHousehold.id, targetUserId, newRole);
+          } catch (error) {
+            Alert.alert("Error", "Failed to update role.");
+          } finally {
+            setUpdatingRole(null);
+          }
+        }
+      }
+    ]);
+  };
+
   const displayName = user?.displayName || "User";
   const initial = displayName.charAt(0).toUpperCase();
   const currentAvatar = user?.photoURL;
+
+  const renderMemberItem = ({ item }: { item: UserProfile }) => {
+    const role = activeHousehold?.members?.[item.id] || 'member';
+    const isMe = item.id === user?.uid;
+
+    return (
+      <View style={styles.memberRow}>
+        <View style={styles.memberInfo}>
+          <Text style={styles.memberAvatar}>{item.photoURL || "👤"}</Text>
+          <View>
+            <Text style={styles.memberName}>{item.displayName || "Unknown"}</Text>
+            <Text style={styles.memberEmail}>{item.email}</Text>
+          </View>
+        </View>
+
+        <View style={styles.roleContainer}>
+          <Text style={[styles.roleBadge, role === 'admin' ? styles.adminBadge : styles.memberBadge]}>
+            {role === 'admin' ? "ADMIN" : "MEMBER"}
+          </Text>
+
+          {!isMe && (
+            <TouchableOpacity
+              onPress={() => handleUpdateRole(item.id, role)}
+              disabled={!!updatingRole}
+              style={styles.roleButton}
+            >
+              {updatingRole === item.id ? (
+                <ActivityIndicator size="small" color="#63B995"/>
+              ) : (
+                <Ionicons
+                  name={role === 'admin' ? "arrow-down-circle-outline" : "arrow-up-circle-outline"}
+                  size={24}
+                  color="#63B995"
+                />
+              )}
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
+    );
+  };
 
   return (
     <ScrollView style={[styles.container,
@@ -197,6 +267,20 @@ export default function ProfileScreen() {
               <Ionicons name="share-outline" size={20} color="#63B995" />
             </TouchableOpacity>
           </View>
+
+          {isAdmin && (
+            <>
+              <View style={styles.divider} >
+                <TouchableOpacity
+                  style={styles.manageButton}
+                  onPress={() => setIsManageMemberVisible(true)}
+                >
+                  <Ionicons name="people-outline" size={20} color="#fff" />
+                  <Text style={styles.manageButtonText}>Manage Members</Text>
+                </TouchableOpacity>
+              </View>
+            </>
+          )}
         </View>
       ) : (
         <Text style={{ color: "#888", marginBottom: 20 }}>No active household.</Text>
@@ -253,7 +337,7 @@ export default function ProfileScreen() {
         </View>
       </Modal>
 
-      {/* 2. EDIT NAME MODAL (UPDATED) */}
+      {/* 2. EDIT NAME MODAL */}
       <Modal visible={isEditNameVisible} animationType="fade" transparent={true} onRequestClose={() => setIsEditNameVisible(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
@@ -310,6 +394,28 @@ export default function ProfileScreen() {
         </View>
       </Modal>
 
+      {/* 4. MANAGE MEMBERS MODAL */}
+      <Modal visible={isManageMemberVisible} animationType="slide" transparent={true} onRequestClose={() => setIsManageMemberVisible(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { maxHeight: '70%' }]}>
+            <Text style={styles.modalTitle}>Manage Members</Text>
+            <Text style={styles.modalSubtitle}>Promote members to admin or remove privileges.</Text>
+
+            <FlatList
+              data={Object.values(memberProfiles)}
+              keyExtractor={(item) => item.id}
+              renderItem={renderMemberItem}
+              style={{ width: '100%', marginBottom: 15 }}
+              showsVerticalScrollIndicator={false}
+            />
+
+            <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={() => setIsManageMemberVisible(false)}>
+              <Text style={styles.buttonText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
     </ScrollView>
   );
 }
@@ -358,6 +464,17 @@ const styles = StyleSheet.create({
   codeValue: { fontSize: 24, fontWeight: "bold", color: "#333", marginTop: 4, letterSpacing: 2 },
   shareButton: { padding: 10, backgroundColor: "#f5f5f5", borderRadius: 8 },
 
+  manageButton: {
+    backgroundColor: '#333',
+    padding: 12,
+    borderRadius: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8
+  },
+  manageButtonText: { color: '#fff', fontWeight: 'bold' },
+
   joinButton: { flexDirection: "row", alignItems: "center", justifyContent: "center", backgroundColor: "#fff", padding: 15, borderRadius: 12, marginBottom: 25, borderWidth: 1, borderColor: "#63B995", borderStyle: "dashed" },
   joinButtonText: { color: "#63B995", fontWeight: "600", marginLeft: 8 },
 
@@ -397,5 +514,36 @@ const styles = StyleSheet.create({
     backgroundColor: '#f0f0f0',
     justifyContent: 'center', alignItems: 'center',
     margin: 5
-  }
+  },
+
+  // Member Management Styles
+  memberRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0'
+  },
+  memberInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    flex: 1
+  },
+  memberAvatar: { fontSize: 24 },
+  memberName: { fontSize: 16, fontWeight: 'bold', color: '#333' },
+  memberEmail: { fontSize: 12, color: '#999' },
+  roleContainer: {alignItems: 'flex-end', gap: 4 },
+  roleBadge: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+    overflow: 'hidden'
+  },
+  adminBadge: { backgroundColor: '#333', color: '#fff' },
+  memberBadge: { backgroundColor: '#e0e0e0', color: '#666' },
+  roleButton: { padding: 5 }
 });

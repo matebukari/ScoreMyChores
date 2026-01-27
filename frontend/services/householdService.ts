@@ -97,5 +97,13 @@ export const householdService = {
     await updateDoc(houseRef, {
       lastResetDate: Timestamp.now()
     });
+  },
+
+  // Update a member's role (Promote/Demote)
+  updateMemberRole: async (householdId: string, targetUserId: string, newRole: 'admin' | 'member') => {
+    const houseRef = doc(db, "households", householdId);
+    await updateDoc(houseRef, {
+      [`members.${targetUserId}`] : newRole
+    });
   }
 };
