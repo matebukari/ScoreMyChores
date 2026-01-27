@@ -240,14 +240,16 @@ export default function ChoresScreen() {
       slots.push(
         <TouchableOpacity
           key={i}
-          style={[styles.calDay, isSelected && styles.calDaySelected]}
+          style={styles.calDay}
           onPress={() => setSelectedDate(new Date(year, month, i))}
         >
-          <Text
-            style={[styles.calDayText, isSelected && styles.calDayTextSelected]}
-          >
-            {i}
-          </Text>
+          <View style={[styles.dayBubble, isSelected && styles.dayBubbleSelected]}>
+            <Text
+              style={[styles.calDayText, isSelected && styles.calDayTextSelected]}
+            >
+              {i}
+            </Text>
+          </View>
         </TouchableOpacity>,
       );
     }
@@ -914,9 +916,20 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+  dayBubble: {
+    width: 34,
+    height: 34,
+    borderRadius: 50,
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "transparent",
+  },
+  dayBubbleSelected: {
+    backgroundColor: "#63B995",
+  },
   calHeadText: { fontSize: 12, color: "#999", fontWeight: "bold" },
   calDayText: { fontSize: 14, color: "#333" },
-  calDaySelected: { backgroundColor: "#63B995", borderRadius: 15 },
   calDayTextSelected: { color: "#fff", fontWeight: "bold" },
 
   // Time Picker Styles
