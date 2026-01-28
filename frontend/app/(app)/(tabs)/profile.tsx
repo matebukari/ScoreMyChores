@@ -270,7 +270,7 @@ export default function ProfileScreen() {
 
           {isAdmin && (
             <>
-              <View style={styles.divider} >
+              <View style={styles.divider} />
                 <TouchableOpacity
                   style={styles.manageButton}
                   onPress={() => setIsManageMemberVisible(true)}
@@ -278,7 +278,6 @@ export default function ProfileScreen() {
                   <Ionicons name="people-outline" size={20} color="#fff" />
                   <Text style={styles.manageButtonText}>Manage Members</Text>
                 </TouchableOpacity>
-              </View>
             </>
           )}
         </View>
@@ -387,9 +386,11 @@ export default function ProfileScreen() {
                 </TouchableOpacity>
               )}
             />
-            <TouchableOpacity style={[styles.button, styles.cancelButton, { marginTop: 10 }]} onPress={() => setIsAvatarModalVisible(false)}>
-              <Text style={styles.buttonText}>Cancel</Text>
-            </TouchableOpacity>
+            <View style={styles.modalButtons}>
+              <TouchableOpacity style={[styles.button, styles.cancelButton, { marginTop: 10 }]} onPress={() => setIsAvatarModalVisible(false)}>
+                <Text style={styles.buttonText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
@@ -409,9 +410,11 @@ export default function ProfileScreen() {
               showsVerticalScrollIndicator={false}
             />
 
-            <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={() => setIsManageMemberVisible(false)}>
-              <Text style={styles.buttonText}>Close</Text>
-            </TouchableOpacity>
+            <View style={styles.modalButtons}>
+              <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={() => setIsManageMemberVisible(false)}>
+                <Text style={styles.buttonText}>Close</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
@@ -534,7 +537,11 @@ const styles = StyleSheet.create({
   memberAvatar: { fontSize: 24 },
   memberName: { fontSize: 16, fontWeight: 'bold', color: '#333' },
   memberEmail: { fontSize: 12, color: '#999' },
-  roleContainer: {alignItems: 'flex-end', gap: 4 },
+  roleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8
+  },
   roleBadge: {
     fontSize: 10,
     fontWeight: 'bold',
