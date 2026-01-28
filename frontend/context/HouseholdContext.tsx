@@ -106,6 +106,31 @@ export function HouseholdProvider({ children }: { children: React.ReactNode }) {
     return () => unsubscribeUser();
   }, [user]);
 
+  // Listen to the Active Household Document in Real-Time
+  useEffect(() => {
+    if (!activeHouseholdId) return;
+
+    const householdRef = doc(db, "households", activeHouseholdId);
+
+    const unsubscribeHousehold = onSnapshot(
+      householdRef,
+      (docSnap) => {
+        if (docSnap.exists()) {
+          setActiveHousehold({ id: docSnap.id, ...docSnap.data() } as Household);
+        } else {
+          setActiveHousehold(null);
+        }
+        setLoading(false);
+      },
+      (error) => {
+        console.error("Household snaphot error:", error);
+        setLoading(false);
+      }
+    );
+
+    return () => unsubscribeHousehold();
+  }, [activeHousehold]);
+
   // Function to switch houses
   const switchHousehold = async (householdId: string) => {
     if (!user) return;
