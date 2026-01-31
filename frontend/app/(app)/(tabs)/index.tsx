@@ -6,13 +6,17 @@ import {
   FlatList,
   TouchableOpacity,
   ActivityIndicator,
+  Dimensions
 } from "react-native";
 import * as Haptics from "expo-haptics";
+import ConfettiCannon from "react-native-confetti-cannon"
 import { useAuth } from "@/context/AuthContext";
 import { useChores } from "@/context/ChoreContext";
 import { useHousehold } from "@/context/HouseholdContext";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+const { width } = Dimensions.get("window");
 
 /**
  * HomeScreen Component
@@ -24,6 +28,7 @@ export default function HomeScreen() {
   const { chores, updateStatus, loading } = useChores();
   const { memberProfiles } = useHousehold();
 
+  const [confettiTrigger, setConfettiTrigger] = useState(0);
   const insets = useSafeAreaInsets();
 
   const getLiveProfile = (
@@ -57,6 +62,7 @@ export default function HomeScreen() {
       } else if (chore.inProgress) {
         await updateStatus(chore.id, "completed");
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        setConfettiTrigger(prev => prev + 1);
       } else {
         await updateStatus(chore.id, "in-progress");
       }
@@ -368,6 +374,19 @@ export default function HomeScreen() {
           );
         }}
       />
+      {confettiTrigger > 0 && (
+        <View style={StyleSheet.absoluteFill} pointerEvents="none">
+          <ConfettiCannon
+            key={confettiTrigger}
+            count={200}
+            origin={{ x: width / 2, y: 0}}
+            autoStart={true}
+            fadeOut={true}
+            fallSpeed={3000}
+          />
+        </View>
+      )}
+      
     </View>
   );
 }

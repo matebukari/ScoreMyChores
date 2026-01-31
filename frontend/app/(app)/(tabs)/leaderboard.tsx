@@ -308,7 +308,7 @@ export default function LeaderboardScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#f8f9fa", paddingHorizontal: 20 },
-  header: { padding: 20, paddingTop: 60, backgroundColor: "#fff" },
+  header: { marginTop: 40, marginBottom: 20 },
   title: { fontSize: 28, fontWeight: "bold", color: "#333" },
 
   toggleContainer: {
