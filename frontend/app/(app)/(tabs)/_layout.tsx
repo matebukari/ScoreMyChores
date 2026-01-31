@@ -1,102 +1,98 @@
 import React from 'react';
 import { Text, View, Platform } from 'react-native';
-import { Tabs } from 'expo-router';
+import { withLayoutContext } from 'expo-router';
+import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs'
 import { Icons } from '@/constants/icons';
 
-const TabIcon = ({ focused, icon: Icon , title }: any) => {
-  // Use your primary purple for active, gray for inactive
+const { Navigator } = createMaterialTopTabNavigator();
+const MaterialTopTabs = withLayoutContext(Navigator);
+
+interface TabIconProps {
+  focused: boolean;
+  icon: any;
+  title: string;
+}
+
+const TabIcon = ({ focused, icon: Icon, title }: TabIconProps) => {
   const activeColor = "#63B995"; 
   const inactiveColor = "#9CA3AF";
 
-  if (focused) {
-    return(
-      <View className="items-center justify-center w-24 mt-2">
-        <Icon width={24} height={24} color={activeColor}/>
-        <Text 
-          className="text-xs font-semibold text-center mt-1" 
-          style={{ color: activeColor }}
-        >
-          {title}
-        </Text>
-      </View>
-    )
-  }
-
-  return(
-    <View className="items-center justify-center w-24 mt-2">
-      <Icon width={24} height={24} color={inactiveColor}/>
+  return (
+    <View className="items-center justify-center w-24">
+      <Icon width={24} height={24} color={focused ? activeColor : inactiveColor} />
       <Text 
-        className="text-xs font-normal text-center mt-1" 
-        style={{ color: inactiveColor }}
+        className={`text-xs text-center mt-1 ${focused ? 'font-semibold' : 'font-normal'}`}
+        style={{ color: focused ? activeColor : inactiveColor }}
       >
         {title}
       </Text>
     </View>
-  )
-}
+  );
+};
 
 const _layout = () => {
   return (
-    <Tabs
+    <MaterialTopTabs
+      tabBarPosition='bottom'
       screenOptions={{
         tabBarShowLabel: false,
+        tabBarShowIcon: true,
+        tabBarIndicatorStyle: { height: 0, backgroundColor: 'transparent' },
+        swipeEnabled: true,
+        animationEnabled: true,
         tabBarItemStyle: {
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100%", 
+          height: '100%',
+          justifyContent: 'center',
+          padding: 0,
         },
         tabBarStyle: {
           backgroundColor: "#FFFFFF", 
           borderTopWidth: 1,
           borderTopColor: "#F3F4F6",
-          height: Platform.OS === 'ios' ? 100 : 90,
           paddingTop: 15,
           paddingBottom: Platform.OS === 'ios' ? 35 : 30,
           elevation: 0,
+          shadowOpacity: 0
         },
       }}
     >
-      <Tabs.Screen
+      <MaterialTopTabs.Screen
         name="index"
         options={{ 
           title: 'Home',  
-          headerShown: false,
-          tabBarIcon: ({ focused }) => (
+          tabBarIcon: ({ focused }: { focused: boolean }) => (
             <TabIcon focused={focused} icon={Icons.Home} title="Home"/>
           )
         }}
       />
-      <Tabs.Screen
+      <MaterialTopTabs.Screen
         name="chores"
         options={{ 
-          title: 'Chores',  
-          headerShown: false,
-          tabBarIcon: ({ focused }) => (
+          title: 'Chores',
+          tabBarIcon: ({ focused }: { focused: boolean }) => (
             <TabIcon focused={focused} icon={Icons.Chores} title="Chores"/>
           )
         }}
       />
-      <Tabs.Screen
+      <MaterialTopTabs.Screen
         name="leaderboard"
         options={{ 
-          title: 'Leaderboard',  
-          headerShown: false,
-          tabBarIcon: ({ focused }) => (
+          title: 'Leaderboard',
+          tabBarIcon: ({ focused }: { focused: boolean }) => (
             <TabIcon focused={focused} icon={Icons.Leaderboard} title="Leaderboard"/>
           )
         }}
       />
-      <Tabs.Screen
+      <MaterialTopTabs.Screen
         name="profile"
         options={{ 
-          title: 'Profile',  
-          headerShown: false,
-          tabBarIcon: ({ focused }) => (
+          title: 'Profile',
+          tabBarIcon: ({ focused }: { focused: boolean }) => (
             <TabIcon focused={focused} icon={Icons.Profile} title="Profile"/>
           )
         }}
       />
-    </Tabs>
+    </MaterialTopTabs>
   )
 }
 
