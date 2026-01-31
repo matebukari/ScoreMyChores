@@ -403,7 +403,7 @@ export default function ProfileScreen() {
             <Text style={styles.modalSubtitle}>Promote members to admin or remove privileges.</Text>
 
             <FlatList
-              data={Object.values(memberProfiles)}
+              data={Object.values(memberProfiles).filter(m => m.id !== user?.uid)}
               keyExtractor={(item) => item.id}
               renderItem={renderMemberItem}
               style={{ width: '100%', marginBottom: 15 }}
