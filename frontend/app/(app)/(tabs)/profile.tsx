@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -50,9 +50,40 @@ export default function ProfileScreen() {
   const [isManageMemberVisible, setIsManageMemberVisible] = useState(false);
   const [updatingRole, setUpdatingRole] = useState<string | null>(null);
 
+  const [householdNames, setHouseholdNames] = useState<Record<string, string>>({});
+
   const isAdmin = activeHousehold?.members?.[user?.uid || ""] === "admin";
 
   const insets = useSafeAreaInsets();
+
+  useEffect(() => {
+    const fetchHouseholdNames = async () => {
+      const names: Record<string, string> = {};
+
+      for (const id of joinedHouseholds) {
+        if (id === activeHousehold?.id) {
+          names[id] = activeHousehold.name;
+        } else {
+          try {
+            const house = await householdService.getHousehold(id);
+            if (house) {
+              names[id] = house.name;
+            } else {
+              names[id] = "Unknown Household";
+            }
+          } catch (error) {
+            console.error("Failed to fetch household name", error);
+            names[id] = "Unknown Household";
+          }
+        }
+      }
+      setHouseholdNames(names);
+    };
+
+    if (joinedHouseholds.length > 0) {
+      fetchHouseholdNames();
+    }
+  }, [joinedHouseholds, activeHousehold]);
 
   const handleSignOut = async () => {
     Alert.alert("Sign Out", "Are you sure?", [
@@ -77,7 +108,6 @@ export default function ProfileScreen() {
     try {
       setSwitching(true);
       await switchHousehold(houseId);
-      Alert.alert("Success", "Switched household!");
     } catch (error) {
       Alert.alert("Error", "Failed to switch.");
     } finally {
@@ -92,7 +122,6 @@ export default function ProfileScreen() {
       await householdService.joinHousehold(user.uid, inviteCode.trim().toUpperCase());
       setIsJoinModalVisible(false);
       setInviteCode("");
-      Alert.alert("Success", "You have joined the household!");
     } catch (error: any) {
       Alert.alert("Error", error.message || "Invalid invite code");
     } finally {
@@ -112,7 +141,6 @@ export default function ProfileScreen() {
       setUpdatingName(true);
       await updateName(newName.trim());
       setIsEditNameVisible(false);
-      Alert.alert("Success", "Name updated successfully!");
     } catch (error) {
       Alert.alert("Error", "Failed to update name");
     } finally {
@@ -302,7 +330,7 @@ export default function ProfileScreen() {
               onPress={() => handleSwitch(houseId)}
             >
               <Text style={[styles.switchText, houseId === activeHousehold?.id && styles.activeSwitchText]}>
-                {houseId === activeHousehold?.id ? "Current House" : `House ID: ${houseId.substring(0, 5)}...`}
+                {householdNames[houseId] || "Loading..."}
               </Text>
               {houseId === activeHousehold?.id && <Ionicons name="checkmark-circle" size={20} color="#63B995" />}
             </TouchableOpacity>
