@@ -15,6 +15,7 @@ import { useChores } from "@/context/ChoreContext";
 import { useHousehold } from "@/context/HouseholdContext";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Platform } from "react-native";
 
 const { width } = Dimensions.get("window");
 
@@ -30,6 +31,7 @@ export default function HomeScreen() {
 
   const [confettiTrigger, setConfettiTrigger] = useState(0);
   const insets = useSafeAreaInsets();
+  const safeTop = insets.top > 0 ? insets.top : (Platform.OS === 'android' ? 30 : 0);
 
   const getLiveProfile = (
     userId: string | null | undefined, 
@@ -126,7 +128,7 @@ export default function HomeScreen() {
   return (
     <View style={[styles.container,
       { 
-        paddingTop: insets.top,
+        paddingTop: safeTop,
         paddingLeft: insets.left + 20,
         paddingRight: insets.right + 20 
       }

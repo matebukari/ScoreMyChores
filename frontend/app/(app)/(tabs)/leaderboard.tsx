@@ -12,6 +12,7 @@ import { useAuth } from "@/context/AuthContext";
 import { Timestamp } from "firebase/firestore";
 import { useHousehold } from "@/context/HouseholdContext";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Platform } from "react-native";
 
 export default function LeaderboardScreen() {
   const { user } = useAuth();
@@ -20,6 +21,7 @@ export default function LeaderboardScreen() {
   const [timeFrame, setTimeFrame] = useState<"weekly" | "monthly">("weekly");
 
   const insets = useSafeAreaInsets();
+  const safeTop = insets.top > 0 ? insets.top : (Platform.OS === 'android' ? 30 : 0);
 
   // Calculate Leaderbooard Data
   const leaderboardData = useMemo(() => {
@@ -89,7 +91,7 @@ export default function LeaderboardScreen() {
   return (
     <View style={[styles.container,
       { 
-        paddingTop: insets.top,
+        paddingTop: safeTop,
         paddingLeft: insets.left + 20,
         paddingRight: insets.right + 20 
       }

@@ -20,6 +20,7 @@ import { useHousehold } from "@/context/HouseholdContext";
 import { useChores } from "@/context/ChoreContext";
 import { choreService } from "@/services/choreService";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Platform } from "react-native";
 
 // --- Constants ---
 const POINT_OPTIONS = ["10", "20", "30", "50", "100"];
@@ -70,6 +71,7 @@ export default function ChoresScreen() {
   const lastMinuteIndex = useRef(new Date().getMinutes());
 
   const insets = useSafeAreaInsets();
+  const safeTop = insets.top > 0 ? insets.top : (Platform.OS === 'android' ? 30 : 0);
   const isAdmin = activeHousehold?.members?.[user?.uid || ""] === "admin";
 
   useEffect(() => {
@@ -422,7 +424,7 @@ export default function ChoresScreen() {
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top, paddingLeft: insets.left + 20, paddingRight: insets.right + 20 }]}>
+    <View style={[styles.container, { paddingTop: safeTop, paddingLeft: insets.left + 20, paddingRight: insets.right + 20 }]}>
       <View style={styles.header}>
         <Text style={styles.title}>Manage Chores</Text>
         {isAdmin && (

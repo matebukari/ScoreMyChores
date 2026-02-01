@@ -18,6 +18,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { householdService } from "@/services/householdService";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Platform } from "react-native";
 
 // List of fun avatars to pick from
 const AVATAR_OPTIONS = [
@@ -55,6 +56,7 @@ export default function ProfileScreen() {
   const isAdmin = activeHousehold?.members?.[user?.uid || ""] === "admin";
 
   const insets = useSafeAreaInsets();
+  const safeTop = insets.top > 0 ? insets.top : (Platform.OS === 'android' ? 30 : 0);
 
   useEffect(() => {
     const fetchHouseholdNames = async () => {
@@ -226,228 +228,227 @@ export default function ProfileScreen() {
   };
 
   return (
-    <ScrollView style={[styles.container,
-      { 
-        paddingTop: insets.top,
-        paddingLeft: insets.left + 20,
-        paddingRight: insets.right + 20 
-      }
-    ]}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Profile</Text>
-      </View>
+    <View style={[styles.container, { paddingTop: safeTop }]}>
+      <ScrollView 
+        contentContainerStyle={{ paddingBottom: 20 }}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.header}>
+          <Text style={styles.title}>Profile</Text>
+        </View>
 
-      {/* USER INFO CARD */}
-      <View style={styles.card}>
-        <View style={{position: 'relative'}}>
-          <View style={styles.avatarContainer}>
-            {currentAvatar ? (
-              <Text style={{ fontSize: 32 }}>{currentAvatar}</Text>
-            ) : (
-              <Text style={styles.avatarText}>{initial}</Text>
+        {/* USER INFO CARD */}
+        <View style={styles.card}>
+          <View style={{position: 'relative'}}>
+            <View style={styles.avatarContainer}>
+              {currentAvatar ? (
+                <Text style={{ fontSize: 32 }}>{currentAvatar}</Text>
+              ) : (
+                <Text style={styles.avatarText}>{initial}</Text>
+              )}
+            </View>
+            
+            <TouchableOpacity 
+              style={styles.editAvatarBadge}
+              onPress={() => setIsAvatarModalVisible(true)}
+            >
+              <Ionicons name="camera" size={14} color="white" />
+            </TouchableOpacity>
+          </View>
+
+          <View style={{ flex: 1, marginLeft: 15 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Text style={styles.nameText}>{displayName}</Text>
+              <TouchableOpacity onPress={() => {
+                setNewName(user?.displayName || "");
+                setIsEditNameVisible(true);
+              }}>
+                <Ionicons name="pencil-sharp" size={16} color="#63B995" />
+              </TouchableOpacity>
+            </View>
+            
+            <Text style={styles.emailText}>{user?.email}</Text>
+            <Text style={styles.roleText}>
+              Role: {activeHousehold?.members[user?.uid || ""] === "admin" ? "Admin" : "Member"}
+            </Text>
+          </View>
+        </View>
+
+        <Text style={styles.sectionTitle}>Current Household</Text>
+
+        {/* HOUSEHOLD INFO */}
+        {loading || switching ? (
+          <ActivityIndicator size="large" color="#63B995" />
+        ) : activeHousehold ? (
+          <View style={styles.houseCard}>
+            <View style={styles.houseHeader}>
+              <Ionicons name="home" size={24} color="#63B995" />
+              <Text style={styles.houseName}>{activeHousehold.name}</Text>
+            </View>
+            <View style={styles.divider} />
+            <View style={styles.codeRow}>
+              <View>
+                <Text style={styles.codeLabel}>Invite Code</Text>
+                <Text style={styles.codeValue}>{activeHousehold.inviteCode}</Text>
+              </View>
+              <TouchableOpacity onPress={handleShareCode} style={styles.shareButton}>
+                <Ionicons name="share-outline" size={20} color="#63B995" />
+              </TouchableOpacity>
+            </View>
+
+            {isAdmin && (
+              <>
+                <View style={styles.divider} />
+                  <TouchableOpacity
+                    style={styles.manageButton}
+                    onPress={() => setIsManageMemberVisible(true)}
+                  >
+                    <Ionicons name="people-outline" size={20} color="#fff" />
+                    <Text style={styles.manageButtonText}>Manage Members</Text>
+                  </TouchableOpacity>
+              </>
             )}
           </View>
-          
-          <TouchableOpacity 
-            style={styles.editAvatarBadge}
-            onPress={() => setIsAvatarModalVisible(true)}
-          >
-            <Ionicons name="camera" size={14} color="white" />
-          </TouchableOpacity>
-        </View>
+        ) : (
+          <Text style={{ color: "#888", marginBottom: 20 }}>No active household.</Text>
+        )}
 
-        <View style={{ flex: 1, marginLeft: 15 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <Text style={styles.nameText}>{displayName}</Text>
-            <TouchableOpacity onPress={() => {
-              setNewName(user?.displayName || "");
-              setIsEditNameVisible(true);
-            }}>
-              <Ionicons name="pencil-sharp" size={16} color="#63B995" />
-            </TouchableOpacity>
-          </View>
-          
-          <Text style={styles.emailText}>{user?.email}</Text>
-          <Text style={styles.roleText}>
-            Role: {activeHousehold?.members[user?.uid || ""] === "admin" ? "Admin" : "Member"}
-          </Text>
-        </View>
-      </View>
+        {/* JOIN BUTTON */}
+        <TouchableOpacity style={styles.joinButton} onPress={() => setIsJoinModalVisible(true)}>
+          <Ionicons name="add-circle-outline" size={22} color="#63B995" />
+          <Text style={styles.joinButtonText}>Join Another Household</Text>
+        </TouchableOpacity>
 
-      <Text style={styles.sectionTitle}>Current Household</Text>
+        {/* SWITCH LIST */}
+        {joinedHouseholds.length > 1 && (
+          <>
+            <Text style={styles.sectionTitle}>Switch Household</Text>
+            {joinedHouseholds.map((houseId) => (
+              <TouchableOpacity
+                key={houseId}
+                style={[styles.switchButton, houseId === activeHousehold?.id && styles.activeSwitchButton]}
+                onPress={() => handleSwitch(houseId)}
+              >
+                <Text style={[styles.switchText, houseId === activeHousehold?.id && styles.activeSwitchText]}>
+                  {householdNames[houseId] || "Loading..."}
+                </Text>
+                {houseId === activeHousehold?.id && <Ionicons name="checkmark-circle" size={20} color="#63B995" />}
+              </TouchableOpacity>
+            ))}
+          </>
+        )}
 
-      {/* HOUSEHOLD INFO */}
-      {loading || switching ? (
-        <ActivityIndicator size="large" color="#63B995" />
-      ) : activeHousehold ? (
-        <View style={styles.houseCard}>
-          <View style={styles.houseHeader}>
-            <Ionicons name="home" size={24} color="#63B995" />
-            <Text style={styles.houseName}>{activeHousehold.name}</Text>
-          </View>
-          <View style={styles.divider} />
-          <View style={styles.codeRow}>
-            <View>
-              <Text style={styles.codeLabel}>Invite Code</Text>
-              <Text style={styles.codeValue}>{activeHousehold.inviteCode}</Text>
-            </View>
-            <TouchableOpacity onPress={handleShareCode} style={styles.shareButton}>
-              <Ionicons name="share-outline" size={20} color="#63B995" />
-            </TouchableOpacity>
-          </View>
+        <TouchableOpacity style={styles.logoutButton} onPress={handleSignOut}>
+          <Text style={styles.logoutText}>Sign Out</Text>
+        </TouchableOpacity>
+        <View style={{ height: 50 }} />
 
-          {isAdmin && (
-            <>
-              <View style={styles.divider} />
-                <TouchableOpacity
-                  style={styles.manageButton}
-                  onPress={() => setIsManageMemberVisible(true)}
-                >
-                  <Ionicons name="people-outline" size={20} color="#fff" />
-                  <Text style={styles.manageButtonText}>Manage Members</Text>
+        {/* --- MODALS --- */}
+
+        {/* 1. JOIN MODAL */}
+        <Modal visible={isJoinModalVisible} animationType="slide" transparent={true} onRequestClose={() => setIsJoinModalVisible(false)}>
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Join Household</Text>
+              <Text style={styles.modalSubtitle}>Enter the invite code from the Admin</Text>
+              <TextInput style={styles.input} placeholder="Invite Code (e.g. A1B2C3)" value={inviteCode} onChangeText={setInviteCode} autoCapitalize="characters" />
+              <View style={styles.modalButtons}>
+                <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={() => setIsJoinModalVisible(false)}>
+                  <Text style={styles.buttonText}>Cancel</Text>
                 </TouchableOpacity>
-            </>
-          )}
-        </View>
-      ) : (
-        <Text style={{ color: "#888", marginBottom: 20 }}>No active household.</Text>
-      )}
+                <TouchableOpacity style={[styles.button, styles.saveButton]} onPress={handleJoinHousehold} disabled={joining}>
+                  {joining ? <ActivityIndicator color="white" /> : <Text style={styles.buttonText}>Join</Text>}
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
 
-      {/* JOIN BUTTON */}
-      <TouchableOpacity style={styles.joinButton} onPress={() => setIsJoinModalVisible(true)}>
-        <Ionicons name="add-circle-outline" size={22} color="#63B995" />
-        <Text style={styles.joinButtonText}>Join Another Household</Text>
-      </TouchableOpacity>
-
-      {/* SWITCH LIST */}
-      {joinedHouseholds.length > 1 && (
-        <>
-          <Text style={styles.sectionTitle}>Switch Household</Text>
-          {joinedHouseholds.map((houseId) => (
-            <TouchableOpacity
-              key={houseId}
-              style={[styles.switchButton, houseId === activeHousehold?.id && styles.activeSwitchButton]}
-              onPress={() => handleSwitch(houseId)}
-            >
-              <Text style={[styles.switchText, houseId === activeHousehold?.id && styles.activeSwitchText]}>
-                {householdNames[houseId] || "Loading..."}
+        {/* 2. EDIT NAME MODAL */}
+        <Modal visible={isEditNameVisible} animationType="fade" transparent={true} onRequestClose={() => setIsEditNameVisible(false)}>
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Change Name</Text>
+              
+              <TextInput
+                style={styles.input}
+                placeholder="Enter your name"
+                value={newName}
+                onChangeText={setNewName}
+                autoCapitalize="words"
+                maxLength={MAX_NAME_LENGTH}
+              />
+              {/* Character Counter */}
+              <Text style={styles.charCount}>
+                {newName.length}/{MAX_NAME_LENGTH}
               </Text>
-              {houseId === activeHousehold?.id && <Ionicons name="checkmark-circle" size={20} color="#63B995" />}
-            </TouchableOpacity>
-          ))}
-        </>
-      )}
 
-      <TouchableOpacity style={styles.logoutButton} onPress={handleSignOut}>
-        <Text style={styles.logoutText}>Sign Out</Text>
-      </TouchableOpacity>
-      <View style={{ height: 50 }} />
-
-      {/* --- MODALS --- */}
-
-      {/* 1. JOIN MODAL */}
-      <Modal visible={isJoinModalVisible} animationType="slide" transparent={true} onRequestClose={() => setIsJoinModalVisible(false)}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Join Household</Text>
-            <Text style={styles.modalSubtitle}>Enter the invite code from the Admin</Text>
-            <TextInput style={styles.input} placeholder="Invite Code (e.g. A1B2C3)" value={inviteCode} onChangeText={setInviteCode} autoCapitalize="characters" />
-            <View style={styles.modalButtons}>
-              <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={() => setIsJoinModalVisible(false)}>
-                <Text style={styles.buttonText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.button, styles.saveButton]} onPress={handleJoinHousehold} disabled={joining}>
-                {joining ? <ActivityIndicator color="white" /> : <Text style={styles.buttonText}>Join</Text>}
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
-      {/* 2. EDIT NAME MODAL */}
-      <Modal visible={isEditNameVisible} animationType="fade" transparent={true} onRequestClose={() => setIsEditNameVisible(false)}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Change Name</Text>
-            
-            <TextInput
-              style={styles.input}
-              placeholder="Enter your name"
-              value={newName}
-              onChangeText={setNewName}
-              autoCapitalize="words"
-              maxLength={MAX_NAME_LENGTH}
-            />
-            {/* Character Counter */}
-            <Text style={styles.charCount}>
-              {newName.length}/{MAX_NAME_LENGTH}
-            </Text>
-
-            <View style={styles.modalButtons}>
-              <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={() => setIsEditNameVisible(false)}>
-                <Text style={styles.buttonText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.button, styles.saveButton]} onPress={handleUpdateName} disabled={updatingName}>
-                {updatingName ? <ActivityIndicator color="white" /> : <Text style={styles.buttonText}>Save</Text>}
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
-      {/* 3. AVATAR PICKER MODAL */}
-      <Modal visible={isAvatarModalVisible} animationType="slide" transparent={true} onRequestClose={() => setIsAvatarModalVisible(false)}>
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { maxHeight: '60%' }]}>
-            <Text style={styles.modalTitle}>Pick an Avatar</Text>
-            <FlatList
-              data={AVATAR_OPTIONS}
-              numColumns={4}
-              keyExtractor={(item) => item}
-              columnWrapperStyle={{ justifyContent: 'space-between', marginBottom: 15 }}
-              renderItem={({ item }) => (
-                <TouchableOpacity 
-                  style={styles.avatarOption} 
-                  onPress={() => handleSelectAvatar(item)}
-                >
-                  <Text style={{ fontSize: 32 }}>{item}</Text>
+              <View style={styles.modalButtons}>
+                <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={() => setIsEditNameVisible(false)}>
+                  <Text style={styles.buttonText}>Cancel</Text>
                 </TouchableOpacity>
-              )}
-            />
-            <View style={styles.modalButtons}>
-              <TouchableOpacity style={[styles.button, styles.cancelButton, { marginTop: 10 }]} onPress={() => setIsAvatarModalVisible(false)}>
-                <Text style={styles.buttonText}>Cancel</Text>
-              </TouchableOpacity>
+                <TouchableOpacity style={[styles.button, styles.saveButton]} onPress={handleUpdateName} disabled={updatingName}>
+                  {updatingName ? <ActivityIndicator color="white" /> : <Text style={styles.buttonText}>Save</Text>}
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
-        </View>
-      </Modal>
+        </Modal>
 
-      {/* 4. MANAGE MEMBERS MODAL */}
-      <Modal visible={isManageMemberVisible} animationType="slide" transparent={true} onRequestClose={() => setIsManageMemberVisible(false)}>
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { maxHeight: '70%' }]}>
-            <Text style={styles.modalTitle}>Manage Members</Text>
-            <Text style={styles.modalSubtitle}>Promote members to admin or remove privileges.</Text>
-
-            <FlatList
-              data={Object.values(memberProfiles).filter(m => m.id !== user?.uid)}
-              keyExtractor={(item) => item.id}
-              renderItem={renderMemberItem}
-              style={{ width: '100%', marginBottom: 15 }}
-              showsVerticalScrollIndicator={false}
-            />
-
-            <View style={styles.modalButtons}>
-              <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={() => setIsManageMemberVisible(false)}>
-                <Text style={styles.buttonText}>Close</Text>
-              </TouchableOpacity>
+        {/* 3. AVATAR PICKER MODAL */}
+        <Modal visible={isAvatarModalVisible} animationType="slide" transparent={true} onRequestClose={() => setIsAvatarModalVisible(false)}>
+          <View style={styles.modalOverlay}>
+            <View style={[styles.modalContent, { maxHeight: '60%' }]}>
+              <Text style={styles.modalTitle}>Pick an Avatar</Text>
+              <FlatList
+                data={AVATAR_OPTIONS}
+                numColumns={4}
+                keyExtractor={(item) => item}
+                columnWrapperStyle={{ justifyContent: 'space-between', marginBottom: 15 }}
+                renderItem={({ item }) => (
+                  <TouchableOpacity 
+                    style={styles.avatarOption} 
+                    onPress={() => handleSelectAvatar(item)}
+                  >
+                    <Text style={{ fontSize: 32 }}>{item}</Text>
+                  </TouchableOpacity>
+                )}
+              />
+              <View style={styles.modalButtons}>
+                <TouchableOpacity style={[styles.button, styles.cancelButton, { marginTop: 10 }]} onPress={() => setIsAvatarModalVisible(false)}>
+                  <Text style={styles.buttonText}>Cancel</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
-        </View>
-      </Modal>
+        </Modal>
 
-    </ScrollView>
+        {/* 4. MANAGE MEMBERS MODAL */}
+        <Modal visible={isManageMemberVisible} animationType="slide" transparent={true} onRequestClose={() => setIsManageMemberVisible(false)}>
+          <View style={styles.modalOverlay}>
+            <View style={[styles.modalContent, { maxHeight: '70%' }]}>
+              <Text style={styles.modalTitle}>Manage Members</Text>
+              <Text style={styles.modalSubtitle}>Promote members to admin or remove privileges.</Text>
+
+              <FlatList
+                data={Object.values(memberProfiles).filter(m => m.id !== user?.uid)}
+                keyExtractor={(item) => item.id}
+                renderItem={renderMemberItem}
+                style={{ width: '100%', marginBottom: 15 }}
+                showsVerticalScrollIndicator={false}
+              />
+
+              <View style={styles.modalButtons}>
+                <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={() => setIsManageMemberVisible(false)}>
+                  <Text style={styles.buttonText}>Close</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+
+      </ScrollView>
+    </View>
   );
 }
 

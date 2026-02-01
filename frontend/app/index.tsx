@@ -1,7 +1,8 @@
 import { Redirect } from "expo-router";
 import { useAuth } from "@/context/AuthContext";
 import { useHousehold } from "@/context/HouseholdContext";
-import { View, ActivityIndicator } from "react-native";
+import { ActivityIndicator } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Index() {
   const { user, loading: authLoading } = useAuth();
@@ -10,9 +11,9 @@ export default function Index() {
   // Show loading spinner while checking Firebase
   if (authLoading || householdLoading) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+      <SafeAreaView style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
         <ActivityIndicator size="large" color="#4A90E2" />
-      </View>
+      </SafeAreaView>
     );
   }
 
