@@ -22,28 +22,10 @@ import { choreService } from "@/services/choreService";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Platform } from "react-native";
 import UserAvatar from "@/components/ui/UserAvatar";
+import ChoreScheduler from "@/components/chores/ChoreSchedular";
 
 // --- Constants ---
 const POINT_OPTIONS = ["10", "20", "30", "50", "100"];
-const MONTHS = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
-
-const ITEM_HEIGHT = 50;
-const WHEEL_WIDTH = 65;
-const VISIBLE_ITEMS = 3;
-const WHEEL_HEIGHT = ITEM_HEIGHT * VISIBLE_ITEMS;
 
 export default function ChoresScreen() {
   const { user } = useAuth();
@@ -64,53 +46,9 @@ export default function ChoresScreen() {
   const [selectedHour, setSelectedHour] = useState(new Date().getHours());
   const [selectedMinute, setSelectedMinute] = useState(new Date().getMinutes());
 
-  // Scroll Refs
-  const hourScrollRef = useRef<ScrollView>(null);
-  const minuteScrollRef = useRef<ScrollView>(null);
-
-  const lastHourIndex = useRef(new Date().getHours());
-  const lastMinuteIndex = useRef(new Date().getMinutes());
-
   const insets = useSafeAreaInsets();
   const safeTop = insets.top > 0 ? insets.top : (Platform.OS === 'android' ? 30 : 0);
   const isAdmin = activeHousehold?.members?.[user?.uid || ""] === "admin";
-
-  useEffect(() => {
-    if (showScheduler) {
-      setTimeout(() => {
-        if (hourScrollRef.current) {
-          hourScrollRef.current.scrollTo({
-            y: selectedHour * ITEM_HEIGHT,
-            animated: false,
-          });
-        }
-        if (minuteScrollRef.current) {
-          minuteScrollRef.current.scrollTo({
-            y: selectedMinute * ITEM_HEIGHT,
-            animated: false,
-          });
-        }
-      }, 100);
-    }
-  }, [showScheduler]);
-
-  const handleScroll = (
-    event: NativeSyntheticEvent<NativeScrollEvent>,
-    setValue: (val: number) => void,
-    lastValRef: { current: number },
-    max: number,
-  ) => {
-    const offsetY = event.nativeEvent.contentOffset.y;
-    let index = Math.round(offsetY / ITEM_HEIGHT);
-    if (index < 0) index = 0;
-    if (index > max) index = max;
-
-    if (index !== lastValRef.current) {
-      Haptics.selectionAsync();
-      setValue(index);
-      lastValRef.current = index;
-    }
-  };
 
   const handleAddChore = async () => {
     if (!newChoreTitle || !newChorePoints) {
@@ -127,7 +65,7 @@ export default function ChoresScreen() {
         scheduledFor.setHours(selectedHour);
         scheduledFor.setMinutes(selectedMinute);
 
-        // --- NEW VALIDATION: Check for past time ---
+        // --- VALIDATION: Check for past time ---
         const now = new Date();
         if (scheduledFor < now) {
           Alert.alert("Invalid Time", "You cannot schedule a task for the past.");
@@ -198,168 +136,6 @@ export default function ChoresScreen() {
       { text: "Cancel", style: "cancel" },
       { text: "Reset", onPress: async () => await resetChore(id) },
     ]);
-  };
-
-  // --- Calendar Helpers ---
-  const getDaysInMonth = (year: number, month: number) =>
-    new Date(year, month + 1, 0).getDate();
-  const getFirstDayOfMonth = (year: number, month: number) =>
-    new Date(year, month, 1).getDay();
-
-  const renderCalendar = () => {
-    const year = currentMonth.getFullYear();
-    const month = currentMonth.getMonth();
-    const daysInMonth = getDaysInMonth(year, month);
-    const firstDay = getFirstDayOfMonth(year, month);
-
-    // Get "Today" at 00:00:00 for comparison
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const slots = [];
-    for (let i = 0; i < firstDay; i++) {
-      slots.push(<View key={`empty-${i}`} style={styles.calDay} />);
-    }
-    for (let i = 1; i <= daysInMonth; i++) {
-      const isSelected =
-        selectedDate.getDate() === i &&
-        selectedDate.getMonth() === month &&
-        selectedDate.getFullYear() === year;
-
-      // Check if this day is in the past
-      const thisDate = new Date(year, month, i);
-      const isPast = thisDate < today;
-
-      slots.push(
-        <TouchableOpacity
-          key={i}
-          style={styles.calDay}
-          disabled={isPast}
-          onPress={() => setSelectedDate(new Date(year, month, i))}
-        >
-          <View
-            style={[
-              styles.dayBubble,
-              isSelected && styles.dayBubbleSelected,
-              isPast && { opacity: 0.8 }
-            ]}
-          >
-            <Text
-              style={[
-                styles.calDayText,
-                isSelected && styles.calDayTextSelected,
-                isPast && { color: "#ccc" }
-              ]}
-            >
-              {i}
-            </Text>
-          </View>
-        </TouchableOpacity>,
-      );
-    }
-
-    return (
-      <View style={styles.calendarContainer}>
-        <View style={styles.calHeader}>
-          <TouchableOpacity onPress={() => setCurrentMonth(new Date(year, month - 1, 1))}>
-            <Ionicons name="chevron-back" size={24} color="#666" />
-          </TouchableOpacity>
-          <Text style={styles.calTitle}>
-            {MONTHS[month]} {year}
-          </Text>
-          <TouchableOpacity onPress={() => setCurrentMonth(new Date(year, month + 1, 1))}>
-            <Ionicons name="chevron-forward" size={24} color="#666" />
-          </TouchableOpacity>
-        </View>
-        <View style={styles.calGrid}>
-          {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((d) => (
-            <View key={d} style={styles.calDay}>
-              <Text style={styles.calHeadText}>{d}</Text>
-            </View>
-          ))}
-          {slots}
-        </View>
-      </View>
-    );
-  };
-
-  const renderTimePicker = () => {
-    const hoursData = Array.from({ length: 24 }, (_, i) => i);
-    const minutesData = Array.from({ length: 60 }, (_, i) => i);
-
-    const hourSnapOffsets = hoursData.map((_, i) => i * ITEM_HEIGHT);
-    const minuteSnapOffsets = minutesData.map((_, i) => i * ITEM_HEIGHT);
-    const spacerHeight = (WHEEL_HEIGHT - ITEM_HEIGHT) / 2;
-
-    return (
-      <View style={styles.timePickerContainer}>
-        <Text style={styles.timeLabel}>Time available:</Text>
-        <View style={styles.wheelsRow}>
-          {/* Hour Wheel */}
-          <View style={styles.wheelWrapper}>
-            <Text style={styles.wheelLabel}>Hour</Text>
-            <View style={styles.wheelContainer}>
-              <View style={styles.selectionOverlay} pointerEvents="none" />
-              <ScrollView
-                ref={hourScrollRef}
-                style={styles.wheel}
-                nestedScrollEnabled={true}
-                showsVerticalScrollIndicator={false}
-                snapToOffsets={hourSnapOffsets}
-                snapToAlignment="start"
-                decelerationRate="fast"
-                scrollEventThrottle={16}
-                onScroll={(e) => handleScroll(e, setSelectedHour, lastHourIndex, 23)}
-              >
-                <View style={{ height: spacerHeight }} />
-                {hoursData.map((h) => (
-                  <View key={`h-${h}`} style={styles.wheelItem}>
-                    <Text style={[styles.wheelText, selectedHour === h && styles.wheelTextSelected]}>
-                      {h.toString().padStart(2, "0")}
-                    </Text>
-                  </View>
-                ))}
-                <View style={{ height: spacerHeight }} />
-              </ScrollView>
-            </View>
-          </View>
-
-          {/* Centered Colon */}
-          <View style={styles.colonWrapper}>
-            <Text style={styles.timeColon}>:</Text>
-          </View>
-
-          {/* Minute Wheel */}
-          <View style={styles.wheelWrapper}>
-            <Text style={styles.wheelLabel}>Min</Text>
-            <View style={styles.wheelContainer}>
-              <View style={styles.selectionOverlay} pointerEvents="none" />
-              <ScrollView
-                ref={minuteScrollRef}
-                style={styles.wheel}
-                nestedScrollEnabled={true}
-                showsVerticalScrollIndicator={false}
-                snapToOffsets={minuteSnapOffsets}
-                snapToAlignment="start"
-                decelerationRate="fast"
-                scrollEventThrottle={16}
-                onScroll={(e) => handleScroll(e, setSelectedMinute, lastMinuteIndex, 59)}
-              >
-                <View style={{ height: spacerHeight }} />
-                {minutesData.map((m) => (
-                  <View key={`m-${m}`} style={styles.wheelItem}>
-                    <Text style={[styles.wheelText, selectedMinute === m && styles.wheelTextSelected]}>
-                      {m.toString().padStart(2, "0")}
-                    </Text>
-                  </View>
-                ))}
-                <View style={{ height: spacerHeight }} />
-              </ScrollView>
-            </View>
-          </View>
-        </View>
-      </View>
-    );
   };
 
   const renderStatusBadge = (item: any) => {
@@ -540,10 +316,14 @@ export default function ChoresScreen() {
 
               {/* Scheduler UI */}
               {showScheduler && (
-                <View style={styles.schedulerContainer}>
-                  {renderCalendar()}
-                  {renderTimePicker()}
-                </View>
+                <ChoreScheduler
+                  selectedDate={selectedDate}
+                  onDateChange={setSelectedDate}
+                  selectedHour={selectedHour}
+                  onHourChange={setSelectedHour}
+                  selectedMinute={selectedMinute}
+                  onMinuteChange={setSelectedMinute}
+                />
               )}
 
               <View style={styles.modalButtons}>
@@ -731,7 +511,6 @@ const styles = StyleSheet.create({
   cancelButton: { backgroundColor: "#ccc" },
   saveButton: { backgroundColor: "#63B995" },
   buttonText: { color: "#fff", fontWeight: "bold", fontSize: 16 },
-  // Scheduler Styles
   scheduleLink: {
     flexDirection: "row",
     alignItems: "center",
@@ -740,109 +519,4 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   scheduleLinkText: { color: "#63B995", fontWeight: "600", fontSize: 14 },
-  schedulerContainer: {
-    marginTop: 10,
-    borderWidth: 1,
-    borderColor: "#f0f0f0",
-    borderRadius: 12,
-    padding: 10,
-    backgroundColor: "#fafafa",
-  },
-  calendarContainer: { marginBottom: 15 },
-  calHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 10,
-  },
-  calTitle: { fontWeight: "bold", fontSize: 16, color: "#333" },
-  calGrid: { flexDirection: "row", flexWrap: "wrap" },
-  calDay: {
-    width: "14.28%",
-    aspectRatio: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  dayBubble: {
-    width: 34,
-    height: 34,
-    borderRadius: 50,
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "transparent",
-  },
-  dayBubbleSelected: {
-    backgroundColor: "#63B995",
-  },
-  calHeadText: { fontSize: 12, color: "#999", fontWeight: "bold" },
-  calDayText: { fontSize: 14, color: "#333" },
-  calDayTextSelected: { color: "#fff", fontWeight: "bold" },
-  // Time Picker Styles
-  timePickerContainer: {
-    borderTopWidth: 1,
-    borderTopColor: "#eee",
-    paddingTop: 15,
-  },
-  timeLabel: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#666",
-    marginBottom: 10,
-    textAlign: "center",
-  },
-  wheelsRow: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "flex-start",
-  },
-  wheelWrapper: { width: WHEEL_WIDTH, alignItems: "center" },
-  wheelContainer: {
-    height: WHEEL_HEIGHT,
-    width: WHEEL_WIDTH,
-    overflow: "hidden",
-  },
-  wheelLabel: {
-    fontSize: 10,
-    color: "#999",
-    marginBottom: 5,
-    height: 15,
-    textAlignVertical: "center",
-    textAlign: "center",
-    width: "100%",
-  },
-  wheel: { width: WHEEL_WIDTH },
-  wheelItem: {
-    height: ITEM_HEIGHT,
-    width: WHEEL_WIDTH,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  wheelText: { fontSize: 16, color: "#ccc", textAlign: "center" },
-  wheelTextSelected: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#63B995",
-    textAlign: "center",
-  },
-  colonWrapper: {
-    height: WHEEL_HEIGHT,
-    justifyContent: "center",
-    alignItems: "center",
-    width: 20,
-    marginTop: 20,
-  },
-  timeColon: { fontSize: 24, fontWeight: "bold", color: "#333" },
-  selectionOverlay: {
-    position: "absolute",
-    top: ITEM_HEIGHT,
-    left: 0,
-    right: 0,
-    height: ITEM_HEIGHT,
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: "#E0E0E0",
-    backgroundColor: "rgba(99, 185, 149, 0.1)",
-    zIndex: 10,
-  },
 });
