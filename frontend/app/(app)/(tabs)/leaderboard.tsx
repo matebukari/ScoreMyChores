@@ -13,6 +13,7 @@ import { Timestamp } from "firebase/firestore";
 import { useHousehold } from "@/context/HouseholdContext";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Platform } from "react-native";
+import UserAvatar from "@/components/ui/UserAvatar";
 
 export default function LeaderboardScreen() {
   const { user } = useAuth();
@@ -143,16 +144,13 @@ export default function LeaderboardScreen() {
         {/* Rank 2 (Left) */}
         {leaderboardData[1] && (
           <View style={[styles.podiumItem]}>
-            <View style={styles.avatarCircle}>
-              {leaderboardData[1].avatar ? (
-                <Text style={{ fontSize: 20 }}>
-                  {leaderboardData[1].avatar}
-                </Text>
-              ) : (
-                <Text style={styles.avatarInitial}>
-                  {getInitial(leaderboardData[1].name)}
-                </Text>
-              )}
+            <View style={{ marginBottom: 5, borderWidth: 2, borderColor: '#C0C0C0', borderRadius: 50 }}>
+              <UserAvatar
+                name={leaderboardData[1].name}
+                avatar={leaderboardData[1].avatar}
+                size={40}
+                color="#ddd"
+              />
             </View>
 
             <Text style={styles.podiumName}>{leaderboardData[1].name}</Text>
@@ -174,25 +172,14 @@ export default function LeaderboardScreen() {
             <View style={{ marginBottom: 5 }}>
               <Ionicons name="trophy" size={24} color="#FFD700" />
             </View>
-            <View
-              style={[
-                styles.avatarCircle,
-                {
-                  backgroundColor: "#FFD700",
-                  borderWidth: 2,
-                  borderColor: "#fff",
-                },
-              ]}
-            >
-              {leaderboardData[0].avatar ? (
-                <Text style={{ fontSize: 22 }}>
-                  {leaderboardData[0].avatar}
-                </Text>
-              ) : (
-                <Text style={[styles.avatarInitial, { color: "#fff" }]}>
-                  {getInitial(leaderboardData[0].name)}
-                </Text>
-              )}
+            
+            <View style={{ marginBottom: 5, borderWidth: 2, borderColor: '#FFD700', borderRadius: 50 }}>
+              <UserAvatar
+                name={leaderboardData[0].name}
+                avatar={leaderboardData[0].avatar}
+                size={40}
+                color="#FFD700"
+              />
             </View>
 
             <Text style={styles.podiumName} numberOfLines={1}>
@@ -212,16 +199,13 @@ export default function LeaderboardScreen() {
         {/* Rank 3 (Right) */}
         {leaderboardData[2] && (
           <View style={[styles.podiumItem]}>
-            <View style={styles.avatarCircle}>
-              {leaderboardData[2].avatar ? (
-                <Text style={{ fontSize: 20 }}>
-                  {leaderboardData[2].avatar}
-                </Text>
-              ) : (
-                <Text style={styles.avatarInitial}>
-                  {getInitial(leaderboardData[2].name)}
-                </Text>
-              )}
+            <View style={{ marginBottom: 5, borderWidth: 2, borderColor: '#CD7F32', borderRadius: 50 }}>
+              <UserAvatar
+                name={leaderboardData[2].name}
+                avatar={leaderboardData[2].avatar}
+                size={40}
+                color="#CD7F32"
+              />
             </View>
 
             <Text style={styles.podiumName} numberOfLines={1}>
@@ -266,25 +250,13 @@ export default function LeaderboardScreen() {
               <View style={styles.rankContainer}>{getRankIcon(index)}</View>
 
               <View style={styles.userInfo}>
-                <View
-                  style={[
-                    styles.smallAvatar,
-                    {
-                      backgroundColor: item.avatar
-                        ? "transparent"
-                        : item.id === user?.uid
-                          ? "#63B995"
-                          : "#ccc",
-                    },
-                  ]}
-                >
-                  {item.avatar ? (
-                    <Text style={{ fontSize: 20 }}>{item.avatar}</Text>
-                  ) : (
-                    <Text style={{ color: "#fff", fontWeight: "bold" }}>
-                      {getInitial(item.name)}
-                    </Text>
-                  )}
+                <View style={{ marginRight: 12 }}>
+                <UserAvatar
+                  name={item.name}
+                  avatar={item.avatar}
+                  size={32}
+                  color={item.id === user?.uid ? "#63B995" : "#ccc"}
+                />
                 </View>
 
                 <View>

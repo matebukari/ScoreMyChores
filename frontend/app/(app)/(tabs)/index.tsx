@@ -16,6 +16,7 @@ import { useHousehold } from "@/context/HouseholdContext";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Platform } from "react-native";
+import UserAvatar from "@/components/ui/UserAvatar";
 
 const { width } = Dimensions.get("window");
 
@@ -98,23 +99,6 @@ export default function HomeScreen() {
   const getDisplayName = (id?: string | null, name?: string | null) => {
     if (id === user?.uid) return "You";
     return name || "Member";
-  };
-
-  const MiniAvatar = ({ name, avatar, color }: { name?: string | null, avatar?: string | null, color: string }) => {
-    if (avatar) {
-      return (
-        <View style={[styles.miniAvatar, { backgroundColor: 'transparent' }]}>
-          <Text style={{ fontSize: 14 }}>{avatar}</Text>
-        </View>
-      );
-    }
-    return (
-      <View style={[styles.miniAvatar, { backgroundColor: color }]}>
-        <Text style={styles.miniAvatarText}>
-          {getInitial(name)}
-        </Text>
-      </View>
-    );
   };
 
   if (loading) {
@@ -206,10 +190,12 @@ export default function HomeScreen() {
                     );
                     return (
                       <>
-                        <MiniAvatar 
+                        <UserAvatar 
                           name={worker.name} 
                           avatar={worker.avatar} 
-                          color="#4A90E2" 
+                          color="#4A90E2"
+                          size={20}
+                          fontSize={10}
                         />
                         <Text style={[styles.miniBadgeText, { color: "#4A90E2" }]}>
                           Started by{" "}
@@ -299,10 +285,12 @@ export default function HomeScreen() {
                       );
                       return (
                         <>
-                          <MiniAvatar 
+                          <UserAvatar 
                             name={worker.name} 
                             avatar={worker.avatar} 
-                            color="#4A90E2" 
+                            color="#4A90E2"
+                            size={20}
+                            fontSize={10}
                           />
                           <Text style={[styles.miniBadgeText, { color: "#4A90E2" }]}>
                             {locked
@@ -326,10 +314,12 @@ export default function HomeScreen() {
                       );
                       return (
                         <>
-                          <MiniAvatar 
+                          <UserAvatar 
                             name={completer.name} 
                             avatar={completer.avatar} 
-                            color="#4CAF50" 
+                            color="#4CAF50"
+                            size={20}
+                            fontSize={10}
                           />
                           <Text style={[styles.miniBadgeText, { color: "#4CAF50" }]}>
                             Done by{" "}

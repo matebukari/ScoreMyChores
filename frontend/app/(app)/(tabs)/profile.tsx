@@ -19,6 +19,7 @@ import { router } from "expo-router";
 import { householdService } from "@/services/householdService";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Platform } from "react-native";
+import UserAvatar from "@/components/ui/UserAvatar";
 
 // List of fun avatars to pick from
 const AVATAR_OPTIONS = [
@@ -193,7 +194,12 @@ export default function ProfileScreen() {
     return (
       <View style={styles.memberRow}>
         <View style={styles.memberInfo}>
-          <Text style={styles.memberAvatar}>{item.photoURL || "👤"}</Text>
+          <UserAvatar
+            name={item.displayName}
+            avatar={item.photoURL}
+            size={32}
+            fontSize={14}
+          />
           <View>
             <Text style={styles.memberName}>{item.displayName || "Unknown"}</Text>
             <Text style={styles.memberEmail}>{item.email}</Text>
@@ -240,13 +246,13 @@ export default function ProfileScreen() {
         {/* USER INFO CARD */}
         <View style={styles.card}>
           <View style={{position: 'relative'}}>
-            <View style={styles.avatarContainer}>
-              {currentAvatar ? (
-                <Text style={{ fontSize: 32 }}>{currentAvatar}</Text>
-              ) : (
-                <Text style={styles.avatarText}>{initial}</Text>
-              )}
-            </View>
+            <UserAvatar
+              name={displayName}
+              avatar={currentAvatar}
+              size={60}
+              fontSize={28}
+              color="#2196F3"
+            />
             
             <TouchableOpacity 
               style={styles.editAvatarBadge}

@@ -21,6 +21,7 @@ import { useChores } from "@/context/ChoreContext";
 import { choreService } from "@/services/choreService";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Platform } from "react-native";
+import UserAvatar from "@/components/ui/UserAvatar";
 
 // --- Constants ---
 const POINT_OPTIONS = ["10", "20", "30", "50", "100"];
@@ -361,22 +362,6 @@ export default function ChoresScreen() {
     );
   };
 
-  // --- Sub-components (Avatar, Badge) ---
-  const Avatar = ({ name, avatar, color }: any) => {
-    if (avatar)
-      return (
-        <View style={[styles.avatarContainer, { backgroundColor: "transparent" }]}>
-          <Text style={{ fontSize: 14 }}>{avatar}</Text>
-        </View>
-      );
-    const initial = name ? name.charAt(0).toUpperCase() : "?";
-    return (
-      <View style={[styles.avatarContainer, { backgroundColor: color }]}>
-        <Text style={styles.avatarText}>{initial}</Text>
-      </View>
-    );
-  };
-
   const renderStatusBadge = (item: any) => {
     const isMe = item.inProgressBy === user?.uid || item.completedBy === user?.uid;
     const getLiveProfile = (userId: string, snapshotName: string, snapshotAvatar: string) => {
@@ -390,7 +375,13 @@ export default function ChoresScreen() {
       const worker = getLiveProfile(item.inProgressBy, item.inProgressByName, item.inProgressByAvatar);
       return (
         <View style={[styles.badge, { backgroundColor: "#FFF3E0", borderColor: "#FFB74D" }]}>
-          <Avatar name={worker.name} avatar={worker.avatar} color="#F57C00" />
+          <UserAvatar 
+            name={worker.name} 
+            avatar={worker.avatar} 
+            color="#F57C00"
+            size={22}
+            fontSize={10}
+          />
           <Text style={[styles.badgeText, { color: "#E65100" }]}>{worker.name} is working</Text>
         </View>
       );
@@ -406,7 +397,13 @@ export default function ChoresScreen() {
       const completer = getLiveProfile(item.completedBy, item.completedByName, item.completedByAvatar);
       return (
         <View style={[styles.badge, { backgroundColor: "#E8F5E9", borderColor: "#81C784" }]}>
-          <Avatar name={completer.name} avatar={completer.avatar} color="#388E3C" />
+          <UserAvatar 
+            name={completer.name} 
+            avatar={completer.avatar} 
+            color="#388E3C"
+            size={22}
+            fontSize={10} 
+          />
           <Text style={[styles.badgeText, { color: "#2E7D32" }]}>Done by {completer.name}</Text>
         </View>
       );
@@ -415,7 +412,13 @@ export default function ChoresScreen() {
       const completer = getLiveProfile(user?.uid || "", item.completedByName, item.completedByAvatar);
       return (
         <View style={[styles.badge, { backgroundColor: "#F3E5F5", borderColor: "#BA68C8" }]}>
-          <Avatar name={completer.name} avatar={completer.avatar} color="#7B1FA2" />
+          <UserAvatar 
+            name={completer.name}
+            avatar={completer.avatar}
+            color="#7B1FA2"
+            size={22}
+            fontSize={10}
+          />
           <Text style={[styles.badgeText, { color: "#7B1FA2" }]}>Done by You</Text>
         </View>
       );
