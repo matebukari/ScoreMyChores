@@ -144,14 +144,18 @@ export default function LeaderboardScreen() {
         {/* Rank 2 (Left) */}
         {leaderboardData[1] && (
           <View style={[styles.podiumItem]}>
-            <View style={{ marginBottom: 5, borderWidth: 2, borderColor: '#C0C0C0', borderRadius: 50 }}>
-              <UserAvatar
-                name={leaderboardData[1].name}
-                avatar={leaderboardData[1].avatar}
-                size={40}
-                color="#ddd"
-              />
-            </View>
+            <UserAvatar
+              name={leaderboardData[1].name}
+              avatar={leaderboardData[1].avatar}
+              size={40}
+              color="#ddd"
+              style={{
+                marginBottom: 5, 
+                borderWidth: 2, 
+                borderColor: '#C0C0C0', 
+                borderRadius: 50
+              }}
+            />
 
             <Text style={styles.podiumName}>{leaderboardData[1].name}</Text>
             <Text style={styles.podiumScore}>{leaderboardData[1].score}</Text>
@@ -173,14 +177,18 @@ export default function LeaderboardScreen() {
               <Ionicons name="trophy" size={24} color="#FFD700" />
             </View>
             
-            <View style={{ marginBottom: 5, borderWidth: 2, borderColor: '#FFD700', borderRadius: 50 }}>
-              <UserAvatar
-                name={leaderboardData[0].name}
-                avatar={leaderboardData[0].avatar}
-                size={40}
-                color="#FFD700"
-              />
-            </View>
+            <UserAvatar
+              name={leaderboardData[0].name}
+              avatar={leaderboardData[0].avatar}
+              size={40}
+              color="#FFD700"
+              style={{ 
+                marginBottom: 5, 
+                borderWidth: 2, 
+                borderColor: '#FFD700', 
+                borderRadius: 50 
+              }}
+            />
 
             <Text style={styles.podiumName} numberOfLines={1}>
               {leaderboardData[0].name}
@@ -199,12 +207,18 @@ export default function LeaderboardScreen() {
         {/* Rank 3 (Right) */}
         {leaderboardData[2] && (
           <View style={[styles.podiumItem]}>
-            <View style={{ marginBottom: 5, borderWidth: 2, borderColor: '#CD7F32', borderRadius: 50 }}>
+            <View >
               <UserAvatar
                 name={leaderboardData[2].name}
                 avatar={leaderboardData[2].avatar}
                 size={40}
                 color="#CD7F32"
+                style={{ 
+                  marginBottom: 5, 
+                  borderWidth: 2, 
+                  borderColor: '#CD7F32', 
+                  borderRadius: 50 
+                }}
               />
             </View>
 

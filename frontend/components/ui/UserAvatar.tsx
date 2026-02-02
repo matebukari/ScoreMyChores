@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, StyleProp, ViewStyle } from "react-native";
 
 interface UserAvatarProps {
   name?: string | null;
@@ -7,6 +7,7 @@ interface UserAvatarProps {
   size?: number;
   color?: string;
   fontSize?: number;
+  style?: StyleProp<ViewStyle>;
 }
 
 export default function UserAvatar({
@@ -15,6 +16,7 @@ export default function UserAvatar({
   size = 40,
   color = "#ccc",
   fontSize,
+  style,
 }: UserAvatarProps) {
   const initial = name ? name.charAt(0).toUpperCase() : "?";
   const calculatedFontSize = fontSize || size * 0.45;
@@ -26,6 +28,7 @@ export default function UserAvatar({
         style={[
           styles.container,
           { width: size, height: size, borderRadius: size / 2, backgroundColor: "transparent" },
+          style
         ]}
       >
         <Text style={{ fontSize: calculatedFontSize * 1.2 }}>{avatar}</Text>
@@ -39,6 +42,7 @@ export default function UserAvatar({
       style={[
         styles.container,
         { width: size, height: size, borderRadius: size / 2, backgroundColor: color },
+        style
       ]}
     >
       <Text style={[styles.text, { fontSize: calculatedFontSize }]}>
