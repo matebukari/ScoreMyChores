@@ -1,17 +1,11 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
   StyleSheet,
-  FlatList,
   TouchableOpacity,
   Alert,
-  Modal,
-  TextInput,
-  ActivityIndicator,
-  ScrollView,
-  NativeSyntheticEvent,
-  NativeScrollEvent,
+  Platform,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "@/context/AuthContext";
@@ -19,16 +13,16 @@ import { useHousehold } from "@/context/HouseholdContext";
 import { useChores } from "@/context/ChoreContext";
 import { choreService } from "@/services/choreService";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Platform } from "react-native";
-import UserAvatar from "@/components/ui/UserAvatar";
+
+// Components
 import AddChoreModal from "@/components/chores/AddChoreModal";
+import ChoreList from "@/components/chores/ChoreList";
 
 export default function ChoresScreen() {
   const { user } = useAuth();
   const { activeHousehold, memberProfiles } = useHousehold();
   const { chores, addChore, loading, resetAll, resetChore } = useChores();
 
-  // Modal & Form State
   const [isModalVisible, setIsModalVisible] = useState(false);
 
   const insets = useSafeAreaInsets();
@@ -83,70 +77,6 @@ export default function ChoresScreen() {
     ]);
   };
 
-  const renderStatusBadge = (item: any) => {
-    const isMe = item.inProgressBy === user?.uid || item.completedBy === user?.uid;
-    const getLiveProfile = (userId: string, snapshotName: string, snapshotAvatar: string) => {
-      const liveUser = memberProfiles[userId];
-      return {
-        name: liveUser?.displayName || snapshotName || "Unknown",
-        avatar: liveUser?.photoURL || snapshotAvatar || null,
-      };
-    };
-    if (item.inProgress && !isMe) {
-      const worker = getLiveProfile(item.inProgressBy, item.inProgressByName, item.inProgressByAvatar);
-      return (
-        <View style={[styles.badge, { backgroundColor: "#FFF3E0", borderColor: "#FFB74D" }]}>
-          <UserAvatar 
-            name={worker.name} 
-            avatar={worker.avatar} 
-            color="#F57C00"
-            size={22}
-            fontSize={10}
-          />
-          <Text style={[styles.badgeText, { color: "#E65100" }]}>{worker.name} is working</Text>
-        </View>
-      );
-    }
-    if (item.inProgress && isMe)
-      return (
-        <View style={[styles.badge, { backgroundColor: "#E3F2FD", borderColor: "#64B5F6" }]}>
-          <Text style={{ fontSize: 14, marginRight: 4 }}>{user?.photoURL || "👤"}</Text>
-          <Text style={[styles.badgeText, { color: "#1565C0" }]}>Doing Now</Text>
-        </View>
-      );
-    if (item.completed && !isMe) {
-      const completer = getLiveProfile(item.completedBy, item.completedByName, item.completedByAvatar);
-      return (
-        <View style={[styles.badge, { backgroundColor: "#E8F5E9", borderColor: "#81C784" }]}>
-          <UserAvatar 
-            name={completer.name} 
-            avatar={completer.avatar} 
-            color="#388E3C"
-            size={22}
-            fontSize={10} 
-          />
-          <Text style={[styles.badgeText, { color: "#2E7D32" }]}>Done by {completer.name}</Text>
-        </View>
-      );
-    }
-    if (item.completed && isMe) {
-      const completer = getLiveProfile(user?.uid || "", item.completedByName, item.completedByAvatar);
-      return (
-        <View style={[styles.badge, { backgroundColor: "#F3E5F5", borderColor: "#BA68C8" }]}>
-          <UserAvatar 
-            name={completer.name}
-            avatar={completer.avatar}
-            color="#7B1FA2"
-            size={22}
-            fontSize={10}
-          />
-          <Text style={[styles.badgeText, { color: "#7B1FA2" }]}>Done by You</Text>
-        </View>
-      );
-    }
-    return null;
-  };
-
   return (
     <View style={[styles.container, { paddingTop: safeTop, paddingLeft: insets.left + 20, paddingRight: insets.right + 20 }]}>
       <View style={styles.header}>
@@ -170,43 +100,15 @@ export default function ChoresScreen() {
         )}
       </View>
 
-      {loading ? (
-        <ActivityIndicator size="large" color="#63B995" style={{ marginTop: 50 }} />
-      ) : (
-        <FlatList
-          data={chores}
-          showsVerticalScrollIndicator={false}
-          keyExtractor={(item) => item.id}
-          ListEmptyComponent={
-            <Text style={{ textAlign: "center", color: "#888", marginTop: 20 }}>
-              No chores yet. {isAdmin ? "Add one!" : "Ask your admin to add some."}
-            </Text>
-          }
-          renderItem={({ item }) => (
-            <View style={[styles.listCard, item.completed && { opacity: 0.8 }]}>
-              <View style={styles.cardLeftContent}>
-                <Text style={[styles.choreTitle, item.completed && { textDecorationLine: "line-through", color: "#999" }]}>
-                  {item.title}
-                </Text>
-                {renderStatusBadge(item)}
-              </View>
-              <View style={styles.rightActions}>
-                <Text style={styles.pointsText}>{item.points} pts</Text>
-                {isAdmin && (
-                  <View style={styles.adminRow}>
-                    <TouchableOpacity onPress={() => handleResetSingle(item.id)}>
-                      <Ionicons name="refresh-circle-outline" size={26} color="#2196F3" />
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={() => handleDeleteChore(item.id)}>
-                      <Ionicons name="trash-outline" size={22} color="#FF5252" />
-                    </TouchableOpacity>
-                  </View>
-                )}
-              </View>
-            </View>
-          )}
-        />
-      )}
+      <ChoreList
+        chores={chores}
+        loading={loading}
+        isAdmin={isAdmin}
+        currentUserId={user?.uid}
+        memberProfiles={memberProfiles}
+        onReset={handleResetSingle}
+        onDelete={handleDeleteChore}
+      />
 
       {/* ADD CHORE MODAL */}
       <AddChoreModal
