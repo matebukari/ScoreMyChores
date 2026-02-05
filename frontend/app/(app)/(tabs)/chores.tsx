@@ -14,7 +14,6 @@ import {
   NativeScrollEvent,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import * as Haptics from "expo-haptics";
 import { useAuth } from "@/context/AuthContext";
 import { useHousehold } from "@/context/HouseholdContext";
 import { useChores } from "@/context/ChoreContext";
@@ -22,10 +21,7 @@ import { choreService } from "@/services/choreService";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Platform } from "react-native";
 import UserAvatar from "@/components/ui/UserAvatar";
-import ChoreScheduler from "@/components/chores/ChoreSchedular";
-
-// --- Constants ---
-const POINT_OPTIONS = ["10", "20", "30", "50", "100"];
+import AddChoreModal from "@/components/chores/AddChoreModal";
 
 export default function ChoresScreen() {
   const { user } = useAuth();
@@ -34,64 +30,13 @@ export default function ChoresScreen() {
 
   // Modal & Form State
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [newChoreTitle, setNewChoreTitle] = useState("");
-  const [newChorePoints, setNewChorePoints] = useState("");
-  const [isAdding, setIsAdding] = useState(false);
-  const [showPointOptions, setShowPointOptions] = useState(false);
-
-  // Scheduler State
-  const [showScheduler, setShowScheduler] = useState(false);
-  const [selectedDate, setSelectedDate] = useState(new Date());
-  const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [selectedHour, setSelectedHour] = useState(new Date().getHours());
-  const [selectedMinute, setSelectedMinute] = useState(new Date().getMinutes());
 
   const insets = useSafeAreaInsets();
   const safeTop = insets.top > 0 ? insets.top : (Platform.OS === 'android' ? 30 : 0);
   const isAdmin = activeHousehold?.members?.[user?.uid || ""] === "admin";
 
-  const handleAddChore = async () => {
-    if (!newChoreTitle || !newChorePoints) {
-      Alert.alert("Error", "Please fill in all fields");
-      return;
-    }
-
-    try {
-      setIsAdding(true);
-
-      let scheduledFor = null;
-      if (showScheduler) {
-        scheduledFor = new Date(selectedDate);
-        scheduledFor.setHours(selectedHour);
-        scheduledFor.setMinutes(selectedMinute);
-
-        // --- VALIDATION: Check for past time ---
-        const now = new Date();
-        if (scheduledFor < now) {
-          Alert.alert("Invalid Time", "You cannot schedule a task for the past.");
-          setIsAdding(false);
-          return;
-        }
-        // -------------------------------------------
-      }
-
-      await addChore(newChoreTitle, parseInt(newChorePoints), scheduledFor);
-
-      setNewChoreTitle("");
-      setNewChorePoints("");
-      setShowPointOptions(false);
-      setShowScheduler(false);
-      setIsModalVisible(false);
-      // Reset scheduler to "now" for next time
-      const now = new Date();
-      setSelectedDate(now);
-      setSelectedHour(now.getHours());
-      setSelectedMinute(now.getMinutes());
-    } catch (error) {
-      Alert.alert("Error", "Failed to add chore");
-    } finally {
-      setIsAdding(false);
-    }
+  const handleAddChoreSubmit = async (title: string, points: number, scheduledFor: Date | null) => {
+    await addChore(title, points, scheduledFor);
   };
 
   const handleDeleteChore = (id: string) => {
@@ -264,84 +209,11 @@ export default function ChoresScreen() {
       )}
 
       {/* ADD CHORE MODAL */}
-      <Modal visible={isModalVisible} animationType="slide" transparent={true} onRequestClose={() => setIsModalVisible(false)}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-              <Text style={styles.modalTitle}>Add New Chore</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Chore Name (e.g. Fold Laundry)"
-                value={newChoreTitle}
-                onChangeText={setNewChoreTitle}
-              />
-
-              {/* Points dropdown */}
-              <View style={styles.dropdownContainer}>
-                <View style={styles.inputRow}>
-                  <TextInput
-                    style={styles.inputFlex}
-                    placeholder="Points (e.g. 50)"
-                    value={newChorePoints}
-                    onChangeText={setNewChorePoints}
-                    keyboardType="numeric"
-                  />
-                  <TouchableOpacity style={styles.dropdownToggle} onPress={() => setShowPointOptions(!showPointOptions)}>
-                    <Ionicons name={showPointOptions ? "chevron-up" : "chevron-down"} size={24} color="#666" />
-                  </TouchableOpacity>
-                </View>
-                {showPointOptions && (
-                  <ScrollView style={styles.dropdownList} nestedScrollEnabled={true} keyboardShouldPersistTaps="handled">
-                    {POINT_OPTIONS.map((opt) => (
-                      <TouchableOpacity
-                        key={opt}
-                        style={styles.dropdownItem}
-                        onPress={() => {
-                          setNewChorePoints(opt);
-                          setShowPointOptions(false);
-                        }}
-                      >
-                        <Text style={styles.dropDownItemText}>{opt} pts</Text>
-                      </TouchableOpacity>
-                    ))}
-                  </ScrollView>
-                )}
-              </View>
-
-              {/* Schedule Link */}
-              <TouchableOpacity style={styles.scheduleLink} onPress={() => setShowScheduler(!showScheduler)}>
-                <Ionicons name="calendar-outline" size={16} color="#63B995" />
-                <Text style={styles.scheduleLinkText}>{showScheduler ? "Hide Scheduler" : "Schedule for later?"}</Text>
-              </TouchableOpacity>
-
-              {/* Scheduler UI */}
-              {showScheduler && (
-                <ChoreScheduler
-                  selectedDate={selectedDate}
-                  onDateChange={setSelectedDate}
-                  selectedHour={selectedHour}
-                  onHourChange={setSelectedHour}
-                  selectedMinute={selectedMinute}
-                  onMinuteChange={setSelectedMinute}
-                />
-              )}
-
-              <View style={styles.modalButtons}>
-                <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={() => setIsModalVisible(false)}>
-                  <Text style={styles.buttonText}>Cancel</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.button, styles.saveButton]}
-                  onPress={handleAddChore}
-                  disabled={isAdding}
-                >
-                  {isAdding ? <ActivityIndicator color="white" /> : <Text style={styles.buttonText}>Add Task</Text>}
-                </TouchableOpacity>
-              </View>
-            </ScrollView>
-          </View>
-        </View>
-      </Modal>
+      <AddChoreModal
+        visible={isModalVisible}
+        onClose={() => setIsModalVisible(false)}
+        onAdd={handleAddChoreSubmit}
+      />
     </View>
   );
 }
@@ -445,78 +317,4 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   avatarText: { color: "white", fontSize: 9, fontWeight: "bold" },
-  // Modal Styles
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  modalContent: {
-    backgroundColor: "#fff",
-    width: "90%",
-    padding: 25,
-    borderRadius: 20,
-    elevation: 5,
-    maxHeight: "85%",
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    marginBottom: 20,
-    textAlign: "center",
-  },
-  input: {
-    backgroundColor: "#f0f0f0",
-    padding: 15,
-    borderRadius: 10,
-    marginBottom: 15,
-    fontSize: 16,
-  },
-  dropdownContainer: { marginBottom: 10 },
-  inputRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#f0f0f0",
-    borderRadius: 10,
-  },
-  inputFlex: { flex: 1, padding: 15, fontSize: 16, color: "#333" },
-  dropdownToggle: { padding: 15, borderLeftWidth: 1, borderLeftColor: "#ddd" },
-  dropdownList: {
-    backgroundColor: "#fff",
-    borderWidth: 1,
-    borderColor: "#eee",
-    borderRadius: 10,
-    marginTop: 5,
-    maxHeight: 135,
-  },
-  dropdownItem: {
-    padding: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#f8f8f8",
-  },
-  dropDownItemText: { fontSize: 16, color: "#333" },
-  modalButtons: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 20,
-  },
-  button: {
-    flex: 1,
-    padding: 15,
-    borderRadius: 10,
-    alignItems: "center",
-    marginHorizontal: 5,
-  },
-  cancelButton: { backgroundColor: "#ccc" },
-  saveButton: { backgroundColor: "#63B995" },
-  buttonText: { color: "#fff", fontWeight: "bold", fontSize: 16 },
-  scheduleLink: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 10,
-    gap: 6,
-  },
-  scheduleLinkText: { color: "#63B995", fontWeight: "600", fontSize: 14 },
 });
