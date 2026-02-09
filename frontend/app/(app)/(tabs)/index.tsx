@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import {
   View,
   Text,
@@ -6,73 +6,32 @@ import {
   FlatList,
   ActivityIndicator,
   Dimensions,
-  Platform
+  Platform,
 } from "react-native";
-import * as Haptics from "expo-haptics";
-import ConfettiCannon from "react-native-confetti-cannon"
-import { useAuth } from "@/context/AuthContext";
-import { useChores } from "@/context/ChoreContext";
+import ConfettiCannon from "react-native-confetti-cannon";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+
 import ScoreCard from "@/components/home/ScoreCard";
 import FocusTask from "@/components/home/FocusTask";
 import ChoreItem from "@/components/home/ChoreItem";
 
+import { useHomeScreen } from "@/hooks/useHomeScreen";
+
 const { width } = Dimensions.get("window");
 
-/**
- * HomeScreen Component
- * The main dashboard that displays user score, the priority "Focus Task",
- * and the full list of daily chores.
- */
 export default function HomeScreen() {
-  const { user } = useAuth();
-  const { chores, updateStatus, loading } = useChores();
+  const {
+    chores,
+    loading,
+    currentScore,
+    focusTask,
+    confettiTrigger,
+    handleChorePress,
+  } = useHomeScreen();
 
-  const [confettiTrigger, setConfettiTrigger] = useState(0);
   const insets = useSafeAreaInsets();
-  const safeTop = insets.top > 0 ? insets.top : (Platform.OS === 'android' ? 30 : 0);
-
-  // Logic to determine if action is allowed
-  const isChoreLocked = (chore: any) => {
-    if (chore.inProgress && chore.inProgressBy !== user?.uid) return true;
-    if (chore.completed && chore.completedBy !== user?.uid) return true;
-    return false;
-  };
-
-  const handleChorePress = async (chore: any) => {
-    if (isChoreLocked(chore)) return;
-
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    try {
-      if (chore.completed) {
-        await updateStatus(chore.id, "pending");
-      } else if (chore.inProgress) {
-        await updateStatus(chore.id, "completed");
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        setConfettiTrigger(prev => prev + 1);
-      } else {
-        await updateStatus(chore.id, "in-progress");
-      }
-    } catch (error) {
-      console.error("Failed to toggle:", error);
-    }
-  };
-
-  const currentScore = chores
-    .filter((c) => c.completed && c.completedBy === user?.uid)
-    .reduce((sum, chore) => sum + chore.points, 0);
-
-  const availableChores = chores.filter((c) => {
-    if (c.completed) return false;
-    if (c.inProgress && c.inProgressBy !== user?.uid) return false;
-    return true;
-  });
-
-  const focusTask = availableChores.sort((a, b) => {
-    if (a.inProgress && !b.inProgress) return -1;
-    if (!a.inProgress && b.inProgress) return 1;
-    return b.points - a.points;
-  })[0];
+  const safeTop =
+    insets.top > 0 ? insets.top : Platform.OS === "android" ? 30 : 0;
 
   if (loading) {
     return (
@@ -83,20 +42,22 @@ export default function HomeScreen() {
   }
 
   return (
-    <View style={[
-      styles.container,
-      { paddingTop: safeTop, paddingLeft: insets.left + 20, paddingRight: insets.right + 20 }
-    ]}>
-
+    <View
+      style={[
+        styles.container,
+        {
+          paddingTop: safeTop,
+          paddingLeft: insets.left + 20,
+          paddingRight: insets.right + 20,
+        },
+      ]}
+    >
       {/* Score & Streak */}
       <ScoreCard score={currentScore} />
 
       {/* Priotary Focus Task */}
       {focusTask ? (
-        <FocusTask
-          task={focusTask}
-          onPress={handleChorePress}
-        />
+        <FocusTask task={focusTask} onPress={handleChorePress} />
       ) : (
         <View style={styles.focusContainer}>
           <Text>ALL CAUGHT UP!</Text>
@@ -116,10 +77,7 @@ export default function HomeScreen() {
           </Text>
         }
         renderItem={({ item }) => (
-          <ChoreItem
-            item={item}
-            onPress={handleChorePress}
-          />
+          <ChoreItem item={item} onPress={handleChorePress} />
         )}
       />
 
