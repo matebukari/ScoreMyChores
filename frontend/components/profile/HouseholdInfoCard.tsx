@@ -1,0 +1,79 @@
+import React from "react";
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+
+interface HouseholdInfoCardProps {
+  household: any;
+  loading: boolean;
+  isAdmin: boolean;
+  onShareCode: () => void;
+  onManageMembers: () => void;
+}
+
+export default function HouseholdInfoCard({
+  household,
+  loading,
+  isAdmin,
+  onShareCode,
+  onManageMembers,
+}: HouseholdInfoCardProps) {
+  if (loading) return <ActivityIndicator size="large" color="#63B995" />;
+  if (!household) return <Text style={{ color: "#888", marginBottom: 20 }}>No active household.</Text>
+
+  return (
+    <View style={styles.houseCard}>
+      <View style={styles.houseHeader}>
+        <Ionicons name="home" size={24} color="#63B995" />
+        <Text style={styles.houseName}>{household.name}</Text>
+      </View>
+      <View style={styles.divider} />
+      <View style={styles.codeRow}>
+        <View>
+          <Text style={styles.codeLabel}>Invite Code</Text>
+          <Text style={styles.codeValue}>{household.inviteCode}</Text>
+        </View>
+        <TouchableOpacity onPress={onShareCode} style={styles.shareButton}>
+          <Ionicons name="share-outline" size={20} color="#63B995" />
+        </TouchableOpacity>
+      </View>
+
+      {isAdmin && (
+        <>
+          <View style={styles.divider} />
+          <TouchableOpacity style={styles.manageButton} onPress={onManageMembers}>
+            <Ionicons name="people-outline" size={20} color="#fff" />
+            <Text style={styles.manageButtonText}>Manage Members</Text>
+          </TouchableOpacity>
+        </>
+      )}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  houseCard: {
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 15,
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
+  },
+  houseHeader: { flexDirection: "row", alignItems: "center", marginBottom: 15 },
+  houseName: { fontSize: 20, fontWeight: "bold", color: "#333", marginLeft: 10 },
+  divider: { height: 1, backgroundColor: "#eee", marginVertical: 15 },
+  codeRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  codeLabel: { fontSize: 12, color: "#888", textTransform: "uppercase", letterSpacing: 1 },
+  codeValue: { fontSize: 24, fontWeight: "bold", color: "#333", marginTop: 4, letterSpacing: 2 },
+  shareButton: { padding: 10, backgroundColor: "#f5f5f5", borderRadius: 8 },
+  manageButton: {
+    backgroundColor: "#333",
+    padding: 12,
+    borderRadius: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+  },
+  manageButtonText: { color: "#fff", fontWeight: "bold" },
+});

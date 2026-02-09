@@ -10,54 +10,48 @@ import {
   ActivityIndicator,
   Modal,
   TextInput,
-  FlatList,
+  Platform,
 } from "react-native";
 import { useAuth } from "@/context/AuthContext";
-import { useHousehold, UserProfile } from "@/context/HouseholdContext";
+import { useHousehold } from "@/context/HouseholdContext";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { householdService } from "@/services/householdService";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Platform } from "react-native";
-import UserAvatar from "@/components/ui/UserAvatar";
 
-// List of fun avatars to pick from
-const AVATAR_OPTIONS = [
-  "🐶", "🐱", "🦊", "🐻", "🐼", "🐨", "🐯", "🦁", 
-  "🐮", "🐷", "🐸", "🐙", "🦄", "🐲", "👽", "🤖",
-  "💩", "👻", "🦸", "🥷", "🧙", "🧚", "🧜", "🧛"
-];
-
-// 1. Define the limit constant
-const MAX_NAME_LENGTH = 16;
+// Components
+import UserInfoCard from "@/components/profile/UserInfoCard";
+import HouseholdInfoCard from "@/components/profile/HouseholdInfoCard";
+import HouseholdSwitcher from "@/components/profile/HouseholdSwitcher";
+import EditNameModal from "@/components/profile/modals/EditNameModal";
+import AvatarPickerModal from "@/components/profile/modals/AvatarPickerModal";
+import ManageMembersModal from "@/components/profile/modals/ManageMembersModal";
+import JoinHouseholdModal from "@/components/profile/modals/JoinHouseholdModal";
 
 export default function ProfileScreen() {
   const { user, logout, updateName, updateAvatar } = useAuth();
   const { activeHousehold, joinedHouseholds, switchHousehold, loading, memberProfiles } = useHousehold();
 
+  // State
   const [switching, setSwitching] = useState(false);
-  const [isJoinModalVisible, setIsJoinModalVisible] = useState(false);
-  const [inviteCode, setInviteCode] = useState("");
-  const [joining, setJoining] = useState(false);
-
-  // Edit Name State
-  const [isEditNameVisible, setIsEditNameVisible] = useState(false);
-  const [newName, setNewName] = useState(user?.displayName || "");
-  const [updatingName, setUpdatingName] = useState(false);
-
-  // Edit Avatar State
-  const [isAvatarModalVisible, setIsAvatarModalVisible] = useState(false);
-
-  // Manage Members State
-  const [isManageMemberVisible, setIsManageMemberVisible] = useState(false);
-  const [updatingRole, setUpdatingRole] = useState<string | null>(null);
-
   const [householdNames, setHouseholdNames] = useState<Record<string, string>>({});
+  
 
-  const isAdmin = activeHousehold?.members?.[user?.uid || ""] === "admin";
+  // Modal Visibility State
+  const [isJoinModalVisible, setIsJoinModalVisible] = useState(false);
+  const [isEditNameVisible, setIsEditNameVisible] = useState(false);
+  const [isAvatarModalVisible, setIsAvatarModalVisible] = useState(false);
+  const [isManageMemberVisible, setIsManageMemberVisible] = useState(false);
+
+  // Operation State
+  const [joining, setJoining] = useState(false);
+  const [updatingName, setUpdatingName] = useState(false);
+  const [updatingRole, setUpdatingRole] = useState<string | null>(null);
 
   const insets = useSafeAreaInsets();
   const safeTop = insets.top > 0 ? insets.top : (Platform.OS === 'android' ? 30 : 0);
+
+  const isAdmin = activeHousehold?.members?.[user?.uid || ""] === "admin";
 
   useEffect(() => {
     const fetchHouseholdNames = async () => {
@@ -69,13 +63,8 @@ export default function ProfileScreen() {
         } else {
           try {
             const house = await householdService.getHousehold(id);
-            if (house) {
-              names[id] = house.name;
-            } else {
-              names[id] = "Unknown Household";
-            }
-          } catch (error) {
-            console.error("Failed to fetch household name", error);
+            names[id] = house ? house.name : "Unknown Household";
+          } catch {
             names[id] = "Unknown Household";
           }
         }
@@ -83,11 +72,10 @@ export default function ProfileScreen() {
       setHouseholdNames(names);
     };
 
-    if (joinedHouseholds.length > 0) {
-      fetchHouseholdNames();
-    }
+    if (joinedHouseholds.length > 0) fetchHouseholdNames();
   }, [joinedHouseholds, activeHousehold]);
 
+  // Handlers
   const handleSignOut = async () => {
     Alert.alert("Sign Out", "Are you sure?", [
       { text: "Cancel", style: "cancel" },
@@ -99,7 +87,7 @@ export default function ProfileScreen() {
     if (!activeHousehold) return;
     try {
       await Share.share({
-        message: `Join my household on ChoreApp! Use code: ${activeHousehold.inviteCode}`,
+        message: `Join my household on ScoreMyChores! Use code: ${activeHousehold.inviteCode}`,
       });
     } catch (error) {
       console.error(error);
@@ -118,13 +106,12 @@ export default function ProfileScreen() {
     }
   };
 
-  const handleJoinHousehold = async () => {
-    if (!inviteCode || !user) return;
+  const handleJoinHousehold = async (code: string) => {
+    if (!code || !user) return;
     try {
       setJoining(true);
-      await householdService.joinHousehold(user.uid, inviteCode.trim().toUpperCase());
+      await householdService.joinHousehold(user.uid, code.trim().toUpperCase());
       setIsJoinModalVisible(false);
-      setInviteCode("");
     } catch (error: any) {
       Alert.alert("Error", error.message || "Invalid invite code");
     } finally {
@@ -132,19 +119,13 @@ export default function ProfileScreen() {
     }
   };
 
-  const handleUpdateName = async () => {
+  const handleUpdateName = async (newName: string) => {
     if (!newName.trim()) return;
-    
-    if (newName.length > MAX_NAME_LENGTH) {
-      Alert.alert("Error", `Name must be ${MAX_NAME_LENGTH} characters or less.`);
-      return;
-    }
-
     try {
       setUpdatingName(true);
       await updateName(newName.trim());
       setIsEditNameVisible(false);
-    } catch (error) {
+    } catch {
       Alert.alert("Error", "Failed to update name");
     } finally {
       setUpdatingName(false);
@@ -173,7 +154,7 @@ export default function ProfileScreen() {
           try {
             setUpdatingRole(targetUserId);
             await householdService.updateMemberRole(activeHousehold.id, targetUserId, newRole);
-          } catch (error) {
+          } catch {
             Alert.alert("Error", "Failed to update role.");
           } finally {
             setUpdatingRole(null);
@@ -181,56 +162,6 @@ export default function ProfileScreen() {
         }
       }
     ]);
-  };
-
-  const displayName = user?.displayName || "User";
-  const initial = displayName.charAt(0).toUpperCase();
-  const currentAvatar = user?.photoURL;
-
-  const renderMemberItem = ({ item }: { item: UserProfile }) => {
-    const role = activeHousehold?.members?.[item.id] || 'member';
-    const isMe = item.id === user?.uid;
-
-    return (
-      <View style={styles.memberRow}>
-        <View style={styles.memberInfo}>
-          <UserAvatar
-            name={item.displayName}
-            avatar={item.photoURL}
-            size={32}
-            fontSize={14}
-          />
-          <View>
-            <Text style={styles.memberName}>{item.displayName || "Unknown"}</Text>
-            <Text style={styles.memberEmail}>{item.email}</Text>
-          </View>
-        </View>
-
-        <View style={styles.roleContainer}>
-          <Text style={[styles.roleBadge, role === 'admin' ? styles.adminBadge : styles.memberBadge]}>
-            {role === 'admin' ? "ADMIN" : "MEMBER"}
-          </Text>
-
-          {!isMe && (
-            <TouchableOpacity
-              onPress={() => handleUpdateRole(item.id, role)}
-              disabled={!!updatingRole}
-              style={styles.roleButton}
-            >
-              {updatingRole === item.id ? (
-                <ActivityIndicator size="small" color="#63B995"/>
-              ) : (
-                <Ionicons
-                  name={role === 'admin' ? "arrow-down-circle-outline" : "arrow-up-circle-outline"}
-                  size={24}
-                  color="#63B995"
-                />
-              )}
-            </TouchableOpacity>
-          )}
-        </View>
-      </View>
-    );
   };
 
   return (
@@ -244,80 +175,23 @@ export default function ProfileScreen() {
         </View>
 
         {/* USER INFO CARD */}
-        <View style={styles.card}>
-          <View style={{position: 'relative'}}>
-            <UserAvatar
-              name={displayName}
-              avatar={currentAvatar}
-              size={60}
-              fontSize={28}
-              color="#2196F3"
-            />
-            
-            <TouchableOpacity 
-              style={styles.editAvatarBadge}
-              onPress={() => setIsAvatarModalVisible(true)}
-            >
-              <Ionicons name="camera" size={14} color="white" />
-            </TouchableOpacity>
-          </View>
-
-          <View style={{ flex: 1, marginLeft: 15 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <Text style={styles.nameText}>{displayName}</Text>
-              <TouchableOpacity onPress={() => {
-                setNewName(user?.displayName || "");
-                setIsEditNameVisible(true);
-              }}>
-                <Ionicons name="pencil-sharp" size={16} color="#63B995" />
-              </TouchableOpacity>
-            </View>
-            
-            <Text style={styles.emailText}>{user?.email}</Text>
-            <Text style={styles.roleText}>
-              Role: {activeHousehold?.members[user?.uid || ""] === "admin" ? "Admin" : "Member"}
-            </Text>
-          </View>
-        </View>
+        <UserInfoCard
+          user={user}
+          role={activeHousehold?.members[user?.uid || ""] === "admin" ? "admin" : "member"}
+          onEditName={() => setIsEditNameVisible(true)}
+          onEditAvatar={() => setIsAvatarModalVisible(true)}
+        />
 
         <Text style={styles.sectionTitle}>Current Household</Text>
 
         {/* HOUSEHOLD INFO */}
-        {loading || switching ? (
-          <ActivityIndicator size="large" color="#63B995" />
-        ) : activeHousehold ? (
-          <View style={styles.houseCard}>
-            <View style={styles.houseHeader}>
-              <Ionicons name="home" size={24} color="#63B995" />
-              <Text style={styles.houseName}>{activeHousehold.name}</Text>
-            </View>
-            <View style={styles.divider} />
-            <View style={styles.codeRow}>
-              <View>
-                <Text style={styles.codeLabel}>Invite Code</Text>
-                <Text style={styles.codeValue}>{activeHousehold.inviteCode}</Text>
-              </View>
-              <TouchableOpacity onPress={handleShareCode} style={styles.shareButton}>
-                <Ionicons name="share-outline" size={20} color="#63B995" />
-              </TouchableOpacity>
-            </View>
-
-            {isAdmin && (
-              <>
-                <View style={styles.divider} />
-                  <TouchableOpacity
-                    style={styles.manageButton}
-                    onPress={() => setIsManageMemberVisible(true)}
-                  >
-                    <Ionicons name="people-outline" size={20} color="#fff" />
-                    <Text style={styles.manageButtonText}>Manage Members</Text>
-                  </TouchableOpacity>
-              </>
-            )}
-          </View>
-        ) : (
-          <Text style={{ color: "#888", marginBottom: 20 }}>No active household.</Text>
-        )}
+        <HouseholdInfoCard
+          household={activeHousehold}
+          loading={loading || switching}
+          isAdmin={isAdmin}
+          onShareCode={handleShareCode}
+          onManageMembers={() => setIsManageMemberVisible(true)}
+        />
 
         {/* JOIN BUTTON */}
         <TouchableOpacity style={styles.joinButton} onPress={() => setIsJoinModalVisible(true)}>
@@ -326,23 +200,13 @@ export default function ProfileScreen() {
         </TouchableOpacity>
 
         {/* SWITCH LIST */}
-        {joinedHouseholds.length > 1 && (
-          <>
-            <Text style={styles.sectionTitle}>Switch Household</Text>
-            {joinedHouseholds.map((houseId) => (
-              <TouchableOpacity
-                key={houseId}
-                style={[styles.switchButton, houseId === activeHousehold?.id && styles.activeSwitchButton]}
-                onPress={() => handleSwitch(houseId)}
-              >
-                <Text style={[styles.switchText, houseId === activeHousehold?.id && styles.activeSwitchText]}>
-                  {householdNames[houseId] || "Loading..."}
-                </Text>
-                {houseId === activeHousehold?.id && <Ionicons name="checkmark-circle" size={20} color="#63B995" />}
-              </TouchableOpacity>
-            ))}
-          </>
-        )}
+        <HouseholdSwitcher
+          joinedHouseholds={joinedHouseholds}
+          activeHouseholdId={activeHousehold?.id}
+          householdNames={householdNames}
+          switching={switching}
+          onSwitch={handleSwitch}
+        />
 
         <TouchableOpacity style={styles.logoutButton} onPress={handleSignOut}>
           <Text style={styles.logoutText}>Sign Out</Text>
@@ -352,107 +216,39 @@ export default function ProfileScreen() {
         {/* --- MODALS --- */}
 
         {/* 1. JOIN MODAL */}
-        <Modal visible={isJoinModalVisible} animationType="slide" transparent={true} onRequestClose={() => setIsJoinModalVisible(false)}>
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Join Household</Text>
-              <Text style={styles.modalSubtitle}>Enter the invite code from the Admin</Text>
-              <TextInput style={styles.input} placeholder="Invite Code (e.g. A1B2C3)" value={inviteCode} onChangeText={setInviteCode} autoCapitalize="characters" />
-              <View style={styles.modalButtons}>
-                <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={() => setIsJoinModalVisible(false)}>
-                  <Text style={styles.buttonText}>Cancel</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={[styles.button, styles.saveButton]} onPress={handleJoinHousehold} disabled={joining}>
-                  {joining ? <ActivityIndicator color="white" /> : <Text style={styles.buttonText}>Join</Text>}
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        </Modal>
+        <JoinHouseholdModal
+          visible={isJoinModalVisible}
+          onClose={() => setIsJoinModalVisible(false)}
+          onJoin={handleJoinHousehold}
+          loading={joining}
+        />
 
         {/* 2. EDIT NAME MODAL */}
-        <Modal visible={isEditNameVisible} animationType="fade" transparent={true} onRequestClose={() => setIsEditNameVisible(false)}>
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Change Name</Text>
-              
-              <TextInput
-                style={styles.input}
-                placeholder="Enter your name"
-                value={newName}
-                onChangeText={setNewName}
-                autoCapitalize="words"
-                maxLength={MAX_NAME_LENGTH}
-              />
-              {/* Character Counter */}
-              <Text style={styles.charCount}>
-                {newName.length}/{MAX_NAME_LENGTH}
-              </Text>
-
-              <View style={styles.modalButtons}>
-                <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={() => setIsEditNameVisible(false)}>
-                  <Text style={styles.buttonText}>Cancel</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={[styles.button, styles.saveButton]} onPress={handleUpdateName} disabled={updatingName}>
-                  {updatingName ? <ActivityIndicator color="white" /> : <Text style={styles.buttonText}>Save</Text>}
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        </Modal>
+        <EditNameModal
+          visible={isEditNameVisible}
+          onClose={() => setIsEditNameVisible(false)}
+          currentName={user?.displayName}
+          onSave={handleUpdateName}
+          loading={updatingName}
+        />
 
         {/* 3. AVATAR PICKER MODAL */}
-        <Modal visible={isAvatarModalVisible} animationType="slide" transparent={true} onRequestClose={() => setIsAvatarModalVisible(false)}>
-          <View style={styles.modalOverlay}>
-            <View style={[styles.modalContent, { maxHeight: '60%' }]}>
-              <Text style={styles.modalTitle}>Pick an Avatar</Text>
-              <FlatList
-                data={AVATAR_OPTIONS}
-                numColumns={4}
-                keyExtractor={(item) => item}
-                columnWrapperStyle={{ justifyContent: 'space-between', marginBottom: 15 }}
-                renderItem={({ item }) => (
-                  <TouchableOpacity 
-                    style={styles.avatarOption} 
-                    onPress={() => handleSelectAvatar(item)}
-                  >
-                    <Text style={{ fontSize: 32 }}>{item}</Text>
-                  </TouchableOpacity>
-                )}
-              />
-              <View style={styles.modalButtons}>
-                <TouchableOpacity style={[styles.button, styles.cancelButton, { marginTop: 10 }]} onPress={() => setIsAvatarModalVisible(false)}>
-                  <Text style={styles.buttonText}>Cancel</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        </Modal>
+        <AvatarPickerModal
+          visible={isAvatarModalVisible}
+          onClose={() => setIsAvatarModalVisible(false)}
+          onSelect={handleSelectAvatar}
+        />
 
         {/* 4. MANAGE MEMBERS MODAL */}
-        <Modal visible={isManageMemberVisible} animationType="slide" transparent={true} onRequestClose={() => setIsManageMemberVisible(false)}>
-          <View style={styles.modalOverlay}>
-            <View style={[styles.modalContent, { maxHeight: '70%' }]}>
-              <Text style={styles.modalTitle}>Manage Members</Text>
-              <Text style={styles.modalSubtitle}>Promote members to admin or remove privileges.</Text>
-
-              <FlatList
-                data={Object.values(memberProfiles).filter(m => m.id !== user?.uid)}
-                keyExtractor={(item) => item.id}
-                renderItem={renderMemberItem}
-                style={{ width: '100%', marginBottom: 15 }}
-                showsVerticalScrollIndicator={false}
-              />
-
-              <View style={styles.modalButtons}>
-                <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={() => setIsManageMemberVisible(false)}>
-                  <Text style={styles.buttonText}>Close</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        </Modal>
-
+        <ManageMembersModal
+          visible={isManageMemberVisible}
+          onClose={() => setIsManageMemberVisible(false)}
+          members={Object.values(memberProfiles).filter(m => m.id !== user?.uid)}
+          householdMembersMap={activeHousehold?.members}
+          currentUserId={user?.uid}
+          onUpdateRole={handleUpdateRole}
+          updatingRole={updatingRole}
+        />
       </ScrollView>
     </View>
   );
@@ -462,130 +258,9 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#f8f9fa", paddingHorizontal: 20 },
   header: { marginTop: 40, marginBottom: 20 },
   title: { fontSize: 28, fontWeight: "bold", color: "#333" },
-
-  card: {
-    backgroundColor: "#fff",
-    padding: 20,
-    borderRadius: 16,
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 25,
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowRadius: 5,
-    elevation: 2,
-  },
-  avatarContainer: {
-    width: 60, height: 60, borderRadius: 30,
-    backgroundColor: "#E3F2FD",
-    justifyContent: "center", alignItems: "center",
-  },
-  avatarText: { fontSize: 28, fontWeight: "bold", color: "#2196F3" },
-  editAvatarBadge: {
-    position: 'absolute', bottom: 0, right: -4,
-    backgroundColor: '#63B995', width: 24, height: 24, borderRadius: 12,
-    justifyContent: 'center', alignItems: 'center',
-    borderWidth: 2, borderColor: '#fff'
-  },
-  
-  nameText: { fontSize: 20, fontWeight: "bold", color: "#333" },
-  emailText: { fontSize: 14, color: "#666", marginTop: 2 },
-  roleText: { fontSize: 12, color: "#999", marginTop: 4, textTransform: 'uppercase', letterSpacing: 0.5 },
-
   sectionTitle: { fontSize: 18, fontWeight: "bold", color: "#333", marginBottom: 15 },
-  houseCard: { backgroundColor: "#fff", borderRadius: 16, padding: 20, marginBottom: 15, borderWidth: 1, borderColor: "#e0e0e0" },
-  houseHeader: { flexDirection: "row", alignItems: "center", marginBottom: 15 },
-  houseName: { fontSize: 20, fontWeight: "bold", color: "#333", marginLeft: 10 },
-  divider: { height: 1, backgroundColor: "#eee", marginVertical: 15 },
-  codeRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  codeLabel: { fontSize: 12, color: "#888", textTransform: "uppercase", letterSpacing: 1 },
-  codeValue: { fontSize: 24, fontWeight: "bold", color: "#333", marginTop: 4, letterSpacing: 2 },
-  shareButton: { padding: 10, backgroundColor: "#f5f5f5", borderRadius: 8 },
-
-  manageButton: {
-    backgroundColor: '#333',
-    padding: 12,
-    borderRadius: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8
-  },
-  manageButtonText: { color: '#fff', fontWeight: 'bold' },
-
   joinButton: { flexDirection: "row", alignItems: "center", justifyContent: "center", backgroundColor: "#fff", padding: 15, borderRadius: 12, marginBottom: 25, borderWidth: 1, borderColor: "#63B995", borderStyle: "dashed" },
   joinButtonText: { color: "#63B995", fontWeight: "600", marginLeft: 8 },
-
-  switchButton: { backgroundColor: "#fff", padding: 15, borderRadius: 12, marginBottom: 10, flexDirection: "row", justifyContent: "space-between", alignItems: "center", borderWidth: 1, borderColor: "#eee" },
-  activeSwitchButton: { borderColor: "#63B995", backgroundColor: "#F3E5F5" },
-  switchText: { color: "#666", fontWeight: "500" },
-  activeSwitchText: { color: "#63B995", fontWeight: "bold" },
-
   logoutButton: { backgroundColor: "#ffebee", padding: 15, borderRadius: 12, alignItems: "center", marginTop: 10 },
   logoutText: { color: "#d32f2f", fontWeight: "bold", fontSize: 16 },
-
-  // Modal Styles
-  modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "center", alignItems: "center" },
-  modalContent: { backgroundColor: "#fff", width: "90%", padding: 25, borderRadius: 20, elevation: 5 },
-  modalTitle: { fontSize: 20, fontWeight: "bold", marginBottom: 15, textAlign: "center" },
-  modalSubtitle: { fontSize: 14, color: "#666", marginBottom: 20, textAlign: "center" },
-  input: { backgroundColor: "#f0f0f0", padding: 15, borderRadius: 10, marginBottom: 15, fontSize: 16 },
-  
-  // Char count style
-  charCount: {
-    textAlign: 'right',
-    color: '#888',
-    fontSize: 12,
-    marginTop: -10,
-    marginBottom: 20,
-    marginRight: 5
-  },
-
-  modalButtons: { flexDirection: "row", justifyContent: "space-between" },
-  button: { flex: 1, padding: 15, borderRadius: 10, alignItems: "center", marginHorizontal: 5 },
-  cancelButton: { backgroundColor: "#ccc" },
-  saveButton: { backgroundColor: "#63B995" },
-  buttonText: { color: "#fff", fontWeight: "bold", fontSize: 16 },
-
-  avatarOption: {
-    width: 60, height: 60, borderRadius: 30,
-    backgroundColor: '#f0f0f0',
-    justifyContent: 'center', alignItems: 'center',
-    margin: 5
-  },
-
-  // Member Management Styles
-  memberRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0'
-  },
-  memberInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    flex: 1
-  },
-  memberAvatar: { fontSize: 24 },
-  memberName: { fontSize: 16, fontWeight: 'bold', color: '#333' },
-  memberEmail: { fontSize: 12, color: '#999' },
-  roleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8
-  },
-  roleBadge: {
-    fontSize: 10,
-    fontWeight: 'bold',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 8,
-    overflow: 'hidden'
-  },
-  adminBadge: { backgroundColor: '#333', color: '#fff' },
-  memberBadge: { backgroundColor: '#e0e0e0', color: '#666' },
-  roleButton: { padding: 5 }
 });
