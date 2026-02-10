@@ -1,99 +1,74 @@
-import React, { useState } from "react";
+import React from "react";
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
-  Alert,
   Platform,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useAuth } from "@/context/AuthContext";
-import { useHousehold } from "@/context/HouseholdContext";
-import { useChores } from "@/context/ChoreContext";
-import { choreService } from "@/services/choreService";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-// Components
 import AddChoreModal from "@/components/chores/AddChoreModal";
 import ChoreList from "@/components/chores/ChoreList";
 
-export default function ChoresScreen() {
-  const { user } = useAuth();
-  const { activeHousehold, memberProfiles } = useHousehold();
-  const { chores, addChore, loading, resetAll, resetChore } = useChores();
+import { useChoresScreen } from "@/hooks/useChoresScreen";
 
-  const [isModalVisible, setIsModalVisible] = useState(false);
+export default function ChoresScreen() {
+  const {
+    chores,
+    loading,
+    memberProfiles,
+    currentUserId,
+    isAdmin,
+    isModalVisible,
+    setIsModalVisible,
+    handleAddChoreSubmit,
+    handleDeleteChore,
+    handleDeleteAll,
+    handleResetAll,
+    handleResetSingle,
+  } = useChoresScreen();
 
   const insets = useSafeAreaInsets();
-  const safeTop = insets.top > 0 ? insets.top : (Platform.OS === 'android' ? 30 : 0);
-  const isAdmin = activeHousehold?.members?.[user?.uid || ""] === "admin";
-
-  const handleAddChoreSubmit = async (title: string, points: number, scheduledFor: Date | null) => {
-    await addChore(title, points, scheduledFor);
-  };
-
-  const handleDeleteChore = (id: string) => {
-    if (!isAdmin) {
-      Alert.alert("Permission Denied", "Only the household admin can delete chores.");
-      return;
-    }
-    Alert.alert("Delete Chore", "Are you sure you want to remove this chore?", [
-      { text: "Cancel", style: "cancel" },
-      { text: "Delete", style: "destructive", onPress: async () => await choreService.deleteChore(id) },
-    ]);
-  };
-
-  const handleDeleteAll = () => {
-    if (!isAdmin || chores.length === 0) return;
-    Alert.alert("Delete ALL Chores", "WARNING: This will remove every single task.", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Delete All",
-        style: "destructive",
-        onPress: async () => {
-          try {
-            const promises = chores.map((chore) => choreService.deleteChore(chore.id));
-            await Promise.all(promises);
-          } catch (error) {
-            Alert.alert("Error", "Failed to delete all chores.");
-          }
-        },
-      },
-    ]);
-  };
-
-  const handleResetAll = () => {
-    Alert.alert("Reset All", "Make all chores 'Pending' again?", [
-      { text: "Cancel", style: "cancel" },
-      { text: "Reset", onPress: resetAll },
-    ]);
-  };
-
-  const handleResetSingle = (id: string) => {
-    Alert.alert("Reset Chore", "Make this chore available again?", [
-      { text: "Cancel", style: "cancel" },
-      { text: "Reset", onPress: async () => await resetChore(id) },
-    ]);
-  };
+  const safeTop =
+    insets.top > 0 ? insets.top : Platform.OS === "android" ? 30 : 0;
 
   return (
-    <View style={[styles.container, { paddingTop: safeTop, paddingLeft: insets.left + 20, paddingRight: insets.right + 20 }]}>
+    <View
+      style={[
+        styles.container,
+        {
+          paddingTop: safeTop,
+          paddingLeft: insets.left + 20,
+          paddingRight: insets.right + 20,
+        },
+      ]}
+    >
       <View style={styles.header}>
         <Text style={styles.title}>Manage Chores</Text>
         {isAdmin && (
           <View style={styles.headerActions}>
             {chores.length > 0 && (
               <>
-                <TouchableOpacity style={styles.resetAllButton} onPress={handleResetAll}>
+                <TouchableOpacity
+                  style={styles.resetAllButton}
+                  onPress={handleResetAll}
+                >
                   <Ionicons name="refresh" size={22} color="white" />
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.deleteAllButton} onPress={handleDeleteAll}>
+                <TouchableOpacity
+                  style={styles.deleteAllButton}
+                  onPress={handleDeleteAll}
+                >
                   <Ionicons name="trash-bin-outline" size={22} color="white" />
                 </TouchableOpacity>
               </>
             )}
-            <TouchableOpacity style={styles.addButton} onPress={() => setIsModalVisible(true)}>
+            <TouchableOpacity
+              style={styles.addButton}
+              onPress={() => setIsModalVisible(true)}
+            >
               <Ionicons name="add" size={28} color="white" />
             </TouchableOpacity>
           </View>
@@ -104,7 +79,7 @@ export default function ChoresScreen() {
         chores={chores}
         loading={loading}
         isAdmin={isAdmin}
-        currentUserId={user?.uid}
+        currentUserId={currentUserId}
         memberProfiles={memberProfiles}
         onReset={handleResetSingle}
         onDelete={handleDeleteChore}
