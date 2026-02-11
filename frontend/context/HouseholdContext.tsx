@@ -158,7 +158,23 @@ export function HouseholdProvider({ children }: { children: React.ReactNode }) {
       (snapshot) => {
         const profiles: Record<string, UserProfile> = {};
         snapshot.docs.forEach((doc) => {
-          profiles[doc.id] = { id: doc.id, ...doc.data() };
+          const data = doc.data();
+
+          let effectiveAvatar = data.photoUrl
+
+          if (
+            data.householdSettings &&
+            data.householdSettings[activeHousehold.id] &&
+            data.householdSettings[activeHousehold.id].avatar
+          ) {
+            effectiveAvatar = data.householdSettings[activeHousehold.id].avatar;
+          }
+
+          profiles[doc.id] = {
+            id: doc.id,
+            ...data,
+            photoURL: effectiveAvatar
+          };
         });
         setMemberProfiles(profiles);
       },

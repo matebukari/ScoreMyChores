@@ -105,5 +105,15 @@ export const householdService = {
     await updateDoc(houseRef, {
       [`members.${targetUserId}`] : newRole
     });
+  },
+
+  // Save avatar specifically for a household
+  updateHouseholdAvatar: async (userId: string, householdId: string, avatar: string) => {
+    const userRef = doc(db, "users", userId);
+    await setDoc(userRef, {
+      householdSettings: {
+        [householdId]: { avatar }
+      }
+    }, { merge: true });
   }
 };

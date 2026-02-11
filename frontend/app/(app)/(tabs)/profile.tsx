@@ -27,6 +27,7 @@ export default function ProfileScreen() {
     activeHousehold,
     joinedHouseholds,
     memberProfiles,
+    currentUserProfile,
     householdNames,
     householdLoading,
     isAdmin,
@@ -71,6 +72,7 @@ export default function ProfileScreen() {
         {/* USER INFO CARD */}
         <UserInfoCard
           user={user}
+          avatar={currentUserProfile?.photoURL}
           role={
             activeHousehold?.members[user?.uid || ""] === "admin"
               ? "admin"

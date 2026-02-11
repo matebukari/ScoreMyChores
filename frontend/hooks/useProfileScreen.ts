@@ -33,6 +33,8 @@ export const useProfileScreen = () => {
   // Derived State
   const isAdmin = activeHousehold?.members?.[user?.uid || ""] === "admin";
 
+  const currentUserProfile = user ? memberProfiles[user.uid] : null;
+
   // Fetch Household Names
   useEffect(() => {
     const fetchHouseholdNames = async () => {
@@ -115,7 +117,11 @@ export const useProfileScreen = () => {
 
   const handleSelectAvatar = async (avatar: string) => {
     try {
-      await updateAvatar(avatar);
+      if (user && activeHousehold) {
+        await householdService.updateHouseholdAvatar(user.uid, activeHousehold.id, avatar);
+      } else {
+        await updateAvatar(avatar);
+      }
       setIsAvatarModalVisible(false);
     } catch (error) {
       Alert.alert("Error", "Failed to update avatar");
@@ -151,6 +157,7 @@ export const useProfileScreen = () => {
     activeHousehold,
     joinedHouseholds,
     memberProfiles,
+    currentUserProfile,
     householdNames,
     householdLoading,
     isAdmin,

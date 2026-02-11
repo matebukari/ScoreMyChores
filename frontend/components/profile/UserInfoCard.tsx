@@ -6,14 +6,15 @@ import { User } from "firebase/auth";
 
 interface UserInfoCardProps {
   user: User | null;
+  avatar?: string | null;
   role: "admin" | "member";
   onEditName: () => void;
   onEditAvatar: () => void;
 }
 
-export default function UserInfoCard({ user, role, onEditName, onEditAvatar }: UserInfoCardProps) {
+export default function UserInfoCard({ user, avatar, role, onEditName, onEditAvatar }: UserInfoCardProps) {
   const displayName = user?.displayName || "User";
-  const currentAvatar = user?.photoURL;
+  const currentAvatar = avatar !== undefined ? avatar : user?.photoURL;
 
   return (
     <View style={styles.card}>
