@@ -5,7 +5,7 @@ import { useChores } from "@/context/ChoreContext";
 
 export function useHomeScreen() {
   const { user } = useAuth();
-  const { chores, updateStatus, loading } = useChores();
+  const { chores, activities, updateStatus, loading } = useChores();
   const [confettiTrigger, setConfettiTrigger] = useState(0);
 
   // Check if a chore is locked for the current user
@@ -37,10 +37,12 @@ export function useHomeScreen() {
 
   // Calculate current user's score
   const currentScore = useMemo(() => {
-    return chores
-      .filter((c) => c.completed && c.completedBy === user?.uid)
-      .reduce((sum, chore) => sum + chore.points, 0);
-  }, [chores, user]);
+    if (!user || !activities) return 0;
+
+    return activities
+      .filter((a) => a.userId === user.uid)
+      .reduce((sum, activity) => sum + activity.points, 0);
+  }, [activities, user]);
 
   // Determine the priority "Focus Task"
   const focusTask = useMemo(() => {

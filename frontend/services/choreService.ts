@@ -9,7 +9,8 @@ import {
   writeBatch,
   query,
   where,
-  getDocs
+  getDocs,
+  getDoc,
 } from "firebase/firestore";
 
 export type Chore = {
@@ -99,6 +100,10 @@ export const choreService = {
     choreDetails?: { householdId: string; title: string; points: number }
   ) => {
     const choreRef = doc(db, "chores", choreId);
+
+    const choreSnap = await getDoc(choreRef);
+    if (!choreSnap.exists()) throw new Error("Chore not found");
+    const choreData = choreSnap.data() as Chore;
     
     // 1. Prepare Chore Updates
     const updates = {
@@ -132,14 +137,25 @@ export const choreService = {
         completedAt: serverTimestamp(),
         type: 'chore_completion'
       });
-      // If undoing (moving away from completed): Remove from history
-    } else {
-      // Find any existing history for this specific chore and delete it
+
+    } else if (choreData.completed) {
       const q = query(collection(db, "activities"), where("choreId", "==", choreId));
       const historySnapshot = await getDocs(q);
-      historySnapshot.forEach((doc) => {
-        batch.delete(doc.ref);
+
+      const activities = historySnapshot.docs.map(doc => ({
+        ref: doc.ref,
+        completedAt: doc.data().completedAt
+      }));
+
+      activities.sort((a, b) => {
+        const timeA = a.completedAt?.toMillis ? a.completedAt.toMillis() : 0;
+        const timeB = b.completedAt?.toMillis ? b.completedAt.toMillis() : 0;
+        return timeB - timeA;
       });
+
+      if (activities.length > 0) {
+        batch.delete(activities[0].ref);
+      }
     }
 
     await batch.commit();
