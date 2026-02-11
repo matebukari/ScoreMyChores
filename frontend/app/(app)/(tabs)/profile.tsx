@@ -19,6 +19,7 @@ import EditNameModal from "@/components/profile/modals/EditNameModal";
 import AvatarPickerModal from "@/components/profile/modals/AvatarPickerModal";
 import ManageMembersModal from "@/components/profile/modals/ManageMembersModal";
 import JoinHouseholdModal from "@/components/profile/modals/JoinHouseholdModal";
+import CreatHouseholdModal from "@/components/profile/modals/CreateHouseholdModal";
 
 export default function ProfileScreen() {
   const {
@@ -36,6 +37,7 @@ export default function ProfileScreen() {
     joining,
     updatingName,
     updatingRole,
+    creating,
     // Modals
     isJoinModalVisible,
     setIsJoinModalVisible,
@@ -45,6 +47,8 @@ export default function ProfileScreen() {
     setIsAvatarModalVisible,
     isManageMemberVisible,
     setIsManageMemberVisible,
+    isCreateModalVisible,
+    setIsCreateModalVisible,
     // Actions
     handleSignOut,
     handleShareCode,
@@ -53,6 +57,7 @@ export default function ProfileScreen() {
     handleUpdateName,
     handleSelectAvatar,
     handleUpdateRole,
+    handleCreateHousehold,
   } = useProfileScreen();
 
   const insets = useSafeAreaInsets();
@@ -93,14 +98,26 @@ export default function ProfileScreen() {
           onManageMembers={() => setIsManageMemberVisible(true)}
         />
 
-        {/* JOIN BUTTON */}
-        <TouchableOpacity
-          style={styles.joinButton}
-          onPress={() => setIsJoinModalVisible(true)}
-        >
-          <Ionicons name="add-circle-outline" size={22} color="#63B995" />
-          <Text style={styles.joinButtonText}>Join Another Household</Text>
-        </TouchableOpacity>
+        {/* ACTION BUTTONS ROW */}
+        <View style={styles.actionRow}>
+          {/* JOIN BUTTON */}
+          <TouchableOpacity
+            style={[styles.actionButton, styles.joinButtonOutline]}
+            onPress={() => setIsJoinModalVisible(true)}
+          >
+            <Ionicons name="enter-outline" size={22} color="#63B995" />
+            <Text style={styles.joinButtonText}>Join</Text>
+          </TouchableOpacity>
+        
+          {/* CREATE BUTTON */}
+          <TouchableOpacity
+            style={[styles.actionButton, styles.createButtonFill]}
+            onPress={() => setIsCreateModalVisible(true)}
+          >
+            <Ionicons name="add-circle-outline" size={22} color="#fff" />
+            <Text style={styles.createButtonText}>Create</Text>
+          </TouchableOpacity>
+        </View>
 
         {/* SWITCH LIST */}
         <HouseholdSwitcher
@@ -154,6 +171,14 @@ export default function ProfileScreen() {
           onUpdateRole={handleUpdateRole}
           updatingRole={updatingRole}
         />
+
+        {/* 5. CREATE MODAL */}
+        <CreatHouseholdModal
+          visible={isCreateModalVisible}
+          onClose={() => setIsCreateModalVisible(false)}
+          onCreate={handleCreateHousehold}
+          loading={creating}
+        />
       </ScrollView>
     </View>
   );
@@ -181,7 +206,6 @@ const styles = StyleSheet.create({
     borderColor: "#63B995",
     borderStyle: "dashed",
   },
-  joinButtonText: { color: "#63B995", fontWeight: "600", marginLeft: 8 },
   logoutButton: {
     backgroundColor: "#ffebee",
     padding: 15,
@@ -190,4 +214,33 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   logoutText: { color: "#d32f2f", fontWeight: "bold", fontSize: 16 },
+  actionRow: {
+    flexDirection: "row",
+    gap: 15,
+    marginBottom: 25,
+  },
+  actionButton: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 15,
+    borderRadius: 12,
+  },
+  joinButtonOutline: {
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#63B995",
+    borderStyle: "dashed",
+  },
+  createButtonFill: {
+    backgroundColor: "#63B995",
+    shadowColor: "#63B995",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 4,
+  },
+  joinButtonText: { color: "#63B995", fontWeight: "600", marginLeft: 8 },
+  createButtonText: { color: "#fff", fontWeight: "bold", marginLeft: 8 },
 });

@@ -23,12 +23,14 @@ export const useProfileScreen = () => {
   const [isEditNameVisible, setIsEditNameVisible] = useState(false);
   const [isAvatarModalVisible, setIsAvatarModalVisible] = useState(false);
   const [isManageMemberVisible, setIsManageMemberVisible] = useState(false);
+  const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
 
   // Operation State
   const [switching, setSwitching] = useState(false);
   const [joining, setJoining] = useState(false);
   const [updatingName, setUpdatingName] = useState(false);
   const [updatingRole, setUpdatingRole] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
 
   // Derived State
   const isAdmin = activeHousehold?.members?.[user?.uid || ""] === "admin";
@@ -151,6 +153,21 @@ export const useProfileScreen = () => {
     ]);
   };
 
+  const handleCreateHousehold = async (name: string) => {
+    if (!user) return;
+    try {
+      setCreating(true);
+      const newHouseId = await householdService.createHousehold(user.uid, name);
+      setIsCreateModalVisible(false);
+      await switchHousehold(newHouseId);
+      Alert.alert("Success", "Household created!");
+    } catch (error) {
+      Alert.alert("Error", "Failed to create household.");
+    } finally {
+      setCreating(false);
+    }
+  };
+
   return {
     // Data
     user,
@@ -166,11 +183,13 @@ export const useProfileScreen = () => {
     joining,
     updatingName,
     updatingRole,
+    creating,
     // Modal Visibilities
     isJoinModalVisible, setIsJoinModalVisible,
     isEditNameVisible, setIsEditNameVisible,
     isAvatarModalVisible, setIsAvatarModalVisible,
     isManageMemberVisible, setIsManageMemberVisible,
+    isCreateModalVisible, setIsCreateModalVisible,
     // Actions
     handleSignOut,
     handleShareCode,
@@ -179,5 +198,6 @@ export const useProfileScreen = () => {
     handleUpdateName,
     handleSelectAvatar,
     handleUpdateRole,
+    handleCreateHousehold,
   };
 };
