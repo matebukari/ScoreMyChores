@@ -160,7 +160,7 @@ export function HouseholdProvider({ children }: { children: React.ReactNode }) {
         snapshot.docs.forEach((doc) => {
           const data = doc.data();
 
-          let effectiveAvatar = data.photoUrl
+          let effectiveAvatar = data.photoURL
 
           if (
             data.householdSettings &&

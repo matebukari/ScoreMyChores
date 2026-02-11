@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet, StyleProp, ViewStyle } from "react-native";
+import { View, Text, StyleSheet, StyleProp, ViewStyle, Image } from "react-native";
 
 interface UserAvatarProps {
   name?: string | null;
@@ -21,6 +21,24 @@ export default function UserAvatar({
   const initial = name ? name.charAt(0).toUpperCase() : "?";
   const calculatedFontSize = fontSize || size * 0.45;
 
+  // Handle Image URL (starts with http or https)
+  if (avatar && (avatar.startsWith("http") || avatar.startsWith("https"))) {
+    return (
+      <View
+        style={[
+          styles.container,
+          { width: size, height: size, borderRadius: size / 2, overflow: "hidden"}
+        ]}
+      >
+        <Image
+          source= {{ uri: avatar }}
+          style={{ width: size, height: size }}
+          resizeMode="cover"
+        />
+      </View>
+    );
+  }
+  
   // If user has a selected avatar
   if (avatar) {
     return (
