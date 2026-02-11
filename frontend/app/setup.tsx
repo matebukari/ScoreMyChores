@@ -17,6 +17,8 @@ import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+const MAX_HOUSEHOLD_NAME_LENGTH = 20;
+
 export default function HouseholdSetup() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
@@ -111,7 +113,13 @@ export default function HouseholdSetup() {
             style={styles.input}
             value={houseName}
             onChangeText={setHouseName}
+            maxLength={MAX_HOUSEHOLD_NAME_LENGTH}
           />
+
+          <Text style={styles.charCount}>
+            {houseName.length}/{MAX_HOUSEHOLD_NAME_LENGTH}
+          </Text>
+
           <TouchableOpacity
             style={[styles.button, styles.createButton]}
             onPress={handleCreate}
@@ -222,7 +230,15 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     fontSize: 16,
     color: "#333",
+    marginBottom: 8,
+  },
+
+  charCount: {
+    textAlign: "right",
+    color: "#9CA3AF",
+    fontSize: 12,
     marginBottom: 16,
+    marginRight: 4,
   },
   
   button: { padding: 16, borderRadius: 12, alignItems: "center", justifyContent: "center" },

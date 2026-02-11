@@ -9,6 +9,8 @@ import {
   ActivityIndicator,
 } from "react-native";
 
+const MAX_HOUSEHOLD_NAME_LENGTH = 20;
+
 interface CreatHouseholdModalProps {
   visible: boolean;
   onClose: () => void;
@@ -51,7 +53,11 @@ export default function CreatHouseholdModal({
             value={householdName}
             onChangeText={setHouseholdName}
             autoCapitalize="words"
+            maxLength={MAX_HOUSEHOLD_NAME_LENGTH}
           />
+          <Text style={styles.charCount}>
+            {householdName.length}/{MAX_HOUSEHOLD_NAME_LENGTH}
+          </Text>
 
           <View style={styles.modalButtons}>
             <TouchableOpacity
@@ -114,7 +120,14 @@ const styles = StyleSheet.create({
     padding: 15,
     fontSize: 16,
     backgroundColor: "#f9f9f9",
+    marginBottom: 8,
+  },
+  charCount: {
+    textAlign: "right",
+    color: "#888",
+    fontSize: 12,
     marginBottom: 20,
+    marginRight: 4,
   },
   modalButtons: {
     flexDirection: "row",
