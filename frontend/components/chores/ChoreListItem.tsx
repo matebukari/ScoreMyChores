@@ -43,9 +43,10 @@ export default function ChoreListItem({
       );
     }
     if (item.inProgress && isMe) {
+      const worker = getLiveProfile(item.inProgressBy, item.inProgressByName, item.inProgressByAvatar);
       return (
         <View style={[styles.badge, { backgroundColor: "#E3F2FD", borderColor: "#64B5F6" }]}>
-          <Text style={{ fontSize: 14, marginRight: 4 }}>👤</Text>
+          <UserAvatar name={worker.name} avatar={worker.avatar} color="#1565C0" size={22} fontSize={10} />
           <Text style={[styles.badgeText, { color: "#1565C0" }]}>Doing Now</Text>
         </View>
       );
