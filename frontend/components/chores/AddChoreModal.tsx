@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import ChoreScheduler from "@/components/chores/ChoreSchedular";
+import { useChores } from "@/context/ChoreContext";
 
 const POINT_OPTIONS = ["10", "20", "30", "50", "100"];
 
@@ -32,6 +33,22 @@ export default function AddChoreModal({ visible, onClose, onAdd }: AddChoreModal
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedHour, setSelectedHour] = useState(new Date().getHours());
   const [selectedMinute, setSelectedMinute] = useState(new Date().getMinutes());
+
+  // Fetch activities to derive recent tasks
+  const { activities } = useChores();
+
+  const recentTasks = useMemo(() => {
+    const unique = new Map<string, number>();
+
+    for (const act of activities) {
+      const data = act as any;
+      if (data.choreTitle && data.points && !unique.has(data.choreTitle)) {
+        unique.set(data.choreTitle, data.points);
+      }
+      if (unique.size >= 5) break;
+    }
+    return Array.from(unique.entries()).map(([t, p]) => ({ title: t, points: p }));
+  }, [activities]);
 
   const handleAdd = async () => {
     if (!title || !points) {
@@ -77,6 +94,11 @@ export default function AddChoreModal({ visible, onClose, onAdd }: AddChoreModal
     }
   };
 
+  const handleSelectRecent = (taskTitle: string, taskPoints: number) => {
+    setTitle(taskTitle);
+    setPoints(taskPoints.toString());
+  };
+
   return (
     <Modal
       visible={visible}
@@ -91,6 +113,32 @@ export default function AddChoreModal({ visible, onClose, onAdd }: AddChoreModal
             keyboardShouldPersistTaps="handled"
           >
             <Text style={styles.modalTitle}>Add New Chore</Text>
+
+            {/* Previous Task Section */}
+            {recentTasks.length > 0 && (
+              <View style={styles.recentContainer}>
+                <Text style={styles.sectionLabel}>Previous Tasks</Text>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  style={styles.recentList}
+                  contentContainerStyle={{ paddingRight: 20 }}
+                >
+                  {recentTasks.map((task, index) => (
+                    <TouchableOpacity
+                      key={index}
+                      style={styles.recentChip}
+                      onPress={() => handleSelectRecent(task.title, task.points)}
+                    >
+                      <Text style={styles.recentChipText} numberOfLines={1}>
+                        {task.title} <Text style={styles.recentChipPoints}>({task.points})</Text>
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+            )}
+
             <TextInput
               style={styles.input}
               placeholder="Chore Name (e.g. Fold Laundry)"
@@ -210,6 +258,39 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginBottom: 20,
     textAlign: "center",
+  },
+  recentContainer: {
+    marginBottom: 15,
+  },
+  sectionLabel: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#888",
+    marginBottom: 8,
+    marginLeft: 4,
+  },
+  recentList: {
+    flexDirection: "row",
+    marginBottom: 5,
+  },
+  recentChip: {
+    backgroundColor: "#f0fdf4",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginRight: 8,
+    borderWidth: 1,
+    borderColor: "#bbf7d0",
+    maxWidth: 160,
+  },
+  recentChipText: {
+    color: "#166534",
+    fontSize: 13,
+    fontWeight: "500",
+  },
+  recentChipPoints: {
+    fontWeight: "bold",
+    opacity: 0.8,
   },
   input: {
     backgroundColor: "#f0f0f0",
