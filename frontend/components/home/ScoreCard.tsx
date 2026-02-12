@@ -4,13 +4,14 @@ import { useAuth } from "@/context/AuthContext";
 
 interface ScoreCardProps {
   score: number;
+  completedDays: number[];
 }
 
-export default function ScoreCard({ score }: ScoreCardProps) {
+export default function ScoreCard({ score, completedDays }: ScoreCardProps) {
   const { user } = useAuth();
 
   const weekDays = ["M", "T", "W", "T", "F", "S", "S"];
-  const currentDayIndex = new Date().getDay() - 1;
+  const currentDayIndex = (new Date().getDay() + 6) % 7;
 
   return (
     <View style={styles.scoreCard}>
@@ -25,14 +26,14 @@ export default function ScoreCard({ score }: ScoreCardProps) {
             <View
               style={[
                 styles.dayCircle,
-                index <= currentDayIndex && styles.dayActive,
+                completedDays.includes(index) && styles.dayActive,
                 index === currentDayIndex && styles.dayToday,
               ]}
             >
               <Text
                 style={[
                   styles.dayText,
-                  index <= currentDayIndex && styles.dayTextActive,
+                  completedDays.includes(index) && styles.dayTextActive,
                 ]}
               >
                 {day}

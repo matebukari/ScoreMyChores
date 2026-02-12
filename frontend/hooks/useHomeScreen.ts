@@ -44,6 +44,35 @@ export function useHomeScreen() {
       .reduce((sum, activity) => sum + activity.points, 0);
   }, [activities, user]);
 
+  const completedDays = useMemo<number[]>(() => {
+    if (!user || !activities) return [] as number[];
+
+    const userActivities = activities.filter((a) => a.userId === user.uid);
+    const now = new Date();
+
+    const currentDayIndex = (now.getDay() + 6) % 7;
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - currentDayIndex);
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    const indices = new Set<number>();
+
+    userActivities.forEach((act) => {
+      const actDate = act.completedAt?.toDate ? act.completedAt.toDate() : new Date(act.completedAt as any);      const cleanActDate = new Date(actDate);
+      cleanActDate.setHours(0, 0, 0, 0);
+
+      const diffTime = cleanActDate.getTime() - startOfWeek.getTime();
+      const diffDays = Math.round(diffTime / (1000 * 3600 * 24));
+
+      if (diffDays >= 0 && diffDays <= 6) {
+        indices.add(diffDays);
+      }
+
+    });
+
+    return Array.from(indices);
+  }, [activities, user]);
+
   // Determine the priority "Focus Task"
   const focusTask = useMemo(() => {
     const availableChores = chores.filter((c) => {
@@ -63,6 +92,7 @@ export function useHomeScreen() {
     chores,
     loading,
     currentScore,
+    completedDays,
     focusTask,
     confettiTrigger,
     handleChorePress,

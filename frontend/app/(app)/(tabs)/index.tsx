@@ -24,6 +24,7 @@ export default function HomeScreen() {
     chores,
     loading,
     currentScore,
+    completedDays,
     focusTask,
     confettiTrigger,
     handleChorePress,
@@ -53,7 +54,7 @@ export default function HomeScreen() {
       ]}
     >
       {/* Score & Streak */}
-      <ScoreCard score={currentScore} />
+      <ScoreCard score={currentScore} completedDays={completedDays} />
 
       {/* Priotary Focus Task */}
       {focusTask ? (
