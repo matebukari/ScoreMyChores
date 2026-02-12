@@ -67,7 +67,6 @@ export function useHomeScreen() {
       if (diffDays >= 0 && diffDays <= 6) {
         indices.add(diffDays);
       }
-
     });
 
     return Array.from(indices);

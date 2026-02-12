@@ -84,8 +84,8 @@ export default function ChoreItem({ item, onPress }: ChoreItemProps) {
                     fontSize={10}
                   />
                   <Text style={[styles.miniBadgeText, { color: "#4A90E2" }]}>
-                    {isLocked
-                      ? `${worker.name} is working`
+                    {item.inProgressBy === user?.uid
+                      ? "Doing now"
                       : `${getDisplayName(item.inProgressBy, worker.name)} is working`}
                   </Text>
                 </>
