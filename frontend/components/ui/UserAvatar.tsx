@@ -20,19 +20,23 @@ export default function UserAvatar({
 }: UserAvatarProps) {
   const initial = name ? name.charAt(0).toUpperCase() : "?";
   const calculatedFontSize = fontSize || size * 0.45;
+  const borderRadius = size / 2;
+  const containerKey = avatar || `initials-${name}`;
 
   // Handle Image URL (starts with http or https)
   if (avatar && (avatar.startsWith("http") || avatar.startsWith("https"))) {
     return (
       <View
+        key={containerKey}
         style={[
           styles.container,
-          { width: size, height: size, borderRadius: size / 2, overflow: "hidden"}
+          { width: size, height: size, borderRadius: borderRadius, overflow: "hidden"},
+          style
         ]}
       >
         <Image
           source= {{ uri: avatar }}
-          style={{ width: size, height: size }}
+          style={{ width: size, height: size , borderRadius: borderRadius}}
           resizeMode="cover"
         />
       </View>
@@ -43,9 +47,10 @@ export default function UserAvatar({
   if (avatar) {
     return (
       <View
+        key={containerKey}
         style={[
           styles.container,
-          { width: size, height: size, borderRadius: size / 2, backgroundColor: "transparent" },
+          { width: size, height: size, borderRadius: borderRadius, backgroundColor: "transparent" },
           style
         ]}
       >
@@ -57,9 +62,10 @@ export default function UserAvatar({
   // Fallback to Initial with colord background
   return (
     <View
+      key={containerKey}
       style={[
         styles.container,
-        { width: size, height: size, borderRadius: size / 2, backgroundColor: color },
+        { width: size, height: size, borderRadius: borderRadius, backgroundColor: color },
         style
       ]}
     >
