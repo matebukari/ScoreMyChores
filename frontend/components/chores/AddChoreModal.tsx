@@ -8,11 +8,11 @@ import {
   TextInput,
   ActivityIndicator,
   ScrollView,
-  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import ChoreScheduler from "@/components/chores/ChoreSchedular";
 import { useChores } from "@/context/ChoreContext";
+import Toast from "react-native-toast-message";
 
 const POINT_OPTIONS = ["10", "20", "30", "50", "100"];
 
@@ -52,13 +52,21 @@ export default function AddChoreModal({ visible, onClose, onAdd }: AddChoreModal
 
   const handleAdd = async () => {
     if (!title || !points) {
-      Alert.alert("Error", "Please fill in all fields");
+      Toast.show({
+        type: 'error',
+        text1: 'Missing Fields',
+        text2: 'Please fill in all fields'
+      });
       return;
     }
 
     const numericPoints = parseInt(points, 10);
     if (isNaN(numericPoints) || numericPoints < 1 || numericPoints > 100) {
-      Alert.alert("Invalid Points", "Please enter a valid whole number between 1 and 100.");
+      Toast.show({
+        type: 'error',
+        text1: 'Invalid Points',
+        text2: 'Please enter a number between 1 and 100.'
+      });
       return;
     }
 
@@ -74,7 +82,11 @@ export default function AddChoreModal({ visible, onClose, onAdd }: AddChoreModal
         // Validation
         const now = new Date();
         if (scheduledFor < now) {
-          Alert.alert("Invalid Time", "You cannot schedule a task for the past.");
+          Toast.show({
+            type: 'error',
+            text1: 'Invalid Time',
+            text2: 'You cannot schedule a task for the past.'
+          });
           setLoading(false);
           return;
         }
@@ -94,7 +106,11 @@ export default function AddChoreModal({ visible, onClose, onAdd }: AddChoreModal
 
       onClose();
     } catch (error) {
-      Alert.alert("Error", "Failed to add chore");
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Failed to add chore'
+      });
     } finally {
       setLoading(false);
     }
@@ -111,10 +127,18 @@ export default function AddChoreModal({ visible, onClose, onAdd }: AddChoreModal
     const num = parseInt(cleanedText, 10);
 
     if (num > 100) {
-      Alert.alert("Invalid Points", "Please enter a valid whole number between 1 and 100.");
+      Toast.show({
+        type: 'error',
+        text1: 'Limit Reached',
+        text2: 'Maximum points allowed is 100.'
+      });
       setPoints("100");
     } else if (num === 0) {
-      Alert.alert("Invalid Points", "Points cannot be 0. Please enter a number between 1 and 100.");
+      Toast.show({
+        type: 'error',
+        text1: 'Invalid Value',
+        text2: 'Points must be at least 1.'
+      });
       setPoints("");
     } else {
       setPoints(num.toString());

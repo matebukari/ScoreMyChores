@@ -5,7 +5,6 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Alert,
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
@@ -16,6 +15,7 @@ import { householdService } from "@/services/householdService";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import Toast from "react-native-toast-message";
 
 const MAX_HOUSEHOLD_NAME_LENGTH = 20;
 
@@ -31,7 +31,11 @@ export default function HouseholdSetup() {
 
   const handleCreate = async () => {
     if (!houseName.trim()) {
-      Alert.alert("Error", "Please enter a household name");
+      Toast.show({
+        type: 'error',
+        text1: 'Missing Name',
+        text2: 'Please enter a household name.'
+      });
       return;
     }
     setLoading(true);
@@ -41,7 +45,11 @@ export default function HouseholdSetup() {
         router.replace("/"); // Go to home
       }
     } catch (error) {
-      Alert.alert("Error", "Could not create household.");
+      Toast.show({
+        type: 'error',
+        text1: 'Creation Failed',
+        text2: 'Could not create household. Please try again.'
+      });
     } finally {
       setLoading(false);
     }
@@ -49,7 +57,11 @@ export default function HouseholdSetup() {
 
   const handleJoin = async () => {
     if (!inviteCode.trim()) {
-      Alert.alert("Error", "Please enter an invite code");
+      Toast.show({
+        type: 'error',
+        text1: 'Missing Code',
+        text2: 'Please enter an invite code.'
+      });
       return;
     }
     setLoading(true);
@@ -59,7 +71,11 @@ export default function HouseholdSetup() {
         router.replace('/'); // Go to Home
       }
     } catch (error) {
-      Alert.alert("Error", "Invalid invite code or network error.");
+      Toast.show({
+        type: 'error',
+        text1: 'Join Failed',
+        text2: 'Invalid invite code or network error.'
+      });
     } finally {
       setLoading(false);
     }

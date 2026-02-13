@@ -13,6 +13,7 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import Toast from "react-native-toast-message";
 
 export default function Register() {
   const [username, setUsername] = useState("");
@@ -26,15 +27,27 @@ export default function Register() {
 
   const handleRegister = async () => {
     if (!username || !email || !password || !confirmPassword) {
-      alert("Please fill in all fields.");
+      Toast.show({
+        type: 'error',
+        text1: 'Missing Fields',
+        text2: 'Please fill in all fields.'
+      });
       return;
     }
     if (password !== confirmPassword) {
-      alert("Passwords do not match.");
+      Toast.show({
+        type: 'error',
+        text1: 'Password Mismatch',
+        text2: 'Passwords do not match.'
+      });
       return;
     }
     if (password.length < 6) {
-      alert("Password must be at least 6 characters.");
+      Toast.show({
+        type: 'info',
+        text1: 'Weak Password',
+        text2: 'Password must be at least 6 characters.'
+      });
       return;
     }
 

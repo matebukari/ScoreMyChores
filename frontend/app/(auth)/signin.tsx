@@ -13,6 +13,7 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import Toast from "react-native-toast-message";
 
 export default function SignIn() {
   const [email, setEmail] = useState("");
@@ -24,7 +25,11 @@ export default function SignIn() {
 
   const handleSignIn = async () => {
     if (!email || !password) {
-      alert("Please fill in all fields");
+      Toast.show({
+        type: 'error',
+        text1: 'Missing Fields',
+        text2: 'Please fill in all fields.'
+      });
       return;
     }
     try {

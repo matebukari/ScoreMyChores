@@ -11,6 +11,7 @@ import {
 } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 import { useRouter, useSegments } from "expo-router";
+import Toast from "react-native-toast-message";
 
 interface AuthContextType {
   user: User | null,
@@ -58,7 +59,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       await signInWithEmailAndPassword(auth, email, password);
     } catch (error: any) {
-      alert(error.message);
+      Toast.show({
+        type: 'error',
+        text1: 'Sign In Failed',
+        text2: error.message
+      });
     }
   };
 
@@ -80,7 +85,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       return credential;
     } catch (error: any) {
-      alert(error.message);
+      Toast.show({
+        type: 'error',
+        text1: 'Registration Failed',
+        text2: error.message
+      });
     }
   }
 

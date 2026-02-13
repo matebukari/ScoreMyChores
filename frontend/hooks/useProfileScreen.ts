@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Alert, Share } from "react-native";
+import Toast from "react-native-toast-message";
 import { router } from "expo-router";
 import { useAuth } from "@/context/AuthContext";
 import { useHousehold } from "@/context/HouseholdContext";
@@ -88,7 +89,7 @@ export const useProfileScreen = () => {
       setSwitching(true);
       await switchHousehold(houseId);
     } catch (error) {
-      Alert.alert("Error", "Failed to switch.");
+      Toast.show({ type: 'error', text1: 'Switch Failed', text2: 'Could not switch household.' });
     } finally {
       setSwitching(false);
     }
@@ -100,8 +101,9 @@ export const useProfileScreen = () => {
       setJoining(true);
       await householdService.joinHousehold(user.uid, code.trim().toUpperCase());
       setIsJoinModalVisible(false);
+      Toast.show({ type: 'success', text1: 'Joined!', text2: 'You have joined the household.' });
     } catch (error: any) {
-      Alert.alert("Error", error.message || "Invalid invite code");
+      Toast.show({ type: 'error', text1: 'Join Failed', text2: error.message || "Invalid invite code" });
     } finally {
       setJoining(false);
     }
@@ -119,8 +121,9 @@ export const useProfileScreen = () => {
       }
       
       setIsEditNameVisible(false);
+      Toast.show({ type: 'success', text1: 'Name Updated' });
     } catch {
-      Alert.alert("Error", "Failed to update name");
+      Toast.show({ type: 'error', text1: 'Error', text2: 'Failed to update name' });
     } finally {
       setUpdatingName(false);
     }
@@ -134,8 +137,9 @@ export const useProfileScreen = () => {
         await updateAvatar(avatar);
       }
       setIsAvatarModalVisible(false);
+      Toast.show({ type: 'success', text1: 'Avatar Updated' });
     } catch (error) {
-      Alert.alert("Error", "Failed to update avatar");
+      Toast.show({ type: 'error', text1: 'Error', text2: 'Failed to update avatar' });
     }
   };
 
@@ -152,8 +156,9 @@ export const useProfileScreen = () => {
           try {
             setUpdatingRole(targetUserId);
             await householdService.updateMemberRole(activeHousehold.id, targetUserId, newRole);
+            Toast.show({ type: 'success', text1: 'Role Updated', text2: `User is now a ${newRole}` });
           } catch {
-            Alert.alert("Error", "Failed to update role.");
+            Toast.show({ type: 'error', text1: 'Error', text2: 'Failed to update role.' });
           } finally {
             setUpdatingRole(null);
           }
@@ -169,9 +174,9 @@ export const useProfileScreen = () => {
       const newHouseId = await householdService.createHousehold(user.uid, name);
       setIsCreateModalVisible(false);
       await switchHousehold(newHouseId);
-      Alert.alert("Success", "Household created!");
+      Toast.show({ type: 'success', text1: 'Household Created!', text2: `Welcome to ${name}` });
     } catch (error) {
-      Alert.alert("Error", "Failed to create household.");
+      Toast.show({ type: 'error', text1: 'Creation Failed', text2: 'Could not create household.' });
     } finally {
       setCreating(false);
     }
@@ -192,8 +197,9 @@ export const useProfileScreen = () => {
             try {
               setLeaving(true);
               await householdService.leaveHousehold(user.uid, activeHousehold.id);
+              Toast.show({ type: 'success', text1: 'Left Household' });
             } catch (error) {
-              Alert.alert("Error", "Failed to leave household.");
+              Toast.show({ type: 'error', text1: 'Error', text2: 'Failed to leave household.' });
             } finally {
               setLeaving(false);
             }
@@ -218,9 +224,10 @@ export const useProfileScreen = () => {
             try {
               setRemovingMember(targetUserId);
               await householdService.removeMember(activeHousehold.id, targetUserId);
+              Toast.show({ type: 'success', text1: 'Member Removed' });
             } catch (error) {
               console.error(error);
-              Alert.alert("Error", "Failed to remove member.");
+              Toast.show({ type: 'error', text1: 'Error', text2: 'Failed to remove member.' });
             } finally {
               setRemovingMember(null);
             }
@@ -245,8 +252,9 @@ export const useProfileScreen = () => {
             try {
               setDeleting(true);
               await householdService.deleteHousehold(activeHousehold.id);
+              Toast.show({ type: 'success', text1: 'Household Deleted' });
             } catch (error) {
-              Alert.alert("Error", "Failed to delete household.");
+              Toast.show({ type: 'error', text1: 'Delete Failed', text2: 'Failed to delete household.' });
             } finally {
               setDeleting(false);
             }
