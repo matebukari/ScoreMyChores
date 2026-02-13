@@ -139,12 +139,19 @@ export default function AddChoreModal({ visible, onClose, onAdd }: AddChoreModal
               </View>
             )}
 
-            <TextInput
-              style={styles.input}
-              placeholder="Chore Name (e.g. Fold Laundry)"
-              value={title}
-              onChangeText={setTitle}
-            />
+            <View style={styles.titleInputContainer}>
+              <TextInput
+                style={styles.titleInput}
+                placeholder="Chore Name (e.g. Dishes)"
+                value={title}
+                onChangeText={setTitle}
+                maxLength={25}
+                multiline={false}
+              />
+              <Text style={styles.charCount}>
+                {title.length}/25
+              </Text>
+            </View>
 
             {/* Points dropdown */}
             <View style={styles.dropdownContainer}>
@@ -292,12 +299,27 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     opacity: 0.8,
   },
-  input: {
+  titleInputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: "#f0f0f0",
-    padding: 15,
     borderRadius: 10,
     marginBottom: 15,
+    paddingHorizontal: 15,
+    height: 54,
+  },
+  titleInput: {
+    flex: 1,
     fontSize: 16,
+    color: "#333",
+    height: "100%",
+    paddingRight: 10,
+    paddingVertical: 0,
+  },
+  charCount: {
+    fontSize: 12,
+    color: "#888",
+    fontWeight: "500",
   },
   dropdownContainer: { marginBottom: 10 },
   inputRow: {
