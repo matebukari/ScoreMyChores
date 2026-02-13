@@ -40,6 +40,7 @@ export default function ProfileScreen() {
     creating,
     leaving,
     deleting,
+    removingMember,
     // Modals
     isJoinModalVisible,
     setIsJoinModalVisible,
@@ -62,6 +63,7 @@ export default function ProfileScreen() {
     handleCreateHousehold,
     handleLeaveHousehold,
     handleDeleteHousehold,
+    handleRemoveMember,
   } = useProfileScreen();
 
   const insets = useSafeAreaInsets();
@@ -172,13 +174,13 @@ export default function ProfileScreen() {
         <ManageMembersModal
           visible={isManageMemberVisible}
           onClose={() => setIsManageMemberVisible(false)}
-          members={Object.values(memberProfiles).filter(
-            (m) => m.id !== user?.uid,
-          )}
+          members={Object.values(memberProfiles)}
           householdMembersMap={activeHousehold?.members}
           currentUserId={user?.uid}
           onUpdateRole={handleUpdateRole}
           updatingRole={updatingRole}
+          onRemoveMember={handleRemoveMember}
+          removingMember={removingMember}
         />
 
         {/* 5. CREATE MODAL */}

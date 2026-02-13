@@ -33,6 +33,7 @@ export const useProfileScreen = () => {
   const [creating, setCreating] = useState(false);
   const [leaving, setLeaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [removingMember, setRemovingMember] = useState<string | null>(null);
 
   // Derived State
   const isAdmin = activeHousehold?.members?.[user?.uid || ""] === "admin";
@@ -202,6 +203,33 @@ export const useProfileScreen = () => {
     );
   };
 
+  const handleRemoveMember = async (targetUserId: string, memberName: string) => {
+    if (!activeHousehold) return;
+
+    Alert.alert(
+      "Remove Member",
+      `Are you sure you want to remove "${memberName}" from the household?`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Remove",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              setRemovingMember(targetUserId);
+              await householdService.removeMember(activeHousehold.id, targetUserId);
+            } catch (error) {
+              console.error(error);
+              Alert.alert("Error", "Failed to remove member.");
+            } finally {
+              setRemovingMember(null);
+            }
+          }
+        }
+      ]
+    );
+  };
+
   const handleDeleteHousehold = async () => {
     if (!activeHousehold) return;
 
@@ -246,6 +274,7 @@ export const useProfileScreen = () => {
     creating,
     leaving,
     deleting,
+    removingMember,
     // Modal Visibilities
     isJoinModalVisible, setIsJoinModalVisible,
     isEditNameVisible, setIsEditNameVisible,
@@ -263,5 +292,6 @@ export const useProfileScreen = () => {
     handleCreateHousehold,
     handleLeaveHousehold,
     handleDeleteHousehold,
+    handleRemoveMember,
   };
 };

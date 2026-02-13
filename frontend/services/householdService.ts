@@ -1,3 +1,4 @@
+import JoinHouseholdModal from "@/components/profile/modals/JoinHouseholdModal";
 import { db } from "../config/firebase";
 import { 
   doc, 
@@ -148,6 +149,24 @@ export const householdService = {
     });
 
     await batch.commit();
+  },
+
+  // Remove just the household reference from the User document
+  // (Used when a user detects they have been kicked)
+  removeHouseholdFromUser: async (userId: string, householdId: string) => {
+    const userRef = doc(db, "users", userId);
+    await updateDoc(userRef, {
+      joinedHouseholds: arrayRemove(householdId)
+    });
+  },
+
+  // Kick a member (Admin action)
+  removeMember: async (householdId: string, targetUserId: string) => {
+    // Remove user from household members map
+    const houseRef = doc(db, "households", householdId);
+    await updateDoc(houseRef, {
+      [`members.${targetUserId}`]: deleteField()
+    });
   },
 
   deleteHousehold: async (householdId: string) => {

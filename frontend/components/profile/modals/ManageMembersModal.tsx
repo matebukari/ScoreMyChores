@@ -18,15 +18,28 @@ interface ManageMembersModalProps {
   currentUserId?: string | null;
   onUpdateRole: (targetUserId: string, currentRole: 'admin' | 'member') => void;
   updatingRole: string | null;
+  onRemoveMember: (targetUserId: string, memberName: string) => void;
+  removingMember: string | null;
 }
 
-export default function ManageMembersModal({ visible, onClose, members, householdMembersMap, currentUserId, onUpdateRole, updatingRole }: ManageMembersModalProps) {
+export default function ManageMembersModal({ 
+  visible, 
+  onClose, 
+  members, 
+  householdMembersMap, 
+  currentUserId, 
+  onUpdateRole, 
+  updatingRole,
+  onRemoveMember,
+  removingMember,
+}: ManageMembersModalProps) {
   
   const renderMemberItem = ({ item }: { item: MemberItem }) => {
     const roleRaw = householdMembersMap?.[item.id] || 'member';
     const role = roleRaw === 'admin' ? 'admin' : 'member';
     
     const isMe = item.id === currentUserId;
+    const name = item.displayName || "Unknown";
 
     return (
       <View style={styles.memberRow}>
@@ -37,23 +50,42 @@ export default function ManageMembersModal({ visible, onClose, members, househol
             <Text style={styles.memberEmail}>{item.email}</Text>
           </View>
         </View>
-        <View style={styles.roleContainer}>
-          <Text style={[styles.roleBadge, role === 'admin' ? styles.adminBadge : styles.memberBadge]}>
-            {role === 'admin' ? "ADMIN" : "MEMBER"}
-          </Text>
+        
+        <View style={styles.actionsContainer}>
+          {/* Role Badge / Toggle */}
+          <View style={styles.roleContainer}>
+            <Text style={[styles.roleBadge, role === 'admin' ? styles.adminBadge : styles.memberBadge]}>
+              {role === 'admin' ? "ADMIN" : "MEMBER"}
+            </Text>
+            {!isMe && (
+              <TouchableOpacity
+                onPress={() => onUpdateRole(item.id, role)}
+                disabled={!!updatingRole || !!removingMember}
+                style={styles.roleButton}
+              >
+                {updatingRole === item.id ? (
+                  <ActivityIndicator size="small" color="#63B995"/>
+                ) : (
+                  <Ionicons
+                    name={role === 'admin' ? "arrow-down-circle-outline" : "arrow-up-circle-outline"}
+                    size={24} color="#63B995"
+                  />
+                )}
+              </TouchableOpacity>
+            )}
+          </View>
+
+          {/* Kick Button */}
           {!isMe && (
             <TouchableOpacity
-              onPress={() => onUpdateRole(item.id, role)}
-              disabled={!!updatingRole}
-              style={styles.roleButton}
+              style={styles.removeButton}
+              onPress={() => onRemoveMember(item.id, name)}
+              disabled={!!removingMember || !!updatingRole}
             >
-              {updatingRole === item.id ? (
-                <ActivityIndicator size="small" color="#63B995"/>
+              {removingMember === item.id ? (
+                <ActivityIndicator size="small" color="#ef5350" />
               ) : (
-                <Ionicons
-                  name={role === 'admin' ? "arrow-down-circle-outline" : "arrow-up-circle-outline"}
-                  size={24} color="#63B995"
-                />
+                <Ionicons name="trash-outline" size={20} color="#ef5350" />
               )}
             </TouchableOpacity>
           )}
@@ -74,6 +106,7 @@ export default function ManageMembersModal({ visible, onClose, members, househol
             renderItem={renderMemberItem}
             style={{ width: '100%', marginBottom: 15 }}
             showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ paddingBottom: 20 }}
           />
           <View style={styles.modalButtons}>
             <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={onClose}>
@@ -99,9 +132,12 @@ const styles = StyleSheet.create({
   memberInfo: { flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 },
   memberName: { fontSize: 16, fontWeight: 'bold', color: '#333' },
   memberEmail: { fontSize: 12, color: '#999' },
-  roleContainer: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  roleBadge: { fontSize: 10, fontWeight: 'bold', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8, overflow: 'hidden' },
+  
+  actionsContainer: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  roleContainer: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  roleBadge: { fontSize: 10, fontWeight: 'bold', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, overflow: 'hidden' },
   adminBadge: { backgroundColor: '#333', color: '#fff' },
   memberBadge: { backgroundColor: '#e0e0e0', color: '#666' },
-  roleButton: { padding: 5 }
+  roleButton: { padding: 4 },
+  removeButton: { padding: 8, backgroundColor: '#ffebee', borderRadius: 8 }
 });
