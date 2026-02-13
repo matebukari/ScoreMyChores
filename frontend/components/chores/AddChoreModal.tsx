@@ -162,6 +162,7 @@ export default function AddChoreModal({ visible, onClose, onAdd }: AddChoreModal
                   value={points}
                   onChangeText={setPoints}
                   keyboardType="numeric"
+                  multiline={false}
                 />
                 <TouchableOpacity
                   style={styles.dropdownToggle}
@@ -321,15 +322,30 @@ const styles = StyleSheet.create({
     color: "#888",
     fontWeight: "500",
   },
-  dropdownContainer: { marginBottom: 10 },
+  dropdownContainer: { marginBottom: 15 },
   inputRow: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#f0f0f0",
     borderRadius: 10,
+    height: 54,
+    paddingLeft: 15,
   },
-  inputFlex: { flex: 1, padding: 15, fontSize: 16, color: "#333" },
-  dropdownToggle: { padding: 15, borderLeftWidth: 1, borderLeftColor: "#ddd" },
+  inputFlex: { 
+    flex: 1, 
+    padding: 15, 
+    fontSize: 16, 
+    color: "#333", 
+    paddingVertical: 0,
+    height: "100%",
+  },
+  dropdownToggle: { 
+    paddingHorizontal: 15,
+    height: "100%",
+    justifyContent: "center", 
+    borderLeftWidth: 1, 
+    borderLeftColor: "#ddd" 
+  },
   dropdownList: {
     backgroundColor: "#fff",
     borderWidth: 1,
