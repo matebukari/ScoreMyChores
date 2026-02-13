@@ -108,7 +108,13 @@ export const useProfileScreen = () => {
     if (!newName.trim()) return;
     try {
       setUpdatingName(true);
-      await updateName(newName.trim());
+
+      if (user && activeHousehold) {
+        await householdService.updateHouseholdName(user.uid, activeHousehold.id, newName.trim());
+      } else {
+        await updateName(newName.trim());
+      }
+      
       setIsEditNameVisible(false);
     } catch {
       Alert.alert("Error", "Failed to update name");

@@ -77,6 +77,7 @@ export default function ProfileScreen() {
         {/* USER INFO CARD */}
         <UserInfoCard
           user={user}
+          name={currentUserProfile?.displayName}
           avatar={currentUserProfile?.photoURL}
           role={
             activeHousehold?.members[user?.uid || ""] === "admin"
@@ -147,7 +148,7 @@ export default function ProfileScreen() {
         <EditNameModal
           visible={isEditNameVisible}
           onClose={() => setIsEditNameVisible(false)}
-          currentName={user?.displayName}
+          currentName={currentUserProfile?.displayName || user?.displayName}
           onSave={handleUpdateName}
           loading={updatingName}
         />

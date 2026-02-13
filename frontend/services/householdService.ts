@@ -115,5 +115,15 @@ export const householdService = {
         [householdId]: { avatar }
       }
     }, { merge: true });
+  },
+
+  // Save name specifically for a household
+  updateHouseholdName: async (userId: string, householdId: string, name: string) => {
+    const userRef = doc(db, "users", userId);
+    await setDoc(userRef, {
+      householdSettings: {
+        [householdId]: { displayName: name }
+      }
+    }, { merge: true });
   }
 };

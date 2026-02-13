@@ -161,19 +161,28 @@ export function HouseholdProvider({ children }: { children: React.ReactNode }) {
           const data = doc.data();
 
           let effectiveAvatar = data.photoURL
+          let effectiveName = data.displayName;
 
           if (
             data.householdSettings &&
-            data.householdSettings[activeHousehold.id] &&
-            data.householdSettings[activeHousehold.id].avatar
+            data.householdSettings[activeHousehold.id]
           ) {
-            effectiveAvatar = data.householdSettings[activeHousehold.id].avatar;
+            const houseSettings = data.householdSettings[activeHousehold.id];
+
+            if (houseSettings.avatar) {
+              effectiveAvatar = houseSettings.avatar;
+            }
+
+            if (houseSettings.displayName) {
+              effectiveName = houseSettings.displayName;
+            }
           }
 
           profiles[doc.id] = {
             id: doc.id,
             ...data,
-            photoURL: effectiveAvatar
+            photoURL: effectiveAvatar,
+            displayName: effectiveName
           };
         });
         setMemberProfiles(profiles);
