@@ -38,6 +38,8 @@ export default function ProfileScreen() {
     updatingName,
     updatingRole,
     creating,
+    leaving,
+    deleting,
     // Modals
     isJoinModalVisible,
     setIsJoinModalVisible,
@@ -58,6 +60,8 @@ export default function ProfileScreen() {
     handleSelectAvatar,
     handleUpdateRole,
     handleCreateHousehold,
+    handleLeaveHousehold,
+    handleDeleteHousehold,
   } = useProfileScreen();
 
   const insets = useSafeAreaInsets();
@@ -97,6 +101,10 @@ export default function ProfileScreen() {
           isAdmin={isAdmin}
           onShareCode={handleShareCode}
           onManageMembers={() => setIsManageMemberVisible(true)}
+          onLeave={handleLeaveHousehold}
+          onDelete={handleDeleteHousehold}
+          leaving={leaving}
+          deleting={deleting}
         />
 
         {/* ACTION BUTTONS ROW */}

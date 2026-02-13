@@ -9,7 +9,11 @@ import {
   query,
   where,
   getDocs,
-  Timestamp
+  Timestamp,
+  deleteDoc,
+  writeBatch,
+  arrayRemove,
+  deleteField
 } from "firebase/firestore";
 
 // Types for the data
@@ -33,7 +37,7 @@ export const householdService = {
   },
 
   // Swich user's active view
-  setActiveHouseholdId: async (userId: string, householdId: string) => {
+  setActiveHouseholdId: async (userId: string, householdId: string | null) => {
     const userRef = doc(db, "users", userId);
     await setDoc(userRef, {
       activeHouseholdId: householdId 
@@ -125,5 +129,49 @@ export const householdService = {
         [householdId]: { displayName: name }
       }
     }, { merge: true });
+  },
+
+  // Leave a household
+  leaveHousehold: async (userId: string, householdId: string) => {
+    const batch = writeBatch(db);
+
+    // Remove user from household members
+    const houseRef = doc(db, "households", householdId);
+    batch.update(houseRef, {
+      [`members.${userId}`]: deleteField()
+    });
+
+    // 2. Remove household from user's joined list
+    const userRef = doc(db, "users", userId);
+    batch.update(userRef, {
+      joinedHouseholds: arrayRemove(householdId)
+    });
+
+    await batch.commit();
+  },
+
+  deleteHousehold: async (householdId: string) => {
+    const houseRef = doc(db, "households", householdId);
+    const houseSnap = await getDoc(houseRef);
+
+    if (!houseSnap.exists()) return;
+
+    const houseData = houseSnap.data() as Household;
+    const memberIds = Object.keys(houseData.members || {});
+
+    const batch = writeBatch(db);
+
+    // 1. Delete the household document
+    batch.delete(houseRef);
+
+    // 2. Remove this household ID from every member's user document
+    memberIds.forEach((memberId) => {
+      const userRef = doc(db, "users", memberId);
+      batch.update(userRef, {
+        joinedHouseholds: arrayRemove(householdId)
+      });
+    });
+
+    await batch.commit();
   }
 };

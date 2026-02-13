@@ -8,6 +8,10 @@ interface HouseholdInfoCardProps {
   isAdmin: boolean;
   onShareCode: () => void;
   onManageMembers: () => void;
+  onLeave: () => void;
+  onDelete: () => void;
+  leaving: boolean;
+  deleting: boolean;
 }
 
 export default function HouseholdInfoCard({
@@ -16,6 +20,10 @@ export default function HouseholdInfoCard({
   isAdmin,
   onShareCode,
   onManageMembers,
+  onLeave,
+  onDelete,
+  leaving,
+  deleting,
 }: HouseholdInfoCardProps) {
   if (loading) return <ActivityIndicator size="large" color="#63B995" />;
   if (!household) return <Text style={{ color: "#888", marginBottom: 20 }}>No active household.</Text>
@@ -37,14 +45,40 @@ export default function HouseholdInfoCard({
         </TouchableOpacity>
       </View>
 
-      {isAdmin && (
-        <>
-          <View style={styles.divider} />
+      <View style={styles.divider} />
+
+      {isAdmin ? (
+        <View style={styles.adminActions}>
           <TouchableOpacity style={styles.manageButton} onPress={onManageMembers}>
             <Ionicons name="people-outline" size={20} color="#fff" />
-            <Text style={styles.manageButtonText}>Manage Members</Text>
+            <Text style={styles.manageButtonText}>Members</Text>
           </TouchableOpacity>
-        </>
+          <TouchableOpacity
+            style={[styles.manageButton, styles.deleteButton]}
+            onPress={onDelete}
+            disabled={deleting}
+          >
+            {deleting ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Ionicons name="trash-outline" size={20} color="#fff" />
+            )}
+            <Text style={styles.manageButtonText}>Delete</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <TouchableOpacity
+          style={[styles.manageButton, styles.leaveButton]}
+          onPress={onLeave}
+          disabled={leaving}
+        >
+          {leaving ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <Ionicons name="log-out-outline" size={20} color="#fff" />
+          )}
+          <Text style={styles.manageButtonText}>Leave Household</Text>
+        </TouchableOpacity>
       )}
     </View>
   );
@@ -66,6 +100,8 @@ const styles = StyleSheet.create({
   codeLabel: { fontSize: 12, color: "#888", textTransform: "uppercase", letterSpacing: 1 },
   codeValue: { fontSize: 24, fontWeight: "bold", color: "#333", marginTop: 4, letterSpacing: 2 },
   shareButton: { padding: 10, backgroundColor: "#f5f5f5", borderRadius: 8 },
+  
+  adminActions: { flexDirection: 'row', gap: 10 },
   manageButton: {
     backgroundColor: "#333",
     padding: 12,
@@ -74,6 +110,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
+    flex: 1
   },
+  deleteButton: { backgroundColor: "#ef5350" },
+  leaveButton: { backgroundColor: "#ef5350", width: '100%' },
   manageButtonText: { color: "#fff", fontWeight: "bold" },
 });

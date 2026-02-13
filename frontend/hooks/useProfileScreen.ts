@@ -31,6 +31,8 @@ export const useProfileScreen = () => {
   const [updatingName, setUpdatingName] = useState(false);
   const [updatingRole, setUpdatingRole] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
+  const [leaving, setLeaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   // Derived State
   const isAdmin = activeHousehold?.members?.[user?.uid || ""] === "admin";
@@ -174,6 +176,58 @@ export const useProfileScreen = () => {
     }
   };
 
+  const handleLeaveHousehold = async () => {
+    if (!user || !activeHousehold) return;
+
+    Alert.alert(
+      "Leave Household",
+      `Are you sure you want to leave "${activeHousehold.name}"?`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Leave",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              setLeaving(true);
+              await householdService.leaveHousehold(user.uid, activeHousehold.id);
+            } catch (error) {
+              Alert.alert("Error", "Failed to leave household.");
+            } finally {
+              setLeaving(false);
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  const handleDeleteHousehold = async () => {
+    if (!activeHousehold) return;
+
+    Alert.alert(
+      "Delete Household",
+      `Are you sure you want to PERMANENTLY delete "${activeHousehold.name}"? This action cannot be undone.`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              setDeleting(true);
+              await householdService.deleteHousehold(activeHousehold.id);
+            } catch (error) {
+              Alert.alert("Error", "Failed to delete household.");
+            } finally {
+              setDeleting(false);
+            }
+          }
+        }
+      ]
+    );
+  };
+
   return {
     // Data
     user,
@@ -190,6 +244,8 @@ export const useProfileScreen = () => {
     updatingName,
     updatingRole,
     creating,
+    leaving,
+    deleting,
     // Modal Visibilities
     isJoinModalVisible, setIsJoinModalVisible,
     isEditNameVisible, setIsEditNameVisible,
@@ -205,5 +261,7 @@ export const useProfileScreen = () => {
     handleSelectAvatar,
     handleUpdateRole,
     handleCreateHousehold,
+    handleLeaveHousehold,
+    handleDeleteHousehold,
   };
 };

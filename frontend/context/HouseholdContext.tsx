@@ -73,9 +73,9 @@ export function HouseholdProvider({ children }: { children: React.ReactNode }) {
 
         setJoinedHouseholds(joined);
 
-        // If User is in a house but "activeHouseholdId" is lost set the first joined house as active.
+        // CASE 1: User has no active ID but is in households (Orphaned state)
         if (!newActiveId && joined.length > 0) {
-          console.log("Fixing orphaned user state...");
+          console.log("User orphaned (no active ID). Auto-switching to first joined...");
           await householdService.setActiveHouseholdId(user.uid, joined[0]);
           return;
         }
@@ -84,9 +84,26 @@ export function HouseholdProvider({ children }: { children: React.ReactNode }) {
 
         if (newActiveId) {
           try {
-            const householdDetails =
-              await householdService.getHousehold(newActiveId);
-            setActiveHousehold(householdDetails);
+            const householdDetails = await householdService.getHousehold(newActiveId);
+            
+            if (householdDetails) {
+              // Success: Household exists
+              setActiveHousehold(householdDetails);
+            } else {
+              // CASE 2: The Active ID points to a deleted household (Stale pointer)
+              console.log("Active household not found (deleted). Fixing state...");
+              
+              // Find a safe fallback that ISN'T the deleted ID
+              const fallbackId = joined.find((id: string) => id !== newActiveId);
+
+              if (fallbackId) {
+                 await householdService.setActiveHouseholdId(user.uid, fallbackId);
+              } else {
+                 // No other houses to go to
+                 await householdService.setActiveHouseholdId(user.uid, null);
+                 setActiveHousehold(null);
+              }
+            }
           } catch (error) {
             console.error("Error fetching houshold details:", error);
             setActiveHousehold(null);
@@ -115,6 +132,9 @@ export function HouseholdProvider({ children }: { children: React.ReactNode }) {
     const unsubscribeHousehold = onSnapshot(
       householdRef,
       (docSnap) => {
+        // If the doc disappears while we are listening (e.g. someone else deleted it)
+        // The user snapshot listener above will usually catch this first because of the batch update,
+        // but this is a safety fallback.
         if (docSnap.exists()) {
           setActiveHousehold({ id: docSnap.id, ...docSnap.data() } as Household);
         } else {
@@ -129,7 +149,7 @@ export function HouseholdProvider({ children }: { children: React.ReactNode }) {
     );
 
     return () => unsubscribeHousehold();
-  }, [activeHousehold]);
+  }, [activeHouseholdId]); // Dependency on ID, not the object
 
   // Function to switch houses
   const switchHousehold = async (householdId: string) => {
