@@ -56,6 +56,12 @@ export default function AddChoreModal({ visible, onClose, onAdd }: AddChoreModal
       return;
     }
 
+    const numericPoints = parseInt(points, 10);
+    if (isNaN(numericPoints) || numericPoints < 1 || numericPoints > 100) {
+      Alert.alert("Invalid Points", "Please enter a valid whole number between 1 and 100.");
+      return;
+    }
+
     try {
       setLoading(true);
 
@@ -91,6 +97,27 @@ export default function AddChoreModal({ visible, onClose, onAdd }: AddChoreModal
       Alert.alert("Error", "Failed to add chore");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handlePointChange = (text: string) => {
+    const cleanedText = text.replace(/[^0-9]/g, "");
+
+    if (cleanedText === "") {
+      setPoints("");
+      return;
+    }
+
+    const num = parseInt(cleanedText, 10);
+
+    if (num > 100) {
+      Alert.alert("Invalid Points", "Please enter a valid whole number between 1 and 100.");
+      setPoints("100");
+    } else if (num === 0) {
+      Alert.alert("Invalid Points", "Points cannot be 0. Please enter a number between 1 and 100.");
+      setPoints("");
+    } else {
+      setPoints(num.toString());
     }
   };
 
@@ -160,9 +187,10 @@ export default function AddChoreModal({ visible, onClose, onAdd }: AddChoreModal
                   style={styles.inputFlex}
                   placeholder="Points (e.g. 50)"
                   value={points}
-                  onChangeText={setPoints}
+                  onChangeText={handlePointChange}
                   keyboardType="numeric"
                   multiline={false}
+                  maxLength={3}
                 />
                 <TouchableOpacity
                   style={styles.dropdownToggle}
@@ -337,6 +365,7 @@ const styles = StyleSheet.create({
     fontSize: 16, 
     color: "#333", 
     paddingVertical: 0,
+    paddingHorizontal: 0,
     height: "100%",
   },
   dropdownToggle: { 
