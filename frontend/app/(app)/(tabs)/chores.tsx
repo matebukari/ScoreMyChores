@@ -28,6 +28,26 @@ export default function ChoresScreen() {
     handleDeleteAll,
     handleResetAll,
     handleResetSingle,
+    // Add Chore Form Props
+    choreTitle, 
+    setChoreTitle,
+    chorePoints, 
+    setChorePoints,
+    handlePointChange,
+    showPointOptions, 
+    setShowPointOptions,
+    isAddingChore,
+    showScheduler, 
+    setShowScheduler,
+    selectedDate, 
+    setSelectedDate,
+    selectedHour, 
+    setSelectedHour,
+    selectedMinute, 
+    setSelectedMinute,
+    recentTasks,
+    handleSelectRecent,
+    POINT_OPTIONS
   } = useChoresScreen();
 
   const insets = useSafeAreaInsets();
@@ -89,7 +109,26 @@ export default function ChoresScreen() {
       <AddChoreModal
         visible={isModalVisible}
         onClose={() => setIsModalVisible(false)}
-        onAdd={handleAddChoreSubmit}
+        title={choreTitle}
+        setTitle={setChoreTitle}
+        points={chorePoints}
+        setPoints={setChorePoints}
+        onPointChange={handlePointChange}
+        showPointOptions={showPointOptions}
+        setShowPointOptions={setShowPointOptions}
+        loading={isAddingChore}
+        pointOptions={POINT_OPTIONS}
+        showScheduler={showScheduler}
+        setShowScheduler={setShowScheduler}
+        selectedDate={selectedDate}
+        onDateChange={setSelectedDate}
+        selectedHour={selectedHour}
+        onHourChange={setSelectedHour}
+        selectedMinute={selectedMinute}
+        onMinuteChange={setSelectedMinute}
+        recentTasks={recentTasks}
+        onSelectRecent={handleSelectRecent}
+        onSubmit={handleAddChoreSubmit}
       />
     </View>
   );

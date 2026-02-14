@@ -11,144 +11,60 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import ChoreScheduler from "@/components/chores/ChoreSchedular";
-import { useChores } from "@/context/ChoreContext";
-import Toast from "react-native-toast-message";
-
-const POINT_OPTIONS = ["10", "20", "30", "50", "100"];
 
 interface AddChoreModalProps {
   visible: boolean;
   onClose: () => void;
-  onAdd: (title: string, points: number, scheduledFor: Date | null) =>Promise<void>;
+  // Form State
+  title: string;
+  setTitle: (text: string) => void;
+  points: string;
+  setPoints: (text: string) => void;
+  onPointChange: (text: string) => void;
+  // UI State
+  showPointOptions: boolean;
+  setShowPointOptions: (show: boolean) => void;
+  loading: boolean;
+  pointOptions: string[];
+  // Scheduler State
+  showScheduler: boolean;
+  setShowScheduler: (show: boolean) => void;
+  selectedDate: Date;
+  onDateChange: (date: Date) => void;
+  selectedHour: number;
+  onHourChange: (hour: number) => void;
+  selectedMinute: number;
+  onMinuteChange: (minute: number) => void;
+  // Data & Handlers
+  recentTasks: { title: string; points: number }[];
+  onSelectRecent: (title: string, points: number) => void;
+  onSubmit: () => Promise<void>;
 }
 
-export default function AddChoreModal({ visible, onClose, onAdd }: AddChoreModalProps) {
-  const [title, setTitle] = useState("");
-  const [points, setPoints] = useState("");
-  const [showPointOptions, setShowPointOptions] = useState(false);
-  const [loading, setLoading] = useState(false);
-
-  // Schedular State
-  const [showScheduler, setShowScheduler] = useState(false);
-  const [selectedDate, setSelectedDate] = useState(new Date());
-  const [selectedHour, setSelectedHour] = useState(new Date().getHours());
-  const [selectedMinute, setSelectedMinute] = useState(new Date().getMinutes());
-
-  // Fetch activities to derive recent tasks
-  const { activities } = useChores();
-
-  const recentTasks = useMemo(() => {
-    const unique = new Map<string, number>();
-
-    for (const act of activities) {
-      const data = act as any;
-      if (data.choreTitle && data.points && !unique.has(data.choreTitle)) {
-        unique.set(data.choreTitle, data.points);
-      }
-      if (unique.size >= 5) break;
-    }
-    return Array.from(unique.entries()).map(([t, p]) => ({ title: t, points: p }));
-  }, [activities]);
-
-  const handleAdd = async () => {
-    if (!title || !points) {
-      Toast.show({
-        type: 'error',
-        text1: 'Missing Fields',
-        text2: 'Please fill in all fields'
-      });
-      return;
-    }
-
-    const numericPoints = parseInt(points, 10);
-    if (isNaN(numericPoints) || numericPoints < 1 || numericPoints > 100) {
-      Toast.show({
-        type: 'error',
-        text1: 'Invalid Points',
-        text2: 'Please enter a number between 1 and 100.'
-      });
-      return;
-    }
-
-    try {
-      setLoading(true);
-
-      let scheduledFor = null;
-      if (showScheduler) {
-        scheduledFor = new Date(selectedDate);
-        scheduledFor.setHours(selectedHour);
-        scheduledFor.setMinutes(selectedMinute);
-
-        // Validation
-        const now = new Date();
-        if (scheduledFor < now) {
-          Toast.show({
-            type: 'error',
-            text1: 'Invalid Time',
-            text2: 'You cannot schedule a task for the past.'
-          });
-          setLoading(false);
-          return;
-        }
-      }
-
-      await onAdd(title, parseInt(points), scheduledFor);
-
-      // Reset form
-      setTitle("");
-      setPoints("");
-      setShowPointOptions(false);
-      setShowScheduler(false);
-      const now = new Date();
-      setSelectedDate(now);
-      setSelectedHour(now.getHours());
-      setSelectedMinute(now.getMinutes());
-
-      onClose();
-    } catch (error) {
-      Toast.show({
-        type: 'error',
-        text1: 'Error',
-        text2: 'Failed to add chore'
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handlePointChange = (text: string) => {
-    const cleanedText = text.replace(/[^0-9]/g, "");
-
-    if (cleanedText === "") {
-      setPoints("");
-      return;
-    }
-
-    const num = parseInt(cleanedText, 10);
-
-    if (num > 100) {
-      Toast.show({
-        type: 'error',
-        text1: 'Limit Reached',
-        text2: 'Maximum points allowed is 100.'
-      });
-      setPoints("100");
-    } else if (num === 0) {
-      Toast.show({
-        type: 'error',
-        text1: 'Invalid Value',
-        text2: 'Points must be at least 1.'
-      });
-      setPoints("");
-    } else {
-      setPoints(num.toString());
-    }
-  };
-
-  const handleSelectRecent = (taskTitle: string, taskPoints: number) => {
-    setTitle(taskTitle);
-    setPoints(taskPoints.toString());
-  };
+export default function AddChoreModal({ 
+  visible, 
+  onClose, 
+  title,
+  setTitle,
+  points,
+  setPoints,
+  onPointChange,
+  showPointOptions,
+  setShowPointOptions,
+  loading,
+  pointOptions,
+  showScheduler,
+  setShowScheduler,
+  selectedDate,
+  onDateChange,
+  selectedHour,
+  onHourChange,
+  selectedMinute,
+  onMinuteChange,
+  recentTasks,
+  onSelectRecent,
+  onSubmit 
+}: AddChoreModalProps) {
 
   return (
     <Modal
@@ -179,7 +95,7 @@ export default function AddChoreModal({ visible, onClose, onAdd }: AddChoreModal
                     <TouchableOpacity
                       key={index}
                       style={styles.recentChip}
-                      onPress={() => handleSelectRecent(task.title, task.points)}
+                      onPress={() => onSelectRecent(task.title, task.points)}
                     >
                       <Text style={styles.recentChipText} numberOfLines={1}>
                         {task.title} <Text style={styles.recentChipPoints}>({task.points})</Text>
@@ -211,7 +127,7 @@ export default function AddChoreModal({ visible, onClose, onAdd }: AddChoreModal
                   style={styles.inputFlex}
                   placeholder="Points (e.g. 50)"
                   value={points}
-                  onChangeText={handlePointChange}
+                  onChangeText={onPointChange}
                   keyboardType="numeric"
                   multiline={false}
                   maxLength={3}
@@ -233,7 +149,7 @@ export default function AddChoreModal({ visible, onClose, onAdd }: AddChoreModal
                   nestedScrollEnabled={true}
                   keyboardShouldPersistTaps="handled"
                 >
-                  {POINT_OPTIONS.map((opt) => (
+                  {pointOptions.map((opt) => (
                     <TouchableOpacity
                       key={opt}
                       style={styles.dropdownItem}
@@ -264,11 +180,11 @@ export default function AddChoreModal({ visible, onClose, onAdd }: AddChoreModal
             {showScheduler && (
               <ChoreScheduler
                 selectedDate={selectedDate}
-                onDateChange={setSelectedDate}
+                onDateChange={onDateChange}
                 selectedHour={selectedHour}
-                onHourChange={setSelectedHour}
+                onHourChange={onHourChange}
                 selectedMinute={selectedMinute}
-                onMinuteChange={setSelectedMinute}
+                onMinuteChange={onMinuteChange}
               />
             )}
 
@@ -281,7 +197,7 @@ export default function AddChoreModal({ visible, onClose, onAdd }: AddChoreModal
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.button, styles.saveButton]}
-                onPress={handleAdd}
+                onPress={onSubmit}
                 disabled={loading}
               >
                 {loading ? (
