@@ -1,5 +1,4 @@
 import { useState, useMemo } from "react";
-import { Alert } from "react-native";
 import Toast from "react-native-toast-message";
 import { useAuth } from "@/context/AuthContext";
 import { useHousehold } from "@/context/HouseholdContext";
@@ -33,6 +32,37 @@ export function useChoresScreen() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedHour, setSelectedHour] = useState(new Date().getHours());
   const [selectedMinute, setSelectedMinute] = useState(new Date().getMinutes());
+
+  const [alertConfig, setAlertConfig] = useState({
+    visible: false,
+    title: "",
+    message: "",
+    confirmText: "Confirm",
+    isDestructive: false,
+    onConfirm: async () => {},
+  });
+
+  const closeAlert = () => setAlertConfig((prev) => ({ ...prev, visible: false }));
+
+  const showConfirmation = (
+    title: string, 
+    message: string, 
+    onConfirm: () => Promise<void> | void, 
+    type: 'default' | 'destructive' = 'default',
+    confirmText: string = "Confirm"
+  ) => {
+    setAlertConfig({
+      visible: true,
+      title,
+      message,
+      confirmText,
+      isDestructive: type === 'destructive',
+      onConfirm: async () => {
+        await onConfirm();
+        closeAlert();
+      },
+    });
+  };
 
   // Check if current user is admin
   const isAdmin = activeHousehold?.members?.[user?.uid || ""] === "admin";
@@ -161,30 +191,28 @@ export function useChoresScreen() {
       });
       return;
     }
-    Alert.alert("Delete Chore", "Are you sure you want to remove this chore?", [
-      { text: "Cancel", style: "cancel" },
-      { text: "Delete", 
-        style: "destructive", 
-        onPress: async () => {
+    showConfirmation(
+      "Delete Chore", 
+      "Are you sure you want to remove this chore?", 
+      async () => {
           try {
             await choreService.deleteChore(id);
             Toast.show({ type: 'success', text1: 'Chore Deleted' });
           } catch (error) {
             Toast.show({ type: 'error', text1: 'Error', text2: 'Could not delete chore.'})
           }
-        } 
       },
-    ]);
+      "destructive",
+      "Delete"
+    );
   };
 
   const handleDeleteAll = () => {
     if (!isAdmin || chores.length === 0) return;
-    Alert.alert("Delete ALL Chores", "WARNING: This will remove every single task.", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Delete All",
-        style: "destructive",
-        onPress: async () => {
+    showConfirmation(
+      "Delete ALL Chores", 
+      "WARNING: This will remove every single task.", 
+      async () => {
           try {
             const promises = chores.map((chore) => choreService.deleteChore(chore.id));
             await Promise.all(promises);
@@ -196,35 +224,36 @@ export function useChoresScreen() {
               text2: 'Failed to delete all chores.'
             });
           }
-        },
       },
-    ]);
+      "destructive",
+      "Delete All"
+    );
   };
 
   const handleResetAll = () => {
-    Alert.alert("Reset All", "Make all chores 'Pending' again?", [
-      { text: "Cancel", style: "cancel" },
-      { 
-        text: "Reset",
-        onPress: async () => {
+    showConfirmation(
+      "Reset All", 
+      "Make all chores 'Pending' again?", 
+      async () => {
           await resetAll();
           Toast.show({ type: 'success', text1: 'Chores Reset', text2: 'All chores are now pending.' });
-        }
       },
-    ]);
+      "default",
+      "Reset"
+    );
   };
 
   const handleResetSingle = (id: string) => {
-    Alert.alert("Reset Chore", "Make this chore available again?", [
-      { text: "Cancel", style: "cancel" },
-      { 
-        text: "Reset",
-        onPress: async () => {
+    showConfirmation(
+      "Reset Chore", 
+      "Make this chore available again?", 
+      async () => {
           await resetChore(id);
           Toast.show({ type: 'success', text1: 'Chore Reset' });
-        } 
       },
-    ]);
+      "default",
+      "Reset"
+    );
   };
 
   return {
@@ -252,6 +281,8 @@ export function useChoresScreen() {
     selectedMinute, setSelectedMinute,
     recentTasks,
     handleSelectRecent,
-    POINT_OPTIONS
+    POINT_OPTIONS,
+    alertConfig,
+    closeAlert
   };
 }

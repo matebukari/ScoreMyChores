@@ -20,6 +20,7 @@ import AvatarPickerModal from "@/components/profile/modals/AvatarPickerModal";
 import ManageMembersModal from "@/components/profile/modals/ManageMembersModal";
 import JoinHouseholdModal from "@/components/profile/modals/JoinHouseholdModal";
 import CreatHouseholdModal from "@/components/profile/modals/CreateHouseholdModal";
+import ConfirmationModal from "@/components/ui/ConfirmationModal";
 
 export default function ProfileScreen() {
   const {
@@ -41,6 +42,8 @@ export default function ProfileScreen() {
     leaving,
     deleting,
     removingMember,
+    alertConfig,
+    closeAlert,
     // Modals
     isJoinModalVisible,
     setIsJoinModalVisible,
@@ -145,6 +148,15 @@ export default function ProfileScreen() {
         <View style={{ height: 50 }} />
 
         {/* --- MODALS --- */}
+        <ConfirmationModal
+          visible={alertConfig.visible}
+          title={alertConfig.title}
+          message={alertConfig.message}
+          confirmText={alertConfig.confirmText}
+          isDestructive={alertConfig.isDestructive}
+          onConfirm={alertConfig.onConfirm}
+          onCancel={closeAlert}
+        />
 
         {/* 1. JOIN MODAL */}
         <JoinHouseholdModal

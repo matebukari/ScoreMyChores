@@ -11,6 +11,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import AddChoreModal from "@/components/chores/AddChoreModal";
 import ChoreList from "@/components/chores/ChoreList";
+import ConfirmationModal from "@/components/ui/ConfirmationModal";
 
 import { useChoresScreen } from "@/hooks/useChoresScreen";
 
@@ -28,6 +29,8 @@ export default function ChoresScreen() {
     handleDeleteAll,
     handleResetAll,
     handleResetSingle,
+    alertConfig,
+    closeAlert,
     // Add Chore Form Props
     choreTitle, 
     setChoreTitle,
@@ -103,6 +106,16 @@ export default function ChoresScreen() {
         memberProfiles={memberProfiles}
         onReset={handleResetSingle}
         onDelete={handleDeleteChore}
+      />
+
+      <ConfirmationModal
+        visible={alertConfig.visible}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        confirmText={alertConfig.confirmText}
+        isDestructive={alertConfig.isDestructive}
+        onConfirm={alertConfig.onConfirm}
+        onCancel={closeAlert}
       />
 
       {/* ADD CHORE MODAL */}

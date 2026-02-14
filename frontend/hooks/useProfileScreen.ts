@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Alert, Share } from "react-native";
+import { Share } from "react-native";
 import Toast from "react-native-toast-message";
 import { router } from "expo-router";
 import { useAuth } from "@/context/AuthContext";
@@ -35,10 +35,39 @@ export const useProfileScreen = () => {
   const [leaving, setLeaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [removingMember, setRemovingMember] = useState<string | null>(null);
+  const [alertConfig, setAlertConfig] = useState({
+    visible: false,
+    title: "",
+    message: "",
+    confirmText: "Confirm",
+    isDestructive: false,
+    onConfirm: async () => {},
+  });
+
+  const closeAlert = () => setAlertConfig((prev) => ({ ...prev, visible: false }));
+
+  const showConfirmation = (
+    title: string, 
+    message: string, 
+    onConfirm: () => Promise<void> | void, 
+    type: 'default' | 'destructive' = 'default',
+    confirmText: string = "Confirm"
+  ) => {
+    setAlertConfig({
+      visible: true,
+      title,
+      message,
+      confirmText,
+      isDestructive: type === 'destructive',
+      onConfirm: async () => {
+        await onConfirm();
+        closeAlert();
+      },
+    });
+  };
 
   // Derived State
   const isAdmin = activeHousehold?.members?.[user?.uid || ""] === "admin";
-
   const currentUserProfile = user ? memberProfiles[user.uid] : null;
 
   // Fetch Household Names
@@ -66,10 +95,13 @@ export const useProfileScreen = () => {
 
   // Handlers
   const handleSignOut = async () => {
-    Alert.alert("Sign Out", "Are you sure?", [
-      { text: "Cancel", style: "cancel" },
-      { text: "Log Out", style: "destructive", onPress: async () => { await logout(); router.replace("/signin"); } },
-    ]);
+    showConfirmation(
+      "Sign Out", 
+      "Are you sure you want to log out?", 
+      async () => { await logout(); router.replace("/signin"); },
+      "destructive",
+      "Log Out"
+    );
   };
 
   const handleShareCode = async () => {
@@ -148,23 +180,22 @@ export const useProfileScreen = () => {
     const newRole = currentRole === 'admin' ? 'member' : 'admin';
     const action = newRole === 'admin' ? "Promote to Admin" : "Demote to Member";
 
-    Alert.alert(action, `Are you sure you want to change this user's role?`, [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Confirm",
-        onPress: async () => {
-          try {
-            setUpdatingRole(targetUserId);
-            await householdService.updateMemberRole(activeHousehold.id, targetUserId, newRole);
-            Toast.show({ type: 'success', text1: 'Role Updated', text2: `User is now a ${newRole}` });
-          } catch {
-            Toast.show({ type: 'error', text1: 'Error', text2: 'Failed to update role.' });
-          } finally {
-            setUpdatingRole(null);
-          }
+    showConfirmation(
+      action,
+      `Are you sure you want to change this user's role?`,
+      async () => {
+        try {
+          setUpdatingRole(targetUserId);
+          await householdService.updateMemberRole(activeHousehold.id, targetUserId, newRole);
+          Toast.show({ type: 'success', text1: 'Role Updated', text2: `User is now a ${newRole}` });
+        } catch {
+          Toast.show({ type: 'error', text1: 'Error', text2: 'Failed to update role.' });
+        } finally {
+          setUpdatingRole(null);
         }
-      }
-    ]);
+      },
+      "default"
+    );
   };
 
   const handleCreateHousehold = async (name: string) => {
@@ -185,82 +216,67 @@ export const useProfileScreen = () => {
   const handleLeaveHousehold = async () => {
     if (!user || !activeHousehold) return;
 
-    Alert.alert(
+    showConfirmation(
       "Leave Household",
       `Are you sure you want to leave "${activeHousehold.name}"?`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Leave",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              setLeaving(true);
-              await householdService.leaveHousehold(user.uid, activeHousehold.id);
-              Toast.show({ type: 'success', text1: 'Left Household' });
-            } catch (error) {
-              Toast.show({ type: 'error', text1: 'Error', text2: 'Failed to leave household.' });
-            } finally {
-              setLeaving(false);
-            }
-          }
+      async () => {
+        try {
+          setLeaving(true);
+          await householdService.leaveHousehold(user.uid, activeHousehold.id);
+          Toast.show({ type: 'success', text1: 'Left Household' });
+        } catch (error) {
+          Toast.show({ type: 'error', text1: 'Error', text2: 'Failed to leave household.' });
+        } finally {
+          setLeaving(false);
         }
-      ]
+      },
+      "destructive",
+      "Leave"
     );
   };
 
   const handleRemoveMember = async (targetUserId: string, memberName: string) => {
     if (!activeHousehold) return;
 
-    Alert.alert(
+    showConfirmation(
       "Remove Member",
       `Are you sure you want to remove "${memberName}" from the household?`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Remove",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              setRemovingMember(targetUserId);
-              await householdService.removeMember(activeHousehold.id, targetUserId);
-              Toast.show({ type: 'success', text1: 'Member Removed' });
-            } catch (error) {
-              console.error(error);
-              Toast.show({ type: 'error', text1: 'Error', text2: 'Failed to remove member.' });
-            } finally {
-              setRemovingMember(null);
-            }
-          }
+      async () => {
+        try {
+          setRemovingMember(targetUserId);
+          await householdService.removeMember(activeHousehold.id, targetUserId);
+          Toast.show({ type: 'success', text1: 'Member Removed' });
+        } catch (error) {
+          console.error(error);
+          Toast.show({ type: 'error', text1: 'Error', text2: 'Failed to remove member.' });
+        } finally {
+          setRemovingMember(null);
         }
-      ]
+      },
+      "destructive",
+      "Remove"
     );
   };
 
   const handleDeleteHousehold = async () => {
     if (!activeHousehold) return;
 
-    Alert.alert(
+    showConfirmation(
       "Delete Household",
       `Are you sure you want to PERMANENTLY delete "${activeHousehold.name}"? This action cannot be undone.`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              setDeleting(true);
-              await householdService.deleteHousehold(activeHousehold.id);
-              Toast.show({ type: 'success', text1: 'Household Deleted' });
-            } catch (error) {
-              Toast.show({ type: 'error', text1: 'Delete Failed', text2: 'Failed to delete household.' });
-            } finally {
-              setDeleting(false);
-            }
-          }
+      async () => {
+        try {
+          setDeleting(true);
+          await householdService.deleteHousehold(activeHousehold.id);
+          Toast.show({ type: 'success', text1: 'Household Deleted' });
+        } catch (error) {
+          Toast.show({ type: 'error', text1: 'Delete Failed', text2: 'Failed to delete household.' });
+        } finally {
+          setDeleting(false);
         }
-      ]
+      },
+      "destructive",
+      "Delete"
     );
   };
 
@@ -283,6 +299,8 @@ export const useProfileScreen = () => {
     leaving,
     deleting,
     removingMember,
+    alertConfig,
+    closeAlert,
     // Modal Visibilities
     isJoinModalVisible, setIsJoinModalVisible,
     isEditNameVisible, setIsEditNameVisible,
