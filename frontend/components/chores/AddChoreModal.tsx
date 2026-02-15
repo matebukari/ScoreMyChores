@@ -8,6 +8,7 @@ import {
   TextInput,
   ActivityIndicator,
   ScrollView,
+  Keyboard,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import ChoreScheduler from "@/components/chores/ChoreSchedular";
@@ -168,7 +169,10 @@ export default function AddChoreModal({
             {/* Schedule Link */}
             <TouchableOpacity
               style={styles.scheduleLink}
-              onPress={() => setShowScheduler(!showScheduler)}
+              onPress={() => {
+                Keyboard.dismiss();
+                setShowScheduler(!showScheduler)
+              }}
             >
               <Ionicons name="calendar-outline" size={16} color="#63B995" />
               <Text style={styles.scheduleLinkText}>
