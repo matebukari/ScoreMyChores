@@ -1,13 +1,15 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Share } from "react-native";
 import Toast from "react-native-toast-message";
 import { router } from "expo-router";
 import { useAuth } from "@/context/AuthContext";
 import { useHousehold } from "@/context/HouseholdContext";
+import {useChores } from "@/context/ChoreContext";
 import { householdService } from "@/services/householdService";
 
 export const useProfileScreen = () => {
   const { user, logout, updateName, updateAvatar } = useAuth();
+  const { activities } = useChores();
   const { 
     activeHousehold, 
     joinedHouseholds, 
@@ -92,6 +94,16 @@ export const useProfileScreen = () => {
 
     if (joinedHouseholds.length > 0) fetchHouseholdNames();
   }, [joinedHouseholds, activeHousehold]);
+
+  const totalPoints = useMemo(() => {
+    if (!user) return 0;
+    return activities.reduce((acc, activity) => {
+      if (activity.userId === user.uid) {
+        return acc + activity.points;
+      }
+      return acc;
+    }, 0);
+  }, [activities, user])
 
   // Handlers
   const handleSignOut = async () => {
@@ -290,6 +302,7 @@ export const useProfileScreen = () => {
     householdNames,
     householdLoading,
     isAdmin,
+    totalPoints,
     // UI State
     switching,
     joining,

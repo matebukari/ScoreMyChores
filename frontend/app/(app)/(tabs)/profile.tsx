@@ -33,6 +33,7 @@ export default function ProfileScreen() {
     householdNames,
     householdLoading,
     isAdmin,
+    totalPoints,
     // UI State
     switching,
     joining,
@@ -104,6 +105,7 @@ export default function ProfileScreen() {
           household={activeHousehold}
           loading={householdLoading || switching}
           isAdmin={isAdmin}
+          userPoints={totalPoints}
           onShareCode={handleShareCode}
           onManageMembers={() => setIsManageMemberVisible(true)}
           onLeave={handleLeaveHousehold}
