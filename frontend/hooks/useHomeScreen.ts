@@ -8,6 +8,22 @@ export function useHomeScreen() {
   const { chores, activities, updateStatus, loading } = useChores();
   const [confettiTrigger, setConfettiTrigger] = useState(0);
 
+  // 1. Filter out future tasks
+  const activeChores = useMemo(() => {
+    const now = new Date();
+    return chores.filter((chore) => {
+      // If no schedule, it's active
+      if (!chore.scheduledFor) return true;
+
+      // Check if schedule time has passed
+      const scheduledDate = chore.scheduledFor.toDate
+        ? chore.scheduledFor.toDate()
+        : new Date(chore.scheduledFor);
+
+      return scheduledDate <= now;
+    });
+  }, [chores]);
+
   // Check if a chore is locked for the current user
   const isChoreLocked = useCallback((chore: any) => {
     if (chore.inProgress && chore.inProgressBy !== user?.uid) return true;
@@ -74,7 +90,7 @@ export function useHomeScreen() {
 
   // Determine the priority "Focus Task"
   const focusTask = useMemo(() => {
-    const availableChores = chores.filter((c) => {
+    const availableChores = activeChores.filter((c) => {
       if (c.completed) return false;
       if (c.inProgress && c.inProgressBy !== user?.uid) return false;
       return true;
@@ -88,7 +104,7 @@ export function useHomeScreen() {
   }, [chores, user]);
 
   return {
-    chores,
+    chores: activeChores,
     loading,
     currentScore,
     completedDays,

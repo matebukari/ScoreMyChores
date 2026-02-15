@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import UserAvatar from "@/components/ui/UserAvatar";
+import { useChoreListItem } from "@/hooks/useChoreListItem";
 
 interface ChoreListItemProps {
   item: any;
@@ -21,13 +22,29 @@ export default function ChoreListItem({
   onDelete,
 }: ChoreListItemProps) {
 
-  // Helper to resolve profile data
-  const getLiveProfile = (userId: string, snapshotName: string, snapshotAvatar: string) => {
-    const liveUser = memberProfiles[userId];
-    return {
-      name: liveUser?.displayName || snapshotName || "Unknown",
-      avatar: liveUser?.photoURL || snapshotAvatar || null,
-    };
+  const { futureDate, getLiveProfile} = useChoreListItem(item, memberProfiles);
+
+  // --- NEW: Helper to format date nicely ---
+  const getScheduledText = (date: Date) => {
+    const now = new Date();
+    const isToday = date.getDate() === now.getDate() &&
+                    date.getMonth() === now.getMonth() &&
+                    date.getFullYear() === now.getFullYear();
+    
+    const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    if (isToday) return `Today, ${timeStr}`;
+    
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const isTomorrow = date.getDate() === tomorrow.getDate() &&
+                       date.getMonth() === tomorrow.getMonth() &&
+                       date.getFullYear() === tomorrow.getFullYear();
+
+    if (isTomorrow) return `Tomorrow, ${timeStr}`;
+
+    // Default: "Feb 15, 10:00 AM"
+    return `${date.toLocaleDateString([], { month: 'short', day: 'numeric' })}, ${timeStr}`;
   };
 
   const renderStatusBadge = () => {
@@ -73,17 +90,33 @@ export default function ChoreListItem({
   };
 
   return (
-    <View style={[styles.listCard, item.completed && { opacity: 0.8 }]}>
+    <View style={[
+      styles.listCard, 
+      (item.completed || futureDate) && { opacity: 0.8 },
+      futureDate && { backgroundColor: "#f9f9f9", borderColor: "#eee" }
+      ]}
+    >
       <View style={styles.cardLeftContent}>
         <Text
           style={[
             styles.choreTitle,
             item.completed && { textDecorationLine: "line-through", color: "#999" },
+            futureDate && { color: "#888" }
           ]}
         >
           {item.title}
         </Text>
-        {renderStatusBadge()}
+
+        {futureDate ? (
+          <View style={styles.futureBadge}>
+            <Ionicons name="time-outline" size={14} color="#888" />
+            <Text style={styles.futureText}>
+              Available at {getScheduledText(futureDate)}
+            </Text>
+          </View>
+        ) : (
+          renderStatusBadge()
+        )}
       </View>
       
       <View style={styles.rightActions}>
@@ -145,4 +178,15 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   badgeText: { fontSize: 11, fontWeight: "600" },
+  futureBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 2
+  },
+  futureText: {
+    fontSize: 12,
+    color: '#888',
+    fontStyle: 'italic'
+  }
 });

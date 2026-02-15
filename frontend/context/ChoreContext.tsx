@@ -94,33 +94,18 @@ export function ChoreProvider({ children }: { children: React.ReactNode }) {
     }
   }, [activeHouseholdId, user]);
 
-  // 2. Time-based Filter (Runs on data change AND every 10 seconds)
+  // 2. Time-based Filter (Runs on data change AND every 10 second)
   useEffect(() => {
     const updateVisibleChores = () => {
-      const now = new Date();
       
       const visible = allChores.filter(chore => {
-        // If there is no schedule, show it immediately
-        if (!chore.scheduledFor) return true;
-
-        // Handle Firestore Timestamp vs Date object
-        const scheduledDate = chore.scheduledFor.toDate 
-          ? chore.scheduledFor.toDate() 
-          : new Date(chore.scheduledFor);
-
-        // Only show if the time has passed (schedule <= now)
-        return scheduledDate <= now;
+        return true;
       });
 
       setDisplayedChores(visible);
     };
-
-    // Run immediately when 'allChores' changes
     updateVisibleChores();
-
-    // Run periodically to reveal tasks that just became due
-    const interval = setInterval(updateVisibleChores, 10000); // Check every 10s
-
+    const interval = setInterval(updateVisibleChores, 1000);
     return () => clearInterval(interval);
   }, [allChores]);
 
