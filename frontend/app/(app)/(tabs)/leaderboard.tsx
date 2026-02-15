@@ -41,7 +41,7 @@ export default function LeaderboardScreen() {
       <TopPodium topThree={leaderboardData.slice(0, 3)} />
 
       {/* Rank List */}
-      <RankList data={leaderboardData.slice(3)} currentUserId={user?.uid} />
+      <RankList data={leaderboardData} currentUserId={user?.uid} />
     </View>
   );
 }

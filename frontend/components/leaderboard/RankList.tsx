@@ -1,5 +1,6 @@
 import React from "react";
 import { View, Text, FlatList, StyleSheet } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import UserAvatar from "@/components/ui/UserAvatar";
 
 interface RankUser {
@@ -16,7 +17,19 @@ interface RankListProps {
 
 export default function RankList({ data, currentUserId }: RankListProps) {
   const getRankIcon = (index: number) => {
-    return <Text style={styles.rankText}>{index + 4}</Text>;
+    // Rank 1: Gold
+    if (index === 0) {
+      return <Ionicons name="medal" size={24} color="#FFD700" />;
+    }
+    // Rank 2: Silver
+    if (index === 1) {
+      return <Ionicons name="medal" size={24} color="#C0C0C0" />;
+    }
+    // Rank 3: Bronze
+    if (index === 2) {
+      return <Ionicons name="medal" size={24} color="#CD7F32" />;
+    }
+    return <Text style={styles.rankText}>{index + 1}</Text>;
   };
 
   return (
