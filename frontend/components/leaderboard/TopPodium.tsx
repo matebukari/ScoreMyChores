@@ -33,7 +33,6 @@ export default function TopPodium({ topThree }: TopPodiumProps) {
               color="#ddd"
               style={{ marginBottom: 5, borderWidth: 2, borderColor: '#C0C0C0', borderRadius: 50 }}
             />
-            <Text style={styles.podiumName} numberOfLines={1}>{second.name}</Text>
             <Text style={styles.podiumScore}>{second.score}</Text>
             <View style={[styles.bar, { height: 70, backgroundColor: "#C0C0C0" }]} />
             <View style={styles.medalContainer}>
@@ -57,7 +56,6 @@ export default function TopPodium({ topThree }: TopPodiumProps) {
               color="#FFD700"
               style={{ marginBottom: 5, borderWidth: 2, borderColor: '#FFD700', borderRadius: 50 }}
             />
-            <Text style={styles.podiumName} numberOfLines={1}>{first.name}</Text>
             <Text style={styles.podiumScore}>{first.score}</Text>
             <View style={[styles.bar, { height: 100, backgroundColor: "#FFD700" }]} />
             <View style={styles.medalContainer}>
@@ -80,7 +78,6 @@ export default function TopPodium({ topThree }: TopPodiumProps) {
                 style={{ marginBottom: 5, borderWidth: 2, borderColor: '#CD7F32', borderRadius: 50 }}
               />
             </View>
-            <Text style={styles.podiumName} numberOfLines={1}>{third.name}</Text>
             <Text style={styles.podiumScore}>{third.score}</Text>
             <View style={[styles.bar, { height: 50, backgroundColor: "#CD7F32" }]} />
             <View style={styles.medalContainer}>
