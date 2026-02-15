@@ -37,9 +37,10 @@ export default function RankList({ data, currentUserId }: RankListProps) {
       <FlatList
         data={data}
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.flatListContent}
         keyExtractor={(item) => item.id}
         ListEmptyComponent={
-          <Text style={{ textAlign: "center", color: "#888", marginTop: 20 }}>
+          <Text style={styles.emptyText}>
             {data.length === 0 ? "No other members ranked yet." : ""}
           </Text>
         }
@@ -50,31 +51,39 @@ export default function RankList({ data, currentUserId }: RankListProps) {
               item.id === currentUserId && styles.currentUserItem,
             ]}
           >
+            {/* Rank Column */}
             <View style={styles.rankContainer}>{getRankIcon(index)}</View>
 
+            {/* User Info Column */}
             <View style={styles.userInfo}>
-              <View style={{ marginRight: 12 }}>
+              <View style={styles.avatarContainer}>
                 <UserAvatar
                   name={item.name}
                   avatar={item.avatar}
-                  size={32}
+                  size={36} // Slightly larger for better visibility
                   color={item.id === currentUserId ? "#63B995" : "#ccc"}
                 />
               </View>
 
-              <View>
+              <View style={styles.nameContainer}>
                 <Text
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
                   style={[
                     styles.userName,
-                    item.id === currentUserId && { color: "#63B995" },
+                    item.id === currentUserId && styles.currentUserName,
                   ]}
                 >
-                  {item.name} {item.id === currentUserId && "(You)"}
+                  {item.name} {item.id === currentUserId}
                 </Text>
               </View>
             </View>
 
-            <Text style={styles.scoreText}>{item.score} pts</Text>
+            {/* Score Column */}
+            <View style={styles.scoreContainer}>
+              <Text style={styles.scoreText}>{item.score}</Text>
+              <Text style={styles.ptsText}> pts</Text>
+            </View>
           </View>
         )}
       />
@@ -88,24 +97,78 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
-    padding: 20,
     elevation: 10,
+    overflow: "hidden", // Ensures content stays within rounded corners
+  },
+  flatListContent: {
+    paddingVertical: 10,
+  },
+  emptyText: {
+    textAlign: "center",
+    color: "#888",
+    marginTop: 20,
+    fontSize: 14,
   },
   listItem: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 15,
+    paddingVertical: 16,
+    paddingHorizontal: 15,
     borderBottomWidth: 1,
     borderBottomColor: "#f0f0f0",
   },
   currentUserItem: {
-    backgroundColor: "#f8fbff",
-    marginHorizontal: -20,
-    paddingHorizontal: 20,
+    backgroundColor: "#f0f9f4",
   },
-  rankContainer: { width: 40, alignItems: "center" },
-  rankText: { fontSize: 16, fontWeight: "bold", color: "#666" },
-  userInfo: { flex: 1, flexDirection: "row", alignItems: "center" },
-  userName: { fontSize: 16, fontWeight: "600", color: "#333" },
-  scoreText: { fontSize: 18, fontWeight: "bold", color: "#63B995" },
+  // Columns
+  rankContainer: {
+    width: 40,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 10,
+  },
+  rankText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#666",
+  },
+  userInfo: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    marginRight: 10,
+  },
+  avatarContainer: {
+    marginRight: 12,
+  },
+  nameContainer: {
+    flex: 1,
+  },
+  userName: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#333",
+  },
+  currentUserName: {
+    color: "#63B995",
+    fontWeight: "700",
+  },
+  scoreContainer: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    minWidth: 60,
+    justifyContent: "flex-end",
+  },
+  scoreText: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#63B995",
+  },
+  ptsText: {
+    fontSize: 12,
+    color: "#63B995",
+    marginBottom: 2,
+    marginLeft: 2,
+    fontWeight: "600",
+  },
 });
