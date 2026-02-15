@@ -51,13 +51,39 @@ export function useHomeScreen() {
     }
   }, [isChoreLocked, updateStatus]);
 
-  // Calculate current user's score
-  const currentScore = useMemo(() => {
-    if (!user || !activities) return 0;
+  // Calculate scores (Weekly & Monthly)
+  const { weeklyScore, monthlyScore } = useMemo(() => {
+    if (!user || !activities) return { weeklyScore: 0, monthlyScore: 0 };
 
-    return activities
-      .filter((a) => a.userId === user.uid)
-      .reduce((sum, activity) => sum + activity.points, 0);
+    const userActivities = activities.filter((a) => a.userId === user.uid);
+    const now = new Date();
+
+    // Calculate start of current week (Monday)
+    const currentDayIndex = (now.getDay() + 6) % 7;
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - currentDayIndex);
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    // Calculate start of current month
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    let weekly = 0;
+    let monthly = 0;
+
+    userActivities.forEach((act) => {
+      const actDate = act.completedAt?.toDate 
+        ? act.completedAt.toDate() 
+        : new Date(act.completedAt as any);
+      
+      if (actDate >= startOfWeek) {
+        weekly += act.points;
+      }
+      if (actDate >= startOfMonth) {
+        monthly += act.points;
+      }
+    });
+
+    return { weeklyScore: weekly, monthlyScore: monthly };
   }, [activities, user]);
 
   const completedDays = useMemo<number[]>(() => {
@@ -106,7 +132,8 @@ export function useHomeScreen() {
   return {
     chores: activeChores,
     loading,
-    currentScore,
+    weeklyScore,
+    monthlyScore,
     completedDays,
     focusTask,
     confettiTrigger,

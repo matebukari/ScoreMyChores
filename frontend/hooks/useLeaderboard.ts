@@ -10,13 +10,18 @@ export function useLeaderboard() {
 
   const leaderboardData = useMemo(() => {
     const now = new Date();
-    const cutoffDate = new Date();
+    let startOfPeriod = new Date();
 
     // Set the cutoff date based on selection
     if (timeFrame === "weekly") {
-      cutoffDate.setDate(now.getDate() - 7);
+      // Calculate start of current week (Monday)
+      const currentDayIndex = (now.getDay() + 6) % 7; 
+      startOfPeriod = new Date(now);
+      startOfPeriod.setDate(now.getDate() - currentDayIndex);
+      startOfPeriod.setHours(0, 0, 0, 0);
     } else {
-      cutoffDate.setDate(now.getDate() - 30);
+      // Start of current month
+      startOfPeriod = new Date(now.getFullYear(), now.getMonth(), 1);
     }
 
     // A map to store scores
@@ -32,7 +37,7 @@ export function useLeaderboard() {
         activity.completedAt instanceof Timestamp
           ? activity.completedAt.toDate()
           : new Date(activity.completedAt);
-      if (completedDate < cutoffDate) return;
+      if (completedDate < startOfPeriod) return;
 
       const userId = activity.userId;
       const liveProfile = memberProfiles[userId];
