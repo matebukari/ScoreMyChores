@@ -3,37 +3,32 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 export function useChoreListItem(item: any, memberProfiles: Record<string, any>) {
   const [_, setTick] = useState(0);
 
-  // 1. Get a stable timestamp
+  // 1. Get a stable timestamp (primitive number)
   const scheduledTime = useMemo(() => {
     if (!item.scheduledFor) return null;
-    // Handle Firestore Timestamp or standard Date
     const date = item.scheduledFor.toDate 
       ? item.scheduledFor.toDate() 
       : new Date(item.scheduledFor);
     return date.getTime();
   }, [item.scheduledFor]);
 
-  // 2. Calculate futureDate synchronously so it's always fresh
+  // 2. Calculate futureDate
   const futureDate = useMemo(() => {
     if (!scheduledTime) return null;
     if (scheduledTime > Date.now()) {
       return new Date(scheduledTime);
     }
     return null;
-  }, [scheduledTime, _]); // Re-calculate when 'tick' updates
+  }, [scheduledTime, _]);
 
   // 3. Timer Effect
   useEffect(() => {
     if (!scheduledTime) return;
-
-    // If time has already passed, do nothing
     if (Date.now() >= scheduledTime) return;
 
-    // Check every second
     const interval = setInterval(() => {
-      // If we crossed the threshold
       if (Date.now() >= scheduledTime) {
-        setTick(t => t + 1); // Force a re-render
+        setTick(t => t + 1);
         clearInterval(interval);
       }
     }, 1000);
@@ -41,7 +36,7 @@ export function useChoreListItem(item: any, memberProfiles: Record<string, any>)
     return () => clearInterval(interval);
   }, [scheduledTime]);
 
-  // Helper to resolve profile data
+  // 4. Helper: Resolve Profile
   const getLiveProfile = useCallback((userId: string, snapshotName: string, snapshotAvatar: string) => {
     const liveUser = memberProfiles[userId];
     return {
@@ -50,8 +45,31 @@ export function useChoreListItem(item: any, memberProfiles: Record<string, any>)
     };
   }, [memberProfiles]);
 
+  // 5. Helper: Format Date Text (Moved here)
+  const getScheduledText = useCallback((date: Date) => {
+    const now = new Date();
+    const isToday = date.getDate() === now.getDate() &&
+                    date.getMonth() === now.getMonth() &&
+                    date.getFullYear() === now.getFullYear();
+    
+    const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    if (isToday) return `Today, ${timeStr}`;
+    
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const isTomorrow = date.getDate() === tomorrow.getDate() &&
+                       date.getMonth() === tomorrow.getMonth() &&
+                       date.getFullYear() === tomorrow.getFullYear();
+
+    if (isTomorrow) return `Tomorrow, ${timeStr}`;
+
+    return `${date.toLocaleDateString([], { month: 'short', day: 'numeric' })}, ${timeStr}`;
+  }, []);
+
   return {
     futureDate,
-    getLiveProfile
+    getLiveProfile,
+    getScheduledText
   };
 }

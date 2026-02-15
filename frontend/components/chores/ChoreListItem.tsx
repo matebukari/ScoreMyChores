@@ -22,30 +22,7 @@ export default function ChoreListItem({
   onDelete,
 }: ChoreListItemProps) {
 
-  const { futureDate, getLiveProfile} = useChoreListItem(item, memberProfiles);
-
-  // --- NEW: Helper to format date nicely ---
-  const getScheduledText = (date: Date) => {
-    const now = new Date();
-    const isToday = date.getDate() === now.getDate() &&
-                    date.getMonth() === now.getMonth() &&
-                    date.getFullYear() === now.getFullYear();
-    
-    const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-    if (isToday) return `Today, ${timeStr}`;
-    
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const isTomorrow = date.getDate() === tomorrow.getDate() &&
-                       date.getMonth() === tomorrow.getMonth() &&
-                       date.getFullYear() === tomorrow.getFullYear();
-
-    if (isTomorrow) return `Tomorrow, ${timeStr}`;
-
-    // Default: "Feb 15, 10:00 AM"
-    return `${date.toLocaleDateString([], { month: 'short', day: 'numeric' })}, ${timeStr}`;
-  };
+  const { futureDate, getLiveProfile, getScheduledText} = useChoreListItem(item, memberProfiles);
 
   const renderStatusBadge = () => {
     const isMe = item.inProgressBy === currentUserId || item.completedBy === currentUserId;
