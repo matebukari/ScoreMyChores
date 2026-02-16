@@ -1,5 +1,6 @@
 import React from "react";
 import { View, Text, StyleSheet, StyleProp, ViewStyle, Image } from "react-native";
+import { Avatars } from "@/constants/avatars";
 
 interface UserAvatarProps {
   name?: string | null;
@@ -44,7 +45,8 @@ export default function UserAvatar({
   }
   
   // If user has a selected avatar
-  if (avatar) {
+  if (avatar && Avatars[avatar]) {
+    const SvgComponent = Avatars[avatar];
     return (
       <View
         key={containerKey}
@@ -54,7 +56,7 @@ export default function UserAvatar({
           style
         ]}
       >
-        <Text style={{ fontSize: calculatedFontSize * 1.2 }}>{avatar}</Text>
+        <SvgComponent width={size} height={size} />
       </View>
     );
   }
