@@ -2,11 +2,19 @@ import { useState, useMemo, useCallback } from "react";
 import * as Haptics from "expo-haptics";
 import { useAuth } from "@/context/AuthContext";
 import { useChores } from "@/context/ChoreContext";
+import { useHousehold } from "@/context/HouseholdContext";
 
 export function useHomeScreen() {
   const { user } = useAuth();
   const { chores, activities, updateStatus, loading } = useChores();
+  const { activeHousehold } = useHousehold();
   const [confettiTrigger, setConfettiTrigger] = useState(0);
+
+  // Check if current user is an admin
+  const isAdmin = useMemo(() => {
+    if (!user || !activeHousehold) return false;
+    return activeHousehold.members[user.uid] === 'admin';
+  }, [user, activeHousehold]);
 
   // 1. Filter out future tasks
   const activeChores = useMemo(() => {
@@ -138,5 +146,6 @@ export function useHomeScreen() {
     focusTask,
     confettiTrigger,
     handleChorePress,
+    isAdmin,
   };
 }

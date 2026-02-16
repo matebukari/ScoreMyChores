@@ -29,6 +29,7 @@ export default function HomeScreen() {
     focusTask,
     confettiTrigger,
     handleChorePress,
+    isAdmin,
   } = useHomeScreen();
 
   const insets = useSafeAreaInsets();
@@ -79,7 +80,11 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           <Text style={{ textAlign: "center", marginTop: 20, color: "#999" }}>
-            No chores yet. Add one to get started!
+            {isAdmin
+              ? "No chores yet. Add one to get started!"
+              : "No chores yet."
+            }
+            
           </Text>
         }
         renderItem={({ item }) => (
