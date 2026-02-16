@@ -41,7 +41,7 @@ export default function RankList({ data, currentUserId }: RankListProps) {
         keyExtractor={(item) => item.id}
         ListEmptyComponent={
           <Text style={styles.emptyText}>
-            {data.length === 0 ? "No other members ranked yet." : ""}
+            {data.length === 0 ? "No members ranked yet." : ""}
           </Text>
         }
         renderItem={({ item, index }) => (

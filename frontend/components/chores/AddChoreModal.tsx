@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import ChoreScheduler from "@/components/chores/ChoreSchedular";
+import Toast from "react-native-toast-message";
 
 interface AddChoreModalProps {
   visible: boolean;
@@ -171,7 +172,7 @@ export default function AddChoreModal({
               style={styles.scheduleLink}
               onPress={() => {
                 Keyboard.dismiss();
-                setShowScheduler(!showScheduler)
+                setShowScheduler(!showScheduler);
               }}
             >
               <Ionicons name="calendar-outline" size={16} color="#63B995" />
@@ -213,6 +214,7 @@ export default function AddChoreModal({
             </View>
           </ScrollView>
         </View>
+        <Toast />
       </View>
     </Modal>
   );
