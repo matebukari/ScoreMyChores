@@ -1,37 +1,35 @@
-import React, { useState } from "react";
+import React from "react";
 import {
   Modal,
   View,
   Text,
   TextInput,
   TouchableOpacity,
-  StyleSheet,
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  useColorScheme,
 } from "react-native";
 
-const MAX_HOUSEHOLD_NAME_LENGTH = 20;
-
-interface CreatHouseholdModalProps {
+interface CreateHouseholdModalProps {
   visible: boolean;
   onClose: () => void;
-  onCreate: (name: string) => void;
+  householdName: string;
+  setHouseholdName: (name: string) => void;
+  onCreate: () => void;
   loading: boolean;
 }
 
-export default function CreatHouseholdModal({
+export default function CreateHouseholdModal({
   visible,
   onClose,
+  householdName,
+  setHouseholdName,
   onCreate,
   loading,
-}: CreatHouseholdModalProps) {
-  const [householdName, setHouseholdName] = useState("");
-
-  const handleCreate = () => {
-    if (householdName.trim()) {
-      onCreate(householdName);
-      setHouseholdName("");
-    }
-  };
+}: CreateHouseholdModalProps) {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === "dark";
 
   return (
     <Modal
@@ -40,115 +38,56 @@ export default function CreatHouseholdModal({
       transparent={true}
       onRequestClose={onClose}
     >
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
-          <Text style={styles.modalTitle}>Create a Household</Text>
-          <Text style={styles.modalSubtitle}>
-            Give your new household a neme to get started.
-          </Text>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        className="flex-1"
+      >
+        <View className="flex-1 bg-black/50 justify-center items-center p-4">
+          <View className="bg-white dark:bg-card-dark w-full max-w-[340px] rounded-2xl p-6 shadow-xl">
+            <Text className="text-xl font-bold mb-1.5 text-center text-text-main dark:text-text-inverted">
+              Create Household
+            </Text>
+            <Text className="text-sm text-text-muted dark:text-gray-400 mb-5 text-center">
+              Name your new household to get started.
+            </Text>
 
-          <TextInput
-            style={styles.input}
-            placeholder="e.g The Smith Family"
-            value={householdName}
-            onChangeText={setHouseholdName}
-            autoCapitalize="words"
-            maxLength={MAX_HOUSEHOLD_NAME_LENGTH}
-          />
-          <Text style={styles.charCount}>
-            {householdName.length}/{MAX_HOUSEHOLD_NAME_LENGTH}
-          </Text>
+            <TextInput
+              className="bg-gray-50 dark:bg-dark-100 text-text-main dark:text-text-inverted p-4 rounded-xl mb-5 text-base border border-gray-200 dark:border-gray-600 focus:border-light-100 dark:focus:border-light-100"
+              placeholder="Ex: Our Sweet Home"
+              placeholderTextColor={isDark ? "#9CA3AF" : "#9CA3AF"}
+              value={householdName}
+              onChangeText={setHouseholdName}
+              autoCapitalize="words"
+            />
 
-          <View style={styles.modalButtons}>
-            <TouchableOpacity
-              style={[styles.button, styles.cancelButton]}
-              onPress={onClose}
-              disabled={loading}
-            >
-              <Text style={styles.buttonText}>Cancel</Text>
-            </TouchableOpacity>
+            <View className="flex-row gap-3">
+              <TouchableOpacity
+                className="flex-1 bg-gray-200 dark:bg-gray-700 p-3.5 rounded-xl items-center"
+                onPress={onClose}
+                disabled={loading}
+              >
+                <Text className="text-gray-700 dark:text-gray-300 font-bold text-base">
+                  Cancel
+                </Text>
+              </TouchableOpacity>
 
-            <TouchableOpacity
-              style={[styles.button, styles.createButton]}
-              onPress={handleCreate}
-              disabled={loading || !householdName.trim()}
-            >
-              {loading ? (
-                <ActivityIndicator color="#fff" size="small" />
-              ) : (
-                <Text style={styles.buttonText}>Create</Text>
-              )}
-            </TouchableOpacity>
+              <TouchableOpacity
+                className="flex-1 bg-light-100 p-3.5 rounded-xl items-center"
+                onPress={onCreate}
+                disabled={loading}
+              >
+                {loading ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <Text className="text-white font-bold text-base">
+                    Create
+                  </Text>
+                )}
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
-
-const styles = StyleSheet.create({
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  modalContent: {
-    backgroundColor: "#fff",
-    width: "85%",
-    padding: 25,
-    borderRadius: 20,
-    elevation: 5,
-  },
-  modalTitle: {
-    fontSize: 22,
-    fontWeight: "bold",
-    marginBottom: 10,
-    textAlign: "center",
-    color: "#333",
-  },
-  modalSubtitle: {
-    fontSize: 14,
-    color: "#666",
-    marginBottom: 20,
-    textAlign: "center",
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 10,
-    padding: 15,
-    fontSize: 16,
-    backgroundColor: "#f9f9f9",
-    marginBottom: 8,
-  },
-  charCount: {
-    textAlign: "right",
-    color: "#888",
-    fontSize: 12,
-    marginBottom: 20,
-    marginRight: 4,
-  },
-  modalButtons: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    gap: 10,
-  },
-  button: {
-    flex: 1,
-    padding: 15,
-    borderRadius: 12,
-    alignItems: "center",
-  },
-  cancelButton: {
-    backgroundColor: "#ccc",
-  },
-  createButton: {
-    backgroundColor: "#63B995",
-  },
-  buttonText: {
-    color: "#fff",
-    fontWeight: "bold",
-    fontSize: 16,
-  },
-});
