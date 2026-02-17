@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, FlatList, StyleSheet } from "react-native";
+import { View, Text, FlatList } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import UserAvatar from "@/components/ui/UserAvatar";
 
@@ -29,60 +29,73 @@ export default function RankList({ data, currentUserId }: RankListProps) {
     if (index === 2) {
       return <Ionicons name="medal" size={24} color="#CD7F32" />;
     }
-    return <Text style={styles.rankText}>{index + 1}</Text>;
+    return (
+      <Text className="text-base font-bold text-gray-500 dark:text-gray-400">
+        {index + 1}
+      </Text>
+    );
   };
 
   return (
-    <View style={styles.listContainer}>
+    <View className="flex-1 bg-white dark:bg-card-dark rounded-t-[30px] shadow-xl overflow-hidden mt-5">
       <FlatList
         data={data}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.flatListContent}
+        contentContainerStyle={{ paddingVertical: 10 }}
         keyExtractor={(item) => item.id}
         ListEmptyComponent={
-          <Text style={styles.emptyText}>
+          <Text className="text-center text-gray-400 mt-5 text-sm">
             {data.length === 0 ? "No members ranked yet." : ""}
           </Text>
         }
         renderItem={({ item, index }) => (
           <View
-            style={[
-              styles.listItem,
-              item.id === currentUserId && styles.currentUserItem,
-            ]}
+            className={`
+              flex-row items-center py-4 px-4 border-b border-gray-100 dark:border-gray-800
+              ${item.id === currentUserId ? "bg-green-50 dark:bg-green-900/20" : ""}
+            `}
           >
             {/* Rank Column */}
-            <View style={styles.rankContainer}>{getRankIcon(index)}</View>
+            <View className="w-10 items-center justify-center mr-2.5">
+              {getRankIcon(index)}
+            </View>
 
             {/* User Info Column */}
-            <View style={styles.userInfo}>
-              <View style={styles.avatarContainer}>
+            <View className="flex-1 flex-row items-center mr-2.5">
+              <View className="mr-3">
                 <UserAvatar
                   name={item.name}
                   avatar={item.avatar}
-                  size={36} // Slightly larger for better visibility
+                  size={36}
                   color={item.id === currentUserId ? "#63B995" : "#ccc"}
                 />
               </View>
 
-              <View style={styles.nameContainer}>
+              <View className="flex-1">
                 <Text
                   numberOfLines={1}
                   ellipsizeMode="tail"
-                  style={[
-                    styles.userName,
-                    item.id === currentUserId && styles.currentUserName,
-                  ]}
+                  className={`
+                    text-base font-semibold
+                    ${item.id === currentUserId 
+                      ? "text-light-100 font-bold" 
+                      : "text-text-main dark:text-text-inverted"
+                    }
+                  `}
                 >
-                  {item.name} {item.id === currentUserId}
+                  {item.name}
                 </Text>
               </View>
             </View>
 
             {/* Score Column */}
-            <View style={styles.scoreContainer}>
-              <Text style={styles.scoreText}>{item.score}</Text>
-              <Text style={styles.ptsText}> pts</Text>
+            <View className="flex-row items-end min-w-[60px] justify-end">
+              <Text className="text-lg font-bold text-light-100">
+                {item.score}
+              </Text>
+              <Text className="text-xs text-light-100 mb-0.5 ml-0.5 font-semibold">
+                 pts
+              </Text>
             </View>
           </View>
         )}
@@ -90,85 +103,3 @@ export default function RankList({ data, currentUserId }: RankListProps) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  listContainer: {
-    flex: 1,
-    backgroundColor: "#fff",
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
-    elevation: 10,
-    overflow: "hidden", // Ensures content stays within rounded corners
-  },
-  flatListContent: {
-    paddingVertical: 10,
-  },
-  emptyText: {
-    textAlign: "center",
-    color: "#888",
-    marginTop: 20,
-    fontSize: 14,
-  },
-  listItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 16,
-    paddingHorizontal: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: "#f0f0f0",
-  },
-  currentUserItem: {
-    backgroundColor: "#f0f9f4",
-  },
-  // Columns
-  rankContainer: {
-    width: 40,
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 10,
-  },
-  rankText: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#666",
-  },
-  userInfo: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    marginRight: 10,
-  },
-  avatarContainer: {
-    marginRight: 12,
-  },
-  nameContainer: {
-    flex: 1,
-  },
-  userName: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#333",
-  },
-  currentUserName: {
-    color: "#63B995",
-    fontWeight: "700",
-  },
-  scoreContainer: {
-    flexDirection: "row",
-    alignItems: "flex-end",
-    minWidth: 60,
-    justifyContent: "flex-end",
-  },
-  scoreText: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#63B995",
-  },
-  ptsText: {
-    fontSize: 12,
-    color: "#63B995",
-    marginBottom: 2,
-    marginLeft: 2,
-    fontWeight: "600",
-  },
-});
