@@ -1,70 +1,94 @@
-import React, { useState } from "react";
-import { Modal, View, Text, TextInput, TouchableOpacity, ActivityIndicator, StyleSheet } from "react-native";
+import React from "react";
+import {
+  Modal,
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  useColorScheme,
+} from "react-native";
 
 interface JoinHouseholdModalProps {
   visible: boolean;
   onClose: () => void;
-  onJoin: (code: string) => void;
+  inviteCode: string;
+  setInviteCode: (code: string) => void;
+  onJoin: () => void;
   loading: boolean;
 }
 
-export default function JoinHouseholdModal({ visible, onClose, onJoin, loading }: JoinHouseholdModalProps) {
-  const [code, setCode] = useState("");
-
-  const handleJoin = () => {
-    if (code.trim()) {
-      onJoin(code);
-      setCode(""); 
-    }
-  };
+export default function JoinHouseholdModal({
+  visible,
+  onClose,
+  inviteCode,
+  setInviteCode,
+  onJoin,
+  loading,
+}: JoinHouseholdModalProps) {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === "dark";
 
   return (
-    <Modal visible={visible} animationType="slide" transparent={true} onRequestClose={onClose}>
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
-          <Text style={styles.modalTitle}>Join Household</Text>
-          <Text style={styles.modalSubtitle}>Enter the invite code from the Admin</Text>
-          
-          <TextInput
-            style={styles.input}
-            placeholder="Invite Code (e.g. A1B2C3)"
-            value={code}
-            onChangeText={setCode}
-            autoCapitalize="characters"
-          />
+    <Modal
+      visible={visible}
+      animationType="fade"
+      transparent={true}
+      onRequestClose={onClose}
+    >
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        className="flex-1"
+      >
+        <View className="flex-1 bg-black/50 justify-center items-center p-4">
+          <View className="bg-white dark:bg-card-dark w-full max-w-[340px] rounded-2xl p-6 shadow-xl">
+            <Text className="text-xl font-bold mb-1.5 text-center text-text-main dark:text-text-inverted">
+              Join Household
+            </Text>
+            <Text className="text-sm text-text-muted dark:text-gray-400 mb-5 text-center">
+              Enter the invite code shared by your admin.
+            </Text>
 
-          <View style={styles.modalButtons}>
-            <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={onClose}>
-              <Text style={styles.buttonText}>Cancel</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={[styles.button, styles.saveButton]} 
-              onPress={handleJoin} 
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator color="white" />
-              ) : (
-                <Text style={styles.buttonText}>Join</Text>
-              )}
-            </TouchableOpacity>
+            <TextInput
+              className="bg-gray-50 dark:bg-dark-100 text-text-main dark:text-text-inverted p-4 rounded-xl mb-5 text-base border border-gray-200 dark:border-gray-600 focus:border-light-100 dark:focus:border-light-100"
+              placeholder="Ex: AB12CD"
+              placeholderTextColor={isDark ? "#9CA3AF" : "#9CA3AF"}
+              value={inviteCode}
+              onChangeText={setInviteCode}
+              autoCapitalize="characters"
+              maxLength={6}
+            />
+
+            <View className="flex-row gap-3">
+              <TouchableOpacity
+                className="flex-1 bg-gray-200 dark:bg-gray-700 p-3.5 rounded-xl items-center"
+                onPress={onClose}
+                disabled={loading}
+              >
+                <Text className="text-gray-700 dark:text-gray-300 font-bold text-base">
+                  Cancel
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                className="flex-1 bg-light-100 p-3.5 rounded-xl items-center"
+                onPress={onJoin}
+                disabled={loading}
+              >
+                {loading ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <Text className="text-white font-bold text-base">
+                    Join
+                  </Text>
+                )}
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
-
-const styles = StyleSheet.create({
-  modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "center", alignItems: "center" },
-  modalContent: { backgroundColor: "#fff", width: "90%", padding: 25, borderRadius: 20, elevation: 5 },
-  modalTitle: { fontSize: 20, fontWeight: "bold", marginBottom: 15, textAlign: "center" },
-  modalSubtitle: { fontSize: 14, color: "#666", marginBottom: 20, textAlign: "center" },
-  input: { backgroundColor: "#f0f0f0", padding: 15, borderRadius: 10, marginBottom: 15, fontSize: 16 },
-  modalButtons: { flexDirection: "row", justifyContent: "space-between" },
-  button: { flex: 1, padding: 15, borderRadius: 10, alignItems: "center", marginHorizontal: 5 },
-  cancelButton: { backgroundColor: "#ccc" },
-  saveButton: { backgroundColor: "#63B995" },
-  buttonText: { color: "#fff", fontWeight: "bold", fontSize: 16 },
-});
