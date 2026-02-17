@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, FlatList, ActivityIndicator, StyleSheet } from "react-native";
+import { Text, FlatList, ActivityIndicator } from "react-native";
 import ChoreListItem from "./ChoreListItem";
 
 interface ChoreListProps {
@@ -23,7 +23,13 @@ export default function ChoreList({
 }: ChoreListProps) {
 
   if (loading) {
-    return <ActivityIndicator size="large" color="#63B995" style={{ marginTop: 50 }} />;
+    return (
+      <ActivityIndicator 
+        size="large" 
+        color="#63B995" 
+        className="mt-[50px]" 
+      />
+    );
   }
 
   return(
@@ -32,7 +38,7 @@ export default function ChoreList({
       showsVerticalScrollIndicator={false}
       keyExtractor={(item) => item.id}
       ListEmptyComponent={
-        <Text style={styles.emptyText}>
+        <Text className="text-center text-dim dark:text-gray-400 mt-5">
           No chores yet. {isAdmin ? "Add one!" : "Ask your admin to add some."}
         </Text>
       }
@@ -49,11 +55,3 @@ export default function ChoreList({
     />
   );
 }
-
-const styles = StyleSheet.create({
-  emptyText: {
-    textAlign: "center",
-    color: "#888",
-    marginTop: 20,
-  },
-});
