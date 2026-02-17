@@ -2,7 +2,6 @@ import React from "react";
 import {
   View,
   Text,
-  StyleSheet,
   FlatList,
   ActivityIndicator,
   Dimensions,
@@ -38,7 +37,7 @@ export default function HomeScreen() {
 
   if (loading) {
     return (
-      <View style={[styles.container, { justifyContent: "center" }]}>
+      <View className="flex-1 justify-center bg-background dark:bg-background-dark">
         <ActivityIndicator size="large" color="#63B995" />
       </View>
     );
@@ -46,45 +45,51 @@ export default function HomeScreen() {
 
   return (
     <View
-      style={[
-        styles.container,
-        {
-          paddingTop: safeTop,
-          paddingLeft: insets.left + 20,
-          paddingRight: insets.right + 20,
-        },
-      ]}
+      className="flex-1 bg-background dark:bg-background-dark"
+      style={{
+        paddingTop: safeTop,
+        paddingLeft: insets.left + 20,
+        paddingRight: insets.right + 20,
+      }}
     >
-      {/* Score & Streak */}
-      <ScoreCard 
-        weeklyScore={weeklyScore}
-        monthlyScore={monthlyScore} 
-        completedDays={completedDays} 
-      />
+      {/* ScoreCard */}
+      <View className="mb-4">
+        <ScoreCard 
+          weeklyScore={weeklyScore}
+          monthlyScore={monthlyScore} 
+          completedDays={completedDays} 
+        />
+      </View>
 
-      {/* Priotary Focus Task */}
-      {focusTask ? (
-        <FocusTask task={focusTask} onPress={handleChorePress} />
-      ) : (
-        <View style={styles.focusContainer}>
-          <Text>ALL CAUGHT UP!</Text>
-        </View>
-      )}
-
-      <Text style={styles.sectionTitle}>Daily Checklist</Text>
-
-      {/* Daily Checklist */}
       <FlatList
         data={chores}
         keyExtractor={(item) => item.id}
         showsVerticalScrollIndicator={false}
+        ListHeaderComponent={
+          <View>
+            {/* Priority Focus Task */}
+            {focusTask ? (
+              <FocusTask task={focusTask} onPress={handleChorePress} />
+            ) : (
+              <View className="mb-[25px]">
+                <Text className="text-text-main dark:text-text-inverted">
+                  ALL CAUGHT UP!
+                </Text>
+              </View>
+            )}
+
+            {/* Section Title */}
+            <Text className="text-xl font-bold mb-[15px] text-text-main dark:text-text-inverted">
+              Daily Checklist
+            </Text>
+          </View>
+        }
         ListEmptyComponent={
-          <Text style={{ textAlign: "center", marginTop: 20, color: "#999" }}>
+          <Text className="text-center mt-5 text-text-muted dark:text-gray-400">
             {isAdmin
               ? "No chores yet. Add one to get started!"
               : "No chores yet."
             }
-            
           </Text>
         }
         renderItem={({ item }) => (
@@ -93,7 +98,7 @@ export default function HomeScreen() {
       />
 
       {confettiTrigger > 0 && (
-        <View style={StyleSheet.absoluteFill} pointerEvents="none">
+        <View className="absolute inset-0" pointerEvents="none">
           <ConfettiCannon
             key={confettiTrigger}
             count={200}
@@ -107,20 +112,3 @@ export default function HomeScreen() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f8f9fa" },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    marginBottom: 15,
-    color: "#333",
-  },
-  focusContainer: { marginBottom: 25 },
-  focusLabel: {
-    fontSize: 12,
-    fontWeight: "800",
-    color: "#63B995",
-    letterSpacing: 1,
-  },
-});

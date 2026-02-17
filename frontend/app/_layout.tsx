@@ -15,7 +15,6 @@ export default function RootLayout() {
           <ChoreProvider>
             <Slot />
             <StatusBar
-              style="dark"
               translucent={true}
               backgroundColor="transparent"
             />
