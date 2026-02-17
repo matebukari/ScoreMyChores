@@ -4,7 +4,6 @@ import {
   View, 
   Text, 
   TouchableOpacity,
-  StyleSheet, 
   ActivityIndicator 
 } from "react-native";
 
@@ -32,35 +31,47 @@ export default function ConfirmationModal({
   onCancel,
 }: ConfirmationModalProps) {
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
-      <View style={styles.overlay}>
-        <View style={styles.card}>
-          <Text style={styles.title}>{title}</Text>
-          <Text style={styles.message}>{message}</Text>
+    <Modal 
+      visible={visible} 
+      transparent 
+      animationType="fade" 
+      onRequestClose={onCancel}
+    >
+      <View className="flex-1 bg-black/50 justify-center items-center p-5">
+        <View className="bg-white dark:bg-card-dark rounded-2xl p-6 w-full max-w-[340px] shadow-xl">
+          <Text className="text-xl font-bold text-text-main dark:text-text-inverted mb-2 text-center">
+            {title}
+          </Text>
+          <Text className="text-base text-text-secondary dark:text-gray-400 text-center mb-6 leading-6">
+            {message}
+          </Text>
 
-          <View style={styles.buttonRow}>
+          <View className="flex-row gap-3">
             {/* Cancel Button */}
             <TouchableOpacity
-              style={[styles.button, styles.cancelButton]}
+              className="flex-1 py-3 rounded-xl items-center justify-center bg-gray-100 dark:bg-gray-700"
               onPress={onCancel}
               disabled={loading}
             >
-              <Text style={styles.cancelText}>{cancelText}</Text>
+              <Text className="text-base font-semibold text-text-secondary dark:text-gray-300">
+                {cancelText}
+              </Text>
             </TouchableOpacity>
 
             {/* Confirm Button */}
             <TouchableOpacity
-              style={[
-                styles.button,
-                isDestructive ? styles.destructiveButton : styles.confirmButton
-              ]}
+              className={`flex-1 py-3 rounded-xl items-center justify-center ${
+                isDestructive ? "bg-danger-bright" : "bg-light-100"
+              }`}
               onPress={onConfirm}
               disabled={loading}
             >
               {loading ? (
                 <ActivityIndicator color="#fff" size="small" />
               ) : (
-                <Text style={styles.confirmText}>{confirmText}</Text>
+                <Text className="text-base font-semibold text-white">
+                  {confirmText}
+                </Text>
               )}
             </TouchableOpacity>
           </View>
@@ -69,69 +80,3 @@ export default function ConfirmationModal({
     </Modal>
   );
 }
-
-const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
-  },
-  card: {
-    backgroundColor: "white",
-    borderRadius: 16,
-    padding: 24,
-    width: "100%",
-    maxWidth: 340,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#1a1a1a",
-    marginBottom: 8,
-    textAlign: "center",
-  },
-  message: {
-    fontSize: 16,
-    color: "#666",
-    textAlign: "center",
-    marginBottom: 24,
-    lineHeight: 22,
-  },
-  buttonRow: {
-    flexDirection: "row",
-    gap: 12,
-  },
-  button: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 10,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  cancelButton: {
-    backgroundColor: "#f5f5f5",
-  },
-  confirmButton: {
-    backgroundColor: "#63B995",
-  },
-  destructiveButton: {
-    backgroundColor: "#FF5252",
-  },
-  cancelText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#666",
-  },
-  confirmText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#fff",
-  },
-});
