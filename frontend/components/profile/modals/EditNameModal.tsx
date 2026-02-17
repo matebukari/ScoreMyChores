@@ -1,64 +1,94 @@
-import React, { useState, useEffect } from "react";
-import { Modal, View, Text, TextInput, TouchableOpacity, ActivityIndicator, StyleSheet } from "react-native";
-
-const MAX_NAME_LENGTH = 16;
+import React from "react";
+import {
+  Modal,
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  useColorScheme,
+} from "react-native";
 
 interface EditNameModalProps {
   visible: boolean;
   onClose: () => void;
-  currentName?: string | null;
-  onSave: (newName: string) => void;
+  name: string;
+  setName: (name: string) => void;
+  onSave: () => void;
   loading: boolean;
 }
 
-export default function EditNameModal({ visible, onClose, currentName, onSave, loading }: EditNameModalProps) {
-  const [name, setName] = useState(currentName || "");
-
-  useEffect(() => {
-   setName(currentName || ""); 
-  }, [currentName, visible]);
+export default function EditNameModal({
+  visible,
+  onClose,
+  name,
+  setName,
+  onSave,
+  loading,
+}: EditNameModalProps) {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === "dark";
 
   return (
-    <Modal visible={visible} animationType="fade" transparent={true} onRequestClose={onClose}>
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
-          <Text style={styles.modalTitle}>Change Name</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter your name"
-            value={name}
-            onChangeText={setName}
-            autoCapitalize="words"
-            maxLength={MAX_NAME_LENGTH}
-          />
-          <Text style={styles.charCount}>{name?.length || 0}/{MAX_NAME_LENGTH}</Text>
-          <View style={styles.modalButtons}>
-            <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={onClose}>
-              <Text style={styles.buttonText}>Cancel</Text>
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={[styles.button, styles.saveButton]} 
-              onPress={() => onSave(name)} 
-              disabled={loading}
-            >
-              {loading ? <ActivityIndicator color="white" /> : <Text style={styles.buttonText}>Save</Text>}
-            </TouchableOpacity>
+    <Modal
+      visible={visible}
+      animationType="fade"
+      transparent={true}
+      onRequestClose={onClose}
+    >
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        className="flex-1"
+      >
+        <View className="flex-1 bg-black/50 justify-center items-center p-4">
+          <View className="bg-white dark:bg-card-dark w-full max-w-[340px] rounded-2xl p-6 shadow-xl">
+            <Text className="text-xl font-bold mb-1.5 text-center text-text-main dark:text-text-inverted">
+              Edit Profile Name
+            </Text>
+            <Text className="text-sm text-text-muted dark:text-gray-400 mb-5 text-center">
+              Update how your name appears to others.
+            </Text>
+
+            <TextInput
+              className="bg-gray-50 dark:bg-dark-100 text-text-main dark:text-text-inverted p-4 rounded-xl mb-5 text-base border border-gray-200 dark:border-gray-600 focus:border-light-100 dark:focus:border-light-100"
+              placeholder="Enter your name"
+              placeholderTextColor={isDark ? "#9CA3AF" : "#9CA3AF"}
+              value={name}
+              onChangeText={setName}
+              autoCapitalize="words"
+              autoCorrect={false}
+            />
+
+            <View className="flex-row gap-3">
+              <TouchableOpacity
+                className="flex-1 bg-gray-200 dark:bg-gray-700 p-3.5 rounded-xl items-center"
+                onPress={onClose}
+                disabled={loading}
+              >
+                <Text className="text-gray-700 dark:text-gray-300 font-bold text-base">
+                  Cancel
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                className="flex-1 bg-light-100 p-3.5 rounded-xl items-center"
+                onPress={onSave}
+                disabled={loading}
+              >
+                {loading ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <Text className="text-white font-bold text-base">
+                    Save
+                  </Text>
+                )}
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
-  )
+  );
 }
-
-const styles = StyleSheet.create({
-  modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "center", alignItems: "center" },
-  modalContent: { backgroundColor: "#fff", width: "90%", padding: 25, borderRadius: 20, elevation: 5 },
-  modalTitle: { fontSize: 20, fontWeight: "bold", marginBottom: 15, textAlign: "center" },
-  input: { backgroundColor: "#f0f0f0", padding: 15, borderRadius: 10, marginBottom: 15, fontSize: 16 },
-  charCount: { textAlign: 'right', color: '#888', fontSize: 12, marginTop: -10, marginBottom: 20, marginRight: 5 },
-  modalButtons: { flexDirection: "row", justifyContent: "space-between" },
-  button: { flex: 1, padding: 15, borderRadius: 10, alignItems: "center", marginHorizontal: 5 },
-  cancelButton: { backgroundColor: "#ccc" },
-  saveButton: { backgroundColor: "#63B995" },
-  buttonText: { color: "#fff", fontWeight: "bold", fontSize: 16 },
-});

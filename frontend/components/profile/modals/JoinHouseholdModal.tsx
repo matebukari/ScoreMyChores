@@ -48,7 +48,7 @@ export default function JoinHouseholdModal({
               Join Household
             </Text>
             <Text className="text-sm text-text-muted dark:text-gray-400 mb-5 text-center">
-              Enter the invite code shared by your admin.
+              Enter the invite code of a household.
             </Text>
 
             <TextInput
