@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet, Platform } from "react-native";
+import { View, Text, Platform } from "react-native";
 import { useAuth } from "@/context/AuthContext";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -11,7 +11,6 @@ import { useLeaderboard } from "@/hooks/useLeaderboard";
 
 export default function LeaderboardScreen() {
   const { user } = useAuth();
-
   const { leaderboardData, timeFrame, setTimeFrame } = useLeaderboard();
 
   const insets = useSafeAreaInsets();
@@ -20,18 +19,18 @@ export default function LeaderboardScreen() {
 
   return (
     <View
-      style={[
-        styles.container,
-        {
-          paddingTop: safeTop,
-          paddingLeft: insets.left + 20,
-          paddingRight: insets.right + 20,
-        },
-      ]}
+      className="flex-1 bg-background dark:bg-background-dark"
+      style={{
+        paddingTop: safeTop,
+        paddingLeft: insets.left + 20,
+        paddingRight: insets.right + 20,
+      }}
     >
       {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.title}>Leaderboard</Text>
+      <View className="mt-10 mb-5">
+        <Text className="text-[28px] font-bold text-text-main dark:text-text-inverted ml-5">
+          Leaderboard
+        </Text>
       </View>
 
       {/* Week / Month toggle */}
@@ -45,9 +44,3 @@ export default function LeaderboardScreen() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f8f9fa" },
-  header: { marginTop: 40, marginBottom: 20 },
-  title: { fontSize: 28, fontWeight: "bold", color: "#333", marginLeft: 20 },
-});
