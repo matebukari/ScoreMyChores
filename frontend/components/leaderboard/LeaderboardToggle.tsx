@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, TouchableOpacity, Platform, ViewStyle } from "react-native";
 
 interface LeaderboardToggleProps {
   timeFrame: "weekly" | "monthly";
@@ -7,37 +7,60 @@ interface LeaderboardToggleProps {
 }
 
 export default function LeaderboardToggle({ timeFrame, onToggle }: LeaderboardToggleProps) {
+  // Define shadow style manually to avoid NativeWind race condition
+  const activeShadow: ViewStyle = {
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 2,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
+  };
+
   return (
-    <View style={styles.toggleContainer}>
+    <View className="flex-row bg-gray-200 dark:bg-gray-800 mx-5 mb-8 rounded-xl p-1">
       <TouchableOpacity
-        style={[
-          styles.toggleButton,
-          timeFrame === "weekly" && styles.activeToggle,
-        ]}
+        className={`
+          flex-1 py-2.5 items-center rounded-lg
+          ${timeFrame === "weekly" ? "bg-white dark:bg-gray-600" : ""}
+        `}
+        style={timeFrame === "weekly" ? activeShadow : undefined}
         onPress={() => onToggle("weekly")}
       >
         <Text
-          style={[
-            styles.toggleText,
-            timeFrame === "weekly" && styles.activeToggleText,
-          ]}
+          className={`
+            font-semibold
+            ${timeFrame === "weekly" 
+              ? "text-light-100" 
+              : "text-text-secondary dark:text-gray-400"
+            }
+          `}
         >
           This Week
         </Text>
       </TouchableOpacity>
 
       <TouchableOpacity
-        style={[
-          styles.toggleButton,
-          timeFrame === "monthly" && styles.activeToggle,
-        ]}
+        className={`
+          flex-1 py-2.5 items-center rounded-lg
+          ${timeFrame === "monthly" ? "bg-white dark:bg-gray-600" : ""}
+        `}
+        style={timeFrame === "monthly" ? activeShadow : undefined}
         onPress={() => onToggle("monthly")}
       >
         <Text
-          style={[
-            styles.toggleText,
-            timeFrame === "monthly" && styles.activeToggleText,
-          ]}
+          className={`
+            font-semibold
+            ${timeFrame === "monthly" 
+              ? "text-light-100" 
+              : "text-text-secondary dark:text-gray-400"
+            }
+          `}
         >
           This Month
         </Text>
@@ -45,22 +68,3 @@ export default function LeaderboardToggle({ timeFrame, onToggle }: LeaderboardTo
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  toggleContainer: {
-    flexDirection: "row",
-    backgroundColor: "#e0e0e0",
-    margin: 20,
-    borderRadius: 12,
-    padding: 4,
-  },
-  toggleButton: {
-    flex: 1,
-    paddingVertical: 10,
-    alignItems: "center",
-    borderRadius: 8,
-  },
-  activeToggle: { backgroundColor: "#fff", elevation: 2 },
-  toggleText: { fontWeight: "600", color: "#666" },
-  activeToggleText: { color: "#63B995" },
-});
