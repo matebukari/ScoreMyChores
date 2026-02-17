@@ -80,7 +80,6 @@ export default function ProfileScreen() {
   return (
     <View style={[styles.container, { paddingTop: safeTop }]}>
       <ScrollView
-        contentContainerStyle={{ paddingBottom: 20 }}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>

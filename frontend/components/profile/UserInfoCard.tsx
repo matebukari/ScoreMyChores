@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { View, Text, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import UserAvatar from "@/components/ui/UserAvatar";
 import { User } from "firebase/auth";
@@ -13,13 +13,20 @@ interface UserInfoCardProps {
   onEditAvatar: () => void;
 }
 
-export default function UserInfoCard({ user, name, avatar, role, onEditName, onEditAvatar }: UserInfoCardProps) {
+export default function UserInfoCard({ 
+  user, 
+  name, 
+  avatar, 
+  role, 
+  onEditName, 
+  onEditAvatar 
+}: UserInfoCardProps) {
   const displayName = name || user?.displayName || "User";
   const currentAvatar = avatar !== undefined ? avatar : user?.photoURL;
 
   return (
-    <View style={styles.card}>
-      <View style={{ position: "relative" }}>
+    <View className="bg-white dark:bg-card-dark p-5 rounded-2xl flex-row items-center mb-6 shadow-sm">
+      <View className="relative">
         <UserAvatar
           name={displayName}
           avatar={currentAvatar}
@@ -27,59 +34,31 @@ export default function UserInfoCard({ user, name, avatar, role, onEditName, onE
           fontSize={28}
           color="#2196F3"
         />
-        <TouchableOpacity style={styles.editAvatarBadge} onPress={onEditAvatar}>
+        <TouchableOpacity 
+          className="absolute -bottom-0 -right-1 bg-light-100 w-6 h-6 rounded-full justify-center items-center border-2 border-white dark:border-card-dark"
+          onPress={onEditAvatar}
+        >
            <Ionicons name="camera" size={14} color="white" />
         </TouchableOpacity>
       </View>
 
-      <View style={{ flex: 1, marginLeft: 15 }}>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-          <Text style={styles.nameText}>{displayName}</Text>
+      <View className="flex-1 ml-4">
+        <View className="flex-row items-center gap-2">
+          <Text className="text-xl font-bold text-text-main dark:text-text-inverted">
+            {displayName}
+          </Text>
           <TouchableOpacity onPress={onEditName}>
             <Ionicons name="pencil-sharp" size={16} color="#63B995" />
           </TouchableOpacity>
         </View>
 
-        <Text style={styles.emailText}>{user?.email}</Text>
-        <Text style={styles.roleText}>Role: {role === "admin" ? "Admin" : "Member"}</Text>
+        <Text className="text-sm text-text-muted dark:text-gray-400 mt-0.5">
+          {user?.email}
+        </Text>
+        <Text className="text-xs text-text-muted dark:text-gray-500 mt-1 uppercase tracking-wider">
+          Role: {role === "admin" ? "Admin" : "Member"}
+        </Text>
       </View>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: "#fff",
-    padding: 20,
-    borderRadius: 16,
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 25,
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowRadius: 5,
-    elevation: 2,
-  },
-  editAvatarBadge: {
-    position: "absolute",
-    bottom: 0,
-    right: -4,
-    backgroundColor: "#63B995",
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 2,
-    borderColor: "#fff",
-  },
-  nameText: { fontSize: 20, fontWeight: "bold", color: "#333" },
-  emailText: { fontSize: 14, color: "#666", marginTop: 2 },
-  roleText: {
-    fontSize: 12,
-    color: "#999",
-    marginTop: 4,
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-  },
-});
