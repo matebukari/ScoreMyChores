@@ -2,13 +2,13 @@ import React from "react";
 import {
   View,
   Text,
-  StyleSheet,
   TouchableOpacity,
   Modal,
   TextInput,
   ActivityIndicator,
   ScrollView,
   Keyboard,
+  useColorScheme,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import ChoreScheduler from "@/components/chores/ChoreSchedular";
@@ -67,6 +67,8 @@ export default function AddChoreModal({
   onSelectRecent,
   onSubmit 
 }: AddChoreModalProps) {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === "dark";
 
   return (
     <Modal
@@ -75,32 +77,39 @@ export default function AddChoreModal({
       transparent={true}
       onRequestClose={onClose}
     >
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
+      <View className="flex-1 bg-black/50 justify-center items-center">
+        <View className="bg-card dark:bg-card-dark w-[90%] p-6 rounded-3xl shadow-xl max-h-[85%]">
           <ScrollView
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
-            <Text style={styles.modalTitle}>Add New Chore</Text>
+            <Text className="text-xl font-bold mb-5 text-center text-text-main dark:text-text-inverted">
+              Add New Chore
+            </Text>
 
             {/* Previous Task Section */}
             {recentTasks.length > 0 && (
-              <View style={styles.recentContainer}>
-                <Text style={styles.sectionLabel}>Previous Tasks</Text>
+              <View className="mb-4">
+                <Text className="text-sm font-semibold text-text-muted dark:text-gray-400 mb-2 ml-1">
+                  Previous Tasks
+                </Text>
                 <ScrollView
                   horizontal
                   showsHorizontalScrollIndicator={false}
-                  style={styles.recentList}
+                  className="flex-row mb-1"
                   contentContainerStyle={{ paddingRight: 20 }}
                 >
                   {recentTasks.map((task, index) => (
                     <TouchableOpacity
                       key={index}
-                      style={styles.recentChip}
+                      className="bg-green-50 dark:bg-green-900/20 px-3 py-2 rounded-full mr-2 border border-green-200 dark:border-green-800 max-w-[160px]"
                       onPress={() => onSelectRecent(task.title, task.points)}
                     >
-                      <Text style={styles.recentChipText} numberOfLines={1}>
-                        {task.title} <Text style={styles.recentChipPoints}>({task.points})</Text>
+                      <Text 
+                        className="text-green-800 dark:text-green-300 text-xs font-medium" 
+                        numberOfLines={1}
+                      >
+                        {task.title} <Text className="font-bold opacity-80">({task.points})</Text>
                       </Text>
                     </TouchableOpacity>
                   ))}
@@ -108,26 +117,29 @@ export default function AddChoreModal({
               </View>
             )}
 
-            <View style={styles.titleInputContainer}>
+            {/* Title Input */}
+            <View className="flex-row items-center bg-background-subtle dark:bg-dark-100 rounded-xl mb-4 px-4 h-[54px] border border-transparent dark:border-gray-500 focus:border-light-100">
               <TextInput
-                style={styles.titleInput}
+                className="flex-1 text-base text-text-main dark:text-text-inverted h-full py-0"
                 placeholder="Chore Name (e.g. Dishes)"
+                placeholderTextColor={isDark ? "#9CA3AF" : "#9CA3AF"}
                 value={title}
                 onChangeText={setTitle}
                 maxLength={25}
                 multiline={false}
               />
-              <Text style={styles.charCount}>
+              <Text className="text-xs text-text-muted dark:text-gray-500 font-medium ml-2">
                 {title.length}/25
               </Text>
             </View>
 
             {/* Points dropdown */}
-            <View style={styles.dropdownContainer}>
-              <View style={styles.inputRow}>
+            <View className="mb-4">
+              <View className="flex-row items-center bg-background-subtle dark:bg-dark-100 rounded-xl h-[54px] pl-4 border border-transparent dark:border-gray-500 focus:border-light-100">
                 <TextInput
-                  style={styles.inputFlex}
+                  className="flex-1 text-base text-text-main dark:text-text-inverted h-full py-0"
                   placeholder="Points (e.g. 50)"
+                  placeholderTextColor={isDark ? "#9CA3AF" : "#9CA3AF"}
                   value={points}
                   onChangeText={onPointChange}
                   keyboardType="numeric"
@@ -135,32 +147,36 @@ export default function AddChoreModal({
                   maxLength={3}
                 />
                 <TouchableOpacity
-                  style={styles.dropdownToggle}
+                  className="px-4 h-full justify-center border-l border-border-light dark:border-gray-500"
                   onPress={() => setShowPointOptions(!showPointOptions)}
                 >
                   <Ionicons
                     name={showPointOptions ? "chevron-up" : "chevron-down"}
                     size={24}
-                    color="#666"
+                    color={isDark ? "#9CA3AF" : "#666"}
                   />
                 </TouchableOpacity>
               </View>
+              
               {showPointOptions && (
                 <ScrollView
-                  style={styles.dropdownList}
+                  className="bg-card dark:bg-card-dark border border-border-light dark:border-gray-500 rounded-xl mt-1 max-h-[135px]"
                   nestedScrollEnabled={true}
+                  showsVerticalScrollIndicator={false}
                   keyboardShouldPersistTaps="handled"
                 >
                   {pointOptions.map((opt) => (
                     <TouchableOpacity
                       key={opt}
-                      style={styles.dropdownItem}
+                      className="p-3 border-b border-border-subtle dark:border-gray-600 active:bg-gray-50 dark:active:bg-gray-800"
                       onPress={() => {
                         setPoints(opt);
                         setShowPointOptions(false);
                       }}
                     >
-                      <Text style={styles.dropDownItemText}>{opt} pts</Text>
+                      <Text className="text-base text-text-main dark:text-text-inverted">
+                        {opt} pts
+                      </Text>
                     </TouchableOpacity>
                   ))}
                 </ScrollView>
@@ -169,14 +185,14 @@ export default function AddChoreModal({
 
             {/* Schedule Link */}
             <TouchableOpacity
-              style={styles.scheduleLink}
+              className="flex-row items-center justify-center py-2.5 gap-1.5"
               onPress={() => {
                 Keyboard.dismiss();
                 setShowScheduler(!showScheduler);
               }}
             >
               <Ionicons name="calendar-outline" size={16} color="#63B995" />
-              <Text style={styles.scheduleLinkText}>
+              <Text className="text-light-100 font-semibold text-sm">
                 {showScheduler ? "Hide Scheduler" : "Schedule for later?"}
               </Text>
             </TouchableOpacity>
@@ -193,22 +209,23 @@ export default function AddChoreModal({
               />
             )}
 
-            <View style={styles.modalButtons}>
+            {/* Action Buttons */}
+            <View className="flex-row justify-between mt-5 gap-3">
               <TouchableOpacity
-                style={[styles.button, styles.cancelButton]}
+                className="flex-1 p-4 rounded-xl items-center bg-gray-300 dark:bg-gray-600"
                 onPress={onClose}
               >
-                <Text style={styles.buttonText}>Cancel</Text>
+                <Text className="text-white font-bold text-base">Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.button, styles.saveButton]}
+                className="flex-1 p-4 rounded-xl items-center bg-light-100"
                 onPress={onSubmit}
                 disabled={loading}
               >
                 {loading ? (
                   <ActivityIndicator color="white" />
                 ) : (
-                  <Text style={styles.buttonText}>Add Task</Text>
+                  <Text className="text-white font-bold text-base">Add Task</Text>
                 )}
               </TouchableOpacity>
             </View>
@@ -219,143 +236,3 @@ export default function AddChoreModal({
     </Modal>
   );
 }
-
-const styles = StyleSheet.create({
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  modalContent: {
-    backgroundColor: "#fff",
-    width: "90%",
-    padding: 25,
-    borderRadius: 20,
-    elevation: 5,
-    maxHeight: "85%",
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    marginBottom: 20,
-    textAlign: "center",
-  },
-  recentContainer: {
-    marginBottom: 15,
-  },
-  sectionLabel: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#888",
-    marginBottom: 8,
-    marginLeft: 4,
-  },
-  recentList: {
-    flexDirection: "row",
-    marginBottom: 5,
-  },
-  recentChip: {
-    backgroundColor: "#f0fdf4",
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 20,
-    marginRight: 8,
-    borderWidth: 1,
-    borderColor: "#bbf7d0",
-    maxWidth: 160,
-  },
-  recentChipText: {
-    color: "#166534",
-    fontSize: 13,
-    fontWeight: "500",
-  },
-  recentChipPoints: {
-    fontWeight: "bold",
-    opacity: 0.8,
-  },
-  titleInputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#f0f0f0",
-    borderRadius: 10,
-    marginBottom: 15,
-    paddingHorizontal: 15,
-    height: 54,
-  },
-  titleInput: {
-    flex: 1,
-    fontSize: 16,
-    color: "#333",
-    height: "100%",
-    paddingRight: 10,
-    paddingVertical: 0,
-  },
-  charCount: {
-    fontSize: 12,
-    color: "#888",
-    fontWeight: "500",
-  },
-  dropdownContainer: { marginBottom: 15 },
-  inputRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#f0f0f0",
-    borderRadius: 10,
-    height: 54,
-    paddingLeft: 15,
-  },
-  inputFlex: { 
-    flex: 1, 
-    padding: 15, 
-    fontSize: 16, 
-    color: "#333", 
-    paddingVertical: 0,
-    paddingHorizontal: 0,
-    height: "100%",
-  },
-  dropdownToggle: { 
-    paddingHorizontal: 15,
-    height: "100%",
-    justifyContent: "center", 
-    borderLeftWidth: 1, 
-    borderLeftColor: "#ddd" 
-  },
-  dropdownList: {
-    backgroundColor: "#fff",
-    borderWidth: 1,
-    borderColor: "#eee",
-    borderRadius: 10,
-    marginTop: 5,
-    maxHeight: 135,
-  },
-  dropdownItem: {
-    padding: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#f8f8f8",
-  },
-  dropDownItemText: { fontSize: 16, color: "#333" },
-  modalButtons: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 20,
-  },
-  button: {
-    flex: 1,
-    padding: 15,
-    borderRadius: 10,
-    alignItems: "center",
-    marginHorizontal: 5,
-  },
-  cancelButton: { backgroundColor: "#ccc" },
-  saveButton: { backgroundColor: "#63B995" },
-  buttonText: { color: "#fff", fontWeight: "bold", fontSize: 16 },
-  scheduleLink: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 10,
-    gap: 6,
-  },
-  scheduleLinkText: { color: "#63B995", fontWeight: "600", fontSize: 14 },
-});
