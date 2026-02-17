@@ -1,15 +1,13 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
-  StyleSheet,
   TouchableOpacity,
   ScrollView,
   Platform,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useColorScheme } from "nativewind";
 
 import { useProfileScreen } from "@/hooks/useProfileScreen";
 
@@ -22,7 +20,7 @@ import EditNameModal from "@/components/profile/modals/EditNameModal";
 import AvatarPickerModal from "@/components/profile/modals/AvatarPickerModal";
 import ManageMembersModal from "@/components/profile/modals/ManageMembersModal";
 import JoinHouseholdModal from "@/components/profile/modals/JoinHouseholdModal";
-import CreatHouseholdModal from "@/components/profile/modals/CreateHouseholdModal";
+import CreateHouseholdModal from "@/components/profile/modals/CreateHouseholdModal";
 import ConfirmationModal from "@/components/ui/ConfirmationModal";
 
 export default function ProfileScreen() {
@@ -73,17 +71,33 @@ export default function ProfileScreen() {
     handleRemoveMember,
   } = useProfileScreen();
 
+  // --- LOCAL STATE FOR MODAL INPUTS ---
+  const [inviteCode, setInviteCode] = useState("");
+  const [editName, setEditName] = useState("");
+  const [newHouseholdName, setNewHouseholdName] = useState("");
+
+  // Sync the edit name input when the modal opens or user data changes
+  useEffect(() => {
+    if (isEditNameVisible) {
+      setEditName(currentUserProfile?.displayName || user?.displayName || "");
+    }
+  }, [isEditNameVisible, currentUserProfile, user]);
+
   const insets = useSafeAreaInsets();
   const safeTop =
     insets.top > 0 ? insets.top : Platform.OS === "android" ? 30 : 0;
 
   return (
-    <View style={[styles.container, { paddingTop: safeTop }]}>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.header}>
-          <Text style={styles.title}>Profile</Text>
+    <View 
+      className="flex-1 bg-background dark:bg-background-dark px-5"
+      style={{ paddingTop: safeTop }}
+    >
+      <ScrollView showsVerticalScrollIndicator={false}>
+        {/* Header */}
+        <View className="mt-10 mb-5">
+          <Text className="text-3xl font-bold text-text-main dark:text-text-inverted">
+            Profile
+          </Text>
         </View>
 
         {/* USER INFO CARD */}
@@ -100,7 +114,9 @@ export default function ProfileScreen() {
           onEditAvatar={() => setIsAvatarModalVisible(true)}
         />
 
-        <Text style={styles.sectionTitle}>Current Household</Text>
+        <Text className="text-lg font-bold text-text-main dark:text-text-inverted mb-[15px]">
+          Current Household
+        </Text>
 
         {/* HOUSEHOLD INFO */}
         <HouseholdInfoCard
@@ -117,23 +133,28 @@ export default function ProfileScreen() {
         />
 
         {/* ACTION BUTTONS ROW */}
-        <View style={styles.actionRow}>
+        <View className="flex-row gap-[15px] mb-[25px]">
           {/* JOIN BUTTON */}
           <TouchableOpacity
-            style={[styles.actionButton, styles.joinButtonOutline]}
+            className="flex-1 flex-row items-center justify-center p-[15px] rounded-xl bg-white dark:bg-card-dark border border-light-100 border-dashed"
             onPress={() => setIsJoinModalVisible(true)}
           >
             <Ionicons name="enter-outline" size={22} color="#63B995" />
-            <Text style={styles.joinButtonText}>Join</Text>
+            <Text className="text-light-100 font-semibold ml-2">
+              Join
+            </Text>
           </TouchableOpacity>
-        
+
           {/* CREATE BUTTON */}
           <TouchableOpacity
-            style={[styles.actionButton, styles.createButtonFill]}
+            className="flex-1 flex-row items-center justify-center p-[15px] rounded-xl bg-light-100 shadow-sm elevation-4"
+            style={{ shadowColor: "#63B995" }} // Keep specific shadow color inline
             onPress={() => setIsCreateModalVisible(true)}
           >
             <Ionicons name="add-circle-outline" size={22} color="#fff" />
-            <Text style={styles.createButtonText}>Create</Text>
+            <Text className="text-white font-bold ml-2">
+              Create
+            </Text>
           </TouchableOpacity>
         </View>
 
@@ -148,10 +169,16 @@ export default function ProfileScreen() {
 
         <ThemeToggle />
 
-        <TouchableOpacity style={styles.logoutButton} onPress={handleSignOut}>
-          <Text style={styles.logoutText}>Sign Out</Text>
+        <TouchableOpacity 
+          className="bg-danger-bg dark:bg-red-900/20 p-[15px] rounded-xl items-center mt-2.5"
+          onPress={handleSignOut}
+        >
+          <Text className="text-danger dark:text-red-400 font-bold text-base">
+            Sign Out
+          </Text>
         </TouchableOpacity>
-        <View style={{ height: 50 }} />
+        
+        <View className="h-[50px]" />
 
         {/* --- MODALS --- */}
         <ConfirmationModal
@@ -167,8 +194,13 @@ export default function ProfileScreen() {
         {/* 1. JOIN MODAL */}
         <JoinHouseholdModal
           visible={isJoinModalVisible}
-          onClose={() => setIsJoinModalVisible(false)}
-          onJoin={handleJoinHousehold}
+          onClose={() => {
+            setIsJoinModalVisible(false);
+            setInviteCode("");
+          }}
+          inviteCode={inviteCode}
+          setInviteCode={setInviteCode}
+          onJoin={() => handleJoinHousehold(inviteCode)}
           loading={joining}
         />
 
@@ -176,8 +208,9 @@ export default function ProfileScreen() {
         <EditNameModal
           visible={isEditNameVisible}
           onClose={() => setIsEditNameVisible(false)}
-          currentName={currentUserProfile?.displayName || user?.displayName}
-          onSave={handleUpdateName}
+          name={editName}
+          setName={setEditName}
+          onSave={() => handleUpdateName(editName)}
           loading={updatingName}
         />
 
@@ -202,74 +235,18 @@ export default function ProfileScreen() {
         />
 
         {/* 5. CREATE MODAL */}
-        <CreatHouseholdModal
+        <CreateHouseholdModal
           visible={isCreateModalVisible}
-          onClose={() => setIsCreateModalVisible(false)}
-          onCreate={handleCreateHousehold}
+          onClose={() => {
+            setIsCreateModalVisible(false);
+            setNewHouseholdName("");
+          }}
+          householdName={newHouseholdName}
+          setHouseholdName={setNewHouseholdName}
+          onCreate={() => handleCreateHousehold(newHouseholdName)}
           loading={creating}
         />
       </ScrollView>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f8f9fa", paddingHorizontal: 20 },
-  header: { marginTop: 40, marginBottom: 20 },
-  title: { fontSize: 28, fontWeight: "bold", color: "#333" },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#333",
-    marginBottom: 15,
-  },
-  joinButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#fff",
-    padding: 15,
-    borderRadius: 12,
-    marginBottom: 25,
-    borderWidth: 1,
-    borderColor: "#63B995",
-    borderStyle: "dashed",
-  },
-  logoutButton: {
-    backgroundColor: "#ffebee",
-    padding: 15,
-    borderRadius: 12,
-    alignItems: "center",
-    marginTop: 10,
-  },
-  logoutText: { color: "#d32f2f", fontWeight: "bold", fontSize: 16 },
-  actionRow: {
-    flexDirection: "row",
-    gap: 15,
-    marginBottom: 25,
-  },
-  actionButton: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 15,
-    borderRadius: 12,
-  },
-  joinButtonOutline: {
-    backgroundColor: "#fff",
-    borderWidth: 1,
-    borderColor: "#63B995",
-    borderStyle: "dashed",
-  },
-  createButtonFill: {
-    backgroundColor: "#63B995",
-    shadowColor: "#63B995",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-    elevation: 4,
-  },
-  joinButtonText: { color: "#63B995", fontWeight: "600", marginLeft: 8 },
-  createButtonText: { color: "#fff", fontWeight: "bold", marginLeft: 8 },
-});
