@@ -5,7 +5,7 @@ import {
   Text,
   TouchableOpacity,
   ScrollView,
-  StyleSheet,
+  useColorScheme,
 } from "react-native";
 import { Avatars } from "@/constants/avatars";
 
@@ -13,55 +13,24 @@ const AVATAR_CATEGORIES = [
   {
     title: "Human",
     data: [
-      "human1",
-      "human2",
-      "human3",
-      "human4",
-      "human5",
-      "human6",
-      "human7",
-      "human8",
-      "human9",
-      "human10",
-      "human11",
-      "human12",
-      "human13",
-      "human14",
-      "human15",
-      "human16",
-      "human17",
-      "human18",
-      "human19",
-      "human20",
-      "human21",
+      "human1", "human2", "human3", "human4", "human5", "human6", "human7",
+      "human8", "human9", "human10", "human11", "human12", "human13",
+      "human14", "human15", "human16", "human17", "human18", "human19",
+      "human20", "human21",
     ],
   },
   {
     title: "Premium",
     data: [
-      "premium1",
-      "premium2",
-      "premium3",
-      "premium4",
-      "premium5",
-      "premium6",
-      "premium7",
-      "premium8",
-      "premium9",
-      "premium10",
-      "premium11",
-      "premium12",
-      "premium13",
-      "premium14",
-      "premium15",
-      "premium16",
-      "premium17",
-      "premium18",
-      "premium19",
+      "premium1", "premium2", "premium3", "premium4", "premium5", "premium6",
+      "premium7", "premium8", "premium9", "premium10", "premium11",
+      "premium12", "premium13", "premium14", "premium15", "premium16",
+      "premium17", "premium18", "premium19",
     ],
   },
 ];
 
+// Flatten the list for the grid
 const ALL_AVATARS = AVATAR_CATEGORIES.flatMap((category) => category.data);
 
 interface AvatarPickerModalProps {
@@ -77,6 +46,9 @@ export default function AvatarPickerModal({
   onSelect,
   currentAvatar,
 }: AvatarPickerModalProps) {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === "dark";
+
   return (
     <Modal
       visible={visible}
@@ -84,43 +56,59 @@ export default function AvatarPickerModal({
       transparent={true}
       onRequestClose={onClose}
     >
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
-          <Text style={styles.modalTitle}>Pick an Avatar</Text>
+      <View className="flex-1 bg-black/50 justify-center items-center p-4">
+        <View className="bg-white dark:bg-card-dark w-full max-w-[350px] h-[70%] rounded-3xl p-5 shadow-xl">
+          <Text className="text-xl font-bold mb-5 text-center text-text-main dark:text-text-inverted">
+            Pick an Avatar
+          </Text>
 
-          <ScrollView showsVerticalScrollIndicator={false}>
-            {/* Single Grid Container for all avatars */}
-            <View style={styles.grid}>
+          <ScrollView 
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ paddingBottom: 20 }}
+          >
+            <View className="flex-row flex-wrap justify-center gap-3">
               {ALL_AVATARS.map((avatarKey) => {
                 const SvgComponent = Avatars[avatarKey];
+                const isSelected = currentAvatar === avatarKey;
 
                 return (
                   <TouchableOpacity
                     key={avatarKey}
-                    style={[
-                      styles.avatarOption,
-                      currentAvatar === avatarKey && styles.selectedOption,
-                    ]}
                     onPress={() => {
                       onSelect(avatarKey);
                       onClose();
                     }}
+                    className={`
+                      w-[70px] h-[70px] rounded-full justify-center items-center border-2 overflow-hidden
+                      ${isSelected 
+                        ? "border-light-100 bg-green-50 dark:bg-green-900/20" 
+                        : "border-transparent bg-gray-50 dark:bg-gray-700"
+                      }
+                    `}
                   >
                     {SvgComponent ? (
-                      <View style={styles.svgWrapper}>
+                      <View className="w-[60px] h-[60px]">
                         <SvgComponent width="100%" height="100%" />
                       </View>
                     ) : (
-                      <Text style={{ fontSize: 12 }}>{avatarKey}</Text>
+                      <Text className="text-xs text-gray-500 dark:text-gray-400">
+                        ?
+                      </Text>
                     )}
                   </TouchableOpacity>
                 );
               })}
             </View>
           </ScrollView>
-          <View style={styles.modalButtons}>
-            <TouchableOpacity style={styles.cancelButton} onPress={onClose}>
-              <Text style={styles.buttonText}>Cancel</Text>
+
+          <View className="mt-4 pt-2 border-t border-gray-100 dark:border-gray-700">
+            <TouchableOpacity 
+              className="bg-gray-200 dark:bg-gray-700 py-3.5 rounded-xl items-center w-full" 
+              onPress={onClose}
+            >
+              <Text className="text-gray-700 dark:text-gray-300 font-bold text-base">
+                Cancel
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -128,67 +116,3 @@ export default function AvatarPickerModal({
     </Modal>
   );
 }
-
-const styles = StyleSheet.create({
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  modalContent: {
-    backgroundColor: "#fff",
-    width: "90%",
-    height: "70%", // Fixed height for the modal
-    padding: 20,
-    borderRadius: 20,
-    elevation: 5,
-  },
-  modalTitle: {
-    fontSize: 22,
-    fontWeight: "bold",
-    marginBottom: 15,
-    textAlign: "center",
-    color: "#333",
-  },
-  grid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "flex-start",
-  },
-  avatarOption: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    backgroundColor: "#f8f9fa",
-    justifyContent: "center",
-    alignItems: "center",
-    margin: 6,
-    borderWidth: 2,
-    borderColor: "transparent",
-    overflow: "hidden",
-  },
-  selectedOption: {
-    borderColor: "#63B995",
-    backgroundColor: "#e8f5e9",
-  },
-  svgWrapper: {
-    width: 60,
-    height: 60,
-  },
-  modalButtons: {
-    marginTop: 10,
-    alignItems: "center",
-  },
-  cancelButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 30,
-    borderRadius: 25,
-    backgroundColor: "#eee",
-  },
-  buttonText: {
-    color: "#333",
-    fontWeight: "600",
-    fontSize: 16,
-  },
-});
