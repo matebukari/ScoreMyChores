@@ -1,6 +1,7 @@
 import React from 'react';
 import { Text, View, Platform } from 'react-native';
 import { withLayoutContext } from 'expo-router';
+import { useColorScheme } from 'nativewind';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs'
 import { Icons } from '@/constants/icons';
 
@@ -31,6 +32,12 @@ const TabIcon = ({ focused, icon: Icon, title }: TabIconProps) => {
 };
 
 const _layout = () => {
+  const { colorScheme } = useColorScheme();
+
+  const themeColors = {
+    background: colorScheme === 'dark' ? '#151312' : '#FFFFFF',
+    border: colorScheme === 'dark' ? '#272a2b' : '#F3F4F6',
+  };
   return (
     <MaterialTopTabs
       tabBarPosition='bottom'
@@ -46,9 +53,9 @@ const _layout = () => {
           padding: 0,
         },
         tabBarStyle: {
-          backgroundColor: "#FFFFFF", 
+          backgroundColor: themeColors.background, 
           borderTopWidth: 1,
-          borderTopColor: "#F3F4F6",
+          borderTopColor: themeColors.border,
           paddingTop: 15,
           paddingBottom: Platform.OS === 'ios' ? 35 : 30,
           elevation: 0,
