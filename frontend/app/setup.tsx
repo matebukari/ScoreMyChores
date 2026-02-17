@@ -4,7 +4,6 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  StyleSheet,
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
@@ -84,106 +83,123 @@ export default function HouseholdSetup() {
   return(
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={[
-        styles.container,
-        { 
-          paddingTop: insets.top,
-          paddingLeft: insets.left,
-          paddingRight: insets.right,
-        }
-      ]}
+      className="flex-1 bg-background dark:bg-background-dark"
+      style={{ 
+        paddingTop: insets.top,
+        paddingLeft: insets.left,
+        paddingRight: insets.right,
+      }}
     >
       <ScrollView
-        contentContainerStyle={[
-          styles.scrollContainer,
-          {
-            paddingTop: 40, 
-            paddingHorizontal: 24,
-            paddingBottom: insets.bottom + 40,
-          }
-        ]}
+        contentContainerStyle={{
+          flexGrow: 1,
+          justifyContent: "center",
+          paddingTop: 40, 
+          paddingHorizontal: 24,
+          paddingBottom: insets.bottom + 40,
+        }}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.header}>
-          <View style={styles.iconCircle}>
+        {/* Header */}
+        <View className="items-center mb-10">
+          <View className="w-20 h-20 rounded-full bg-white dark:bg-card-dark justify-center items-center mb-5 shadow-lg shadow-light-100/20 elevation-5">
             <Ionicons name="home" size={48} color="#63B995" />
           </View>
-          <Text style={styles.title}>Welcome Home</Text>
-          <Text style={styles.subtitle}>Create a new household or join an existing one to get started.</Text>
+          <Text className="text-3xl font-bold text-text-main dark:text-text-inverted text-center">
+            Welcome Home
+          </Text>
+          <Text className="text-base text-text-secondary dark:text-gray-400 mt-2.5 text-center px-5 leading-6">
+            Create a new household or join an existing one to get started.
+          </Text>
         </View>
 
         {/* Option A: Create */}
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <View style={[styles.iconBox, { backgroundColor: "#E8F5E9" }]}>
+        <View className="bg-white dark:bg-card-dark p-6 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700">
+          <View className="flex-row items-center mb-3">
+            <View className="w-10 h-10 rounded-xl bg-green-50 dark:bg-green-900/20 justify-center items-center mr-3">
               <Ionicons name="add" size={24} color="#63B995" />
             </View>
-            <Text style={styles.cardTitle}>Create New Household</Text>
+            <Text className="text-lg font-bold text-text-main dark:text-text-inverted">
+              Create New Household
+            </Text>
           </View>
           
-          <Text style={styles.cardDescription}>Start fresh and invite your family or roommates.</Text>
+          <Text className="text-sm text-text-muted dark:text-gray-400 mb-5">
+            Start fresh and invite your family or roommates.
+          </Text>
           
           <TextInput
             placeholder="Household Name (e.g. The Smiths)"
             placeholderTextColor="#9CA3AF"
-            style={styles.input}
+            className="bg-gray-50 dark:bg-dark-200 border border-gray-200 dark:border-gray-600 p-4 rounded-xl text-base text-text-main dark:text-text-inverted mb-2"
             value={houseName}
             onChangeText={setHouseName}
             maxLength={MAX_HOUSEHOLD_NAME_LENGTH}
           />
 
-          <Text style={styles.charCount}>
+          <Text className="text-right text-xs text-text-muted dark:text-gray-500 mb-4 mr-1">
             {houseName.length}/{MAX_HOUSEHOLD_NAME_LENGTH}
           </Text>
 
           <TouchableOpacity
-            style={[styles.button, styles.createButton]}
+            className="bg-light-100 shadow-md shadow-light-100/30 p-4 rounded-xl items-center justify-center elevation-4"
             onPress={handleCreate}
             disabled={loading}
           >
             {loading ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.buttonText}>Create Household</Text>
+              <Text className="text-white font-bold text-base">
+                Create Household
+              </Text>
             )}
           </TouchableOpacity>
         </View>
 
-        <View style={styles.divider}>
-          <View style={styles.line}/>
-          <Text style={styles.orText}>OR</Text>
-          <View style={styles.line}/>
+        {/* Divider */}
+        <View className="flex-row items-center my-8">
+          <View className="flex-1 h-[1px] bg-gray-200 dark:bg-gray-700" />
+          <Text className="mx-4 text-xs font-bold text-text-muted dark:text-gray-500 tracking-widest">
+            OR
+          </Text>
+          <View className="flex-1 h-[1px] bg-gray-200 dark:bg-gray-700" />
         </View>
 
         {/* Option B: Join */}
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <View style={[styles.iconBox, { backgroundColor: "#E3F2FD" }]}>
+        <View className="bg-white dark:bg-card-dark p-6 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700">
+          <View className="flex-row items-center mb-3">
+            <View className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/20 justify-center items-center mr-3">
               <Ionicons name="enter-outline" size={24} color="#42A5F5" />
             </View>
-            <Text style={styles.cardTitle}>Join with Code</Text>
+            <Text className="text-lg font-bold text-text-main dark:text-text-inverted">
+              Join with Code
+            </Text>
           </View>
 
-          <Text style={styles.cardDescription}>Enter the invite code shared by your admin.</Text>
+          <Text className="text-sm text-text-muted dark:text-gray-400 mb-5">
+            Enter the invite code shared by your admin.
+          </Text>
 
           <TextInput
             placeholder="6-Digit Invite Code"
             placeholderTextColor="#9CA3AF"
-            style={styles.input}
+            className="bg-gray-50 dark:bg-dark-200 border border-gray-200 dark:border-gray-600 p-4 rounded-xl text-base text-text-main dark:text-text-inverted mb-4"
             autoCapitalize="characters"
             value={inviteCode}
             onChangeText={setInviteCode}
             maxLength={6}
           />
           <TouchableOpacity
-            style={[styles.button, styles.joinButton]}
+            className="bg-white dark:bg-transparent border-2 border-light-100 p-4 rounded-xl items-center justify-center"
             onPress={handleJoin}
             disabled={loading}
           >
             {loading ? (
               <ActivityIndicator color="#63B995" />
             ) : (
-              <Text style={[styles.buttonText, styles.joinButtonText]}>Join Household</Text>
+              <Text className="text-light-100 font-bold text-base">
+                Join Household
+              </Text>
             )}
           </TouchableOpacity>
         </View>
@@ -191,80 +207,3 @@ export default function HouseholdSetup() {
     </KeyboardAvoidingView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#f8f9fa",
-  },
-  scrollContainer: {
-    flexGrow: 1,
-    justifyContent: "center",
-  },
-  header: { alignItems: "center", marginBottom: 40 },
-  iconCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: "#fff",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 20,
-    shadowColor: "#63B995",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    elevation: 5,
-  },
-  title: { fontSize: 32, fontWeight: "bold", color: "#333", textAlign: "center" },
-  subtitle: { fontSize: 16, color: "#666", marginTop: 10, textAlign: "center", paddingHorizontal: 20, lineHeight: 22 },
-  
-  card: {
-    backgroundColor: "#fff",
-    padding: 24,
-    borderRadius: 24,
-    shadowColor: "#000",
-    shadowOpacity: 0.03,
-    shadowRadius: 15,
-    elevation: 2,
-    borderWidth: 1,
-    borderColor: "#f0f0f0",
-  },
-  cardHeader: { flexDirection: "row", alignItems: "center", marginBottom: 12 },
-  iconBox: {
-    width: 40, height: 40, borderRadius: 12,
-    justifyContent: "center", alignItems: "center", marginRight: 12
-  },
-  cardTitle: { fontSize: 18, fontWeight: "bold", color: "#333" },
-  cardDescription: { fontSize: 14, color: "#888", marginBottom: 20 },
-  
-  input: {
-    backgroundColor: "#F9FAFB",
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-    padding: 16,
-    borderRadius: 12,
-    fontSize: 16,
-    color: "#333",
-    marginBottom: 8,
-  },
-
-  charCount: {
-    textAlign: "right",
-    color: "#9CA3AF",
-    fontSize: 12,
-    marginBottom: 16,
-    marginRight: 4,
-  },
-  
-  button: { padding: 16, borderRadius: 12, alignItems: "center", justifyContent: "center" },
-  createButton: { backgroundColor: "#63B995", shadowColor: "#63B995", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 4 },
-  joinButton: { backgroundColor: "#fff", borderWidth: 2, borderColor: "#63B995" },
-  
-  buttonText: { color: "#fff", fontWeight: "bold", fontSize: 16 },
-  joinButtonText: { color: "#63B995" },
-  
-  divider: { flexDirection: "row", alignItems: "center", marginVertical: 30 },
-  line: { flex: 1, height: 1, backgroundColor: "#E5E7EB" },
-  orText: { marginHorizontal: 16, color: "#9CA3AF", fontWeight: "bold", fontSize: 12, letterSpacing: 1 },
-});
