@@ -166,10 +166,10 @@ const styles = StyleSheet.create({
     margin: 6,
     borderWidth: 2,
     borderColor: "transparent",
-    overflow: "hidden", // Ensures SVG doesn't bleed out
+    overflow: "hidden",
   },
   selectedOption: {
-    borderColor: "#63B995", // Highlight color
+    borderColor: "#63B995",
     backgroundColor: "#e8f5e9",
   },
   svgWrapper: {
