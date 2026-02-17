@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import React from "react";
+import { View, Text, TouchableOpacity, useColorScheme } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import UserAvatar from "@/components/ui/UserAvatar";
 import { useChoreListItem } from "@/hooks/useChoreListItem";
@@ -21,45 +21,63 @@ export default function ChoreListItem({
   onReset,
   onDelete,
 }: ChoreListItemProps) {
-
-  const { futureDate, getLiveProfile, getScheduledText} = useChoreListItem(item, memberProfiles);
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === "dark";
+  
+  const { futureDate, getLiveProfile, getScheduledText } = useChoreListItem(item, memberProfiles);
 
   const renderStatusBadge = () => {
     const isMe = item.inProgressBy === currentUserId || item.completedBy === currentUserId;
 
+    // Helper to switch avatar/text colors based on theme
+    const colors = {
+      orange: isDark ? "#FFB74D" : "#E65100", // Light Orange / Dark Orange
+      blue: isDark ? "#64B5F6" : "#1565C0",   // Light Blue / Dark Blue
+      green: isDark ? "#81C784" : "#2E7D32",  // Light Green / Dark Green
+      purple: isDark ? "#BA68C8" : "#7B1FA2", // Light Purple / Dark Purple
+    };
+
     if (item.inProgress && !isMe) {
       const worker = getLiveProfile(item.inProgressBy, item.inProgressByName, item.inProgressByAvatar);
       return (
-        <View style={[styles.badge, { backgroundColor: "#FFF3E0", borderColor: "#FFB74D" }]}>
-          <UserAvatar name={worker.name} avatar={worker.avatar} color="#F57C00" size={22} fontSize={10} />
-          <Text style={[styles.badgeText, { color: "#E65100" }]}>{worker.name} is working</Text>
+        <View className="flex-row items-center px-2 py-0.5 rounded-full self-start border gap-1.5 bg-orange-50 border-orange-200 dark:bg-orange-900/20 dark:border-orange-700">
+          <UserAvatar name={worker.name} avatar={worker.avatar} color={colors.orange} size={22} fontSize={10} />
+          <Text className="text-[11px] font-semibold text-orange-800 dark:text-orange-300">
+            {worker.name} is working
+          </Text>
         </View>
       );
     }
     if (item.inProgress && isMe) {
       const worker = getLiveProfile(item.inProgressBy, item.inProgressByName, item.inProgressByAvatar);
       return (
-        <View style={[styles.badge, { backgroundColor: "#E3F2FD", borderColor: "#64B5F6" }]}>
-          <UserAvatar name={worker.name} avatar={worker.avatar} color="#1565C0" size={22} fontSize={10} />
-          <Text style={[styles.badgeText, { color: "#1565C0" }]}>Doing Now</Text>
+        <View className="flex-row items-center px-2 py-0.5 rounded-full self-start border gap-1.5 bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-700">
+          <UserAvatar name={worker.name} avatar={worker.avatar} color={colors.blue} size={22} fontSize={10} />
+          <Text className="text-[11px] font-semibold text-blue-800 dark:text-blue-300">
+            Doing Now
+          </Text>
         </View>
       );
     }
     if (item.completed && !isMe) {
       const completer = getLiveProfile(item.completedBy, item.completedByName, item.completedByAvatar);
       return (
-        <View style={[styles.badge, { backgroundColor: "#E8F5E9", borderColor: "#81C784" }]}>
-          <UserAvatar name={completer.name} avatar={completer.avatar} color="#388E3C" size={22} fontSize={10} />
-          <Text style={[styles.badgeText, { color: "#2E7D32" }]}>Done by {completer.name}</Text>
+        <View className="flex-row items-center px-2 py-0.5 rounded-full self-start border gap-1.5 bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-700">
+          <UserAvatar name={completer.name} avatar={completer.avatar} color={colors.green} size={22} fontSize={10} />
+          <Text className="text-[11px] font-semibold text-green-800 dark:text-green-300">
+            Done by {completer.name}
+          </Text>
         </View>
       );
     }
     if (item.completed && isMe) {
       const completer = getLiveProfile(currentUserId || "", item.completedByName, item.completedByAvatar);
       return (
-        <View style={[styles.badge, { backgroundColor: "#F3E5F5", borderColor: "#BA68C8" }]}>
-          <UserAvatar name={completer.name} avatar={completer.avatar} color="#7B1FA2" size={22} fontSize={10} />
-          <Text style={[styles.badgeText, { color: "#7B1FA2" }]}>Done by You</Text>
+        <View className="flex-row items-center px-2 py-0.5 rounded-full self-start border gap-1.5 bg-purple-50 border-purple-200 dark:bg-purple-900/20 dark:border-purple-700">
+          <UserAvatar name={completer.name} avatar={completer.avatar} color={colors.purple} size={22} fontSize={10} />
+          <Text className="text-[11px] font-semibold text-purple-800 dark:text-purple-300">
+            Done by You
+          </Text>
         </View>
       );
     }
@@ -67,27 +85,35 @@ export default function ChoreListItem({
   };
 
   return (
-    <View style={[
-      styles.listCard, 
-      (item.completed || futureDate) && { opacity: 0.8 },
-      futureDate && { backgroundColor: "#f9f9f9", borderColor: "#eee" }
-      ]}
+    <View 
+      className={`
+        flex-row items-center justify-between p-2.5 rounded-xl mb-2.5 border min-h-[70px]
+        ${futureDate 
+          ? "bg-background-subtle dark:bg-dark-100/50 border-border-subtle dark:border-gray-700" 
+          : "bg-card dark:bg-card-dark border-border-light dark:border-gray-600"
+        }
+        ${(item.completed || futureDate) ? "opacity-80" : "opacity-100"}
+      `}
     >
-      <View style={styles.cardLeftContent}>
+      {/* Left Content */}
+      <View className="flex-1 flex-col justify-center items-start gap-1">
         <Text
-          style={[
-            styles.choreTitle,
-            item.completed && { textDecorationLine: "line-through", color: "#999" },
-            futureDate && { color: "#888" }
-          ]}
+          className={`
+            text-base font-semibold text-left
+            ${item.completed 
+              ? "line-through text-text-muted dark:text-gray-400" // INCREASED VISIBILITY
+              : "text-text-main dark:text-text-inverted"
+            }
+            ${futureDate ? "text-text-muted dark:text-gray-400" : ""}
+          `}
         >
           {item.title}
         </Text>
 
         {futureDate ? (
-          <View style={styles.futureBadge}>
+          <View className="flex-row items-center gap-1 mt-0.5">
             <Ionicons name="time-outline" size={14} color="#888" />
-            <Text style={styles.futureText}>
+            <Text className="text-xs text-text-muted dark:text-gray-400 italic">
               Available at {getScheduledText(futureDate)}
             </Text>
           </View>
@@ -96,15 +122,26 @@ export default function ChoreListItem({
         )}
       </View>
       
-      <View style={styles.rightActions}>
-        <Text style={styles.pointsText}>{item.points} pts</Text>
+      {/* Right Actions */}
+      <View className="flex-row items-center">
+        <Text className="mr-4 font-bold text-light-100">
+          {item.points} pts
+        </Text>
         {isAdmin && (
-          <View style={styles.adminRow}>
+          <View className="flex-row items-center gap-2.5">
             <TouchableOpacity onPress={() => onReset(item.id)}>
-              <Ionicons name="refresh-circle-outline" size={26} color="#2196F3" />
+              <Ionicons 
+                name="refresh-circle-outline" 
+                size={26} 
+                color={isDark ? "#64B5F6" : "#2196F3"} 
+              />
             </TouchableOpacity>
             <TouchableOpacity onPress={() => onDelete(item.id)}>
-              <Ionicons name="trash-outline" size={22} color="#FF5252" />
+              <Ionicons 
+                name="trash-outline" 
+                size={22} 
+                color={isDark ? "#FF5252" : "#FF5252"} 
+              />
             </TouchableOpacity>
           </View>
         )}
@@ -112,58 +149,3 @@ export default function ChoreListItem({
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  listCard: {
-    backgroundColor: "#fff",
-    padding: 8,
-    paddingLeft: 10,
-    paddingRight: 10,
-    borderRadius: 12,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: "#eee",
-    minHeight: 70,
-  },
-  cardLeftContent: {
-    flex: 1,
-    flexDirection: "column",
-    justifyContent: "center",
-    alignItems: "flex-start",
-    gap: 4,
-  },
-  choreTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#333",
-    textAlign: "left",
-  },
-  rightActions: { flexDirection: "row", alignItems: "center" },
-  adminRow: { flexDirection: "row", alignItems: "center", gap: 10 },
-  pointsText: { marginRight: 15, fontWeight: "bold", color: "#63B995" },
-  badge: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 20,
-    alignSelf: "flex-start",
-    borderWidth: 1,
-    gap: 6,
-  },
-  badgeText: { fontSize: 11, fontWeight: "600" },
-  futureBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    marginTop: 2
-  },
-  futureText: {
-    fontSize: 12,
-    color: '#888',
-    fontStyle: 'italic'
-  }
-});
