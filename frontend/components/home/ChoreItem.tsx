@@ -1,6 +1,7 @@
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { View, Text, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useColorScheme } from "nativewind";
 import { useAuth } from "@/context/AuthContext";
 import { useHousehold } from "@/context/HouseholdContext";
 import UserAvatar from "@/components/ui/UserAvatar";
@@ -13,6 +14,8 @@ interface ChoreItemProps {
 export default function ChoreItem({ item, onPress }: ChoreItemProps) {
   const { user } = useAuth();
   const { memberProfiles } = useHousehold();
+  const { colorScheme } = useColorScheme();
+  const isDark = colorScheme === "dark";
 
   const getLiveProfile = (
     userId: string | null | undefined,
@@ -37,37 +40,70 @@ export default function ChoreItem({ item, onPress }: ChoreItemProps) {
     return false;
   })();
 
+  // 1. Background & Border Logic
+  let backgroundColor = isDark ? "#27272a" : "#FFFFFF"; 
+  let borderColor = isDark ? "#3F3F46" : "#E0E0E0";     
+  let borderWidth = 2;
+
+  if (item.completed) {
+    backgroundColor = isDark ? "#022c22" : "#f0fff4"; 
+    borderColor = "transparent";
+    borderWidth = 0; 
+  } else if (item.inProgress) {
+    backgroundColor = isDark ? "#172554" : "#f8fbff"; 
+    borderColor = isDark ? "#1e40af" : "#4A90E2";
+  }
+
+  // 2. Text Colors
+  let titleColor = isDark ? "#FFFFFF" : "#333333";
+  let titleDecoration: "none" | "line-through" = "none";
+  const doneTextColor = isDark ? "#4ade80" : "#4CAF50"; 
+
+  if (item.completed) {
+    titleColor = "#9CA3AF"; 
+    titleDecoration = "line-through";
+  } else if (item.inProgress) {
+    titleColor = isDark ? "#60A5FA" : "#4A90E2"; 
+  }
+
+  // 3. Icon Colors
+  const statusColor = item.inProgress 
+    ? (isDark ? "#60A5FA" : "#4A90E2") 
+    : "#63B995"; 
+
+  const iconColor = (() => {
+    if (item.completed) return isDark ? "#4ade80" : "#4CAF50"; 
+    if (item.inProgress) return isDark ? "#60A5FA" : "#4A90E2";
+    return isDark ? "#52525b" : "#CCCCCC"; 
+  })();
+
   return (
     <TouchableOpacity
-      style={[
-        styles.choreItem,
-        item.completed && {
-          backgroundColor: "#f0fff4",
-          borderColor: "transparent",
-        },
-        item.inProgress && {
-          borderColor: "#4A90E2",
-          backgroundColor: "#f8fbff",
-        },
-        isLocked && { opacity: 0.5 },
-      ]}
+      className={`p-3 px-4 rounded-2xl flex-row justify-between items-center mb-2 shadow-sm ${isLocked ? 'opacity-50' : ''}`}
+      style={{ 
+        minHeight: 70, 
+        backgroundColor,
+        borderColor,
+        borderWidth,
+      }}
       onPress={() => onPress(item)}
       disabled={isLocked}
     >
-      <View style={styles.choreInfo}>
-        <Text
-          style={[
-            styles.choreText,
-            item.completed && styles.completedText,
-            item.inProgress && { fontWeight: "bold", color: "#4A90E2" },
-          ]}
+      <View className="flex-1 flex-col justify-center items-start">
+        {/* Title */}
+        <Text 
+          className="text-base font-semibold text-left"
+          style={{ 
+            color: titleColor, 
+            textDecorationLine: titleDecoration 
+          }}
         >
           {item.title}
         </Text>
 
-        {/* Badge: In Progress */}
+        {/* In Progress Badge */}
         {item.inProgress && (
-          <View style={styles.miniBadge}>
+          <View className="flex-row items-center mt-1.5 gap-1.5">
             {(() => {
               const worker = getLiveProfile(
                 item.inProgressBy,
@@ -79,11 +115,11 @@ export default function ChoreItem({ item, onPress }: ChoreItemProps) {
                   <UserAvatar
                     name={worker.name}
                     avatar={worker.avatar}
-                    color="#4A90E2"
+                    color={statusColor}
                     size={20}
                     fontSize={10}
                   />
-                  <Text style={[styles.miniBadgeText, { color: "#4A90E2" }]}>
+                  <Text className="text-xs font-semibold" style={{ color: statusColor }}>
                     {item.inProgressBy === user?.uid
                       ? "Doing now"
                       : `${getDisplayName(item.inProgressBy, worker.name)} is working`}
@@ -94,9 +130,9 @@ export default function ChoreItem({ item, onPress }: ChoreItemProps) {
           </View>
         )}
 
-        {/* Badge: Completed */}
+        {/* Completed Badge */}
         {item.completed && (
-          <View style={styles.miniBadge}>
+          <View className="flex-row items-center mt-1.5 gap-1.5">
             {(() => {
               const completer = getLiveProfile(
                 item.completedBy,
@@ -108,11 +144,14 @@ export default function ChoreItem({ item, onPress }: ChoreItemProps) {
                   <UserAvatar
                     name={completer.name}
                     avatar={completer.avatar}
-                    color="#4CAF50"
+                    color={doneTextColor}
                     size={20}
                     fontSize={10}
                   />
-                  <Text style={[styles.miniBadgeText, { color: "#4CAF50" }]}>
+                  <Text 
+                    className="text-xs font-semibold"
+                    style={{ color: doneTextColor }} 
+                  >
                     Done by {getDisplayName(item.completedBy, completer.name)}
                   </Text>
                 </>
@@ -122,10 +161,12 @@ export default function ChoreItem({ item, onPress }: ChoreItemProps) {
         )}
       </View>
 
-      <View style={styles.choreAction}>
+      {/* Right Side: Points & Icon */}
+      <View className="flex-row items-center">
         {!item.completed && (
           <Text
-            style={[styles.pointsText, item.inProgress && { color: "#4A90E2" }]}
+            className="font-bold mr-3 text-sm"
+            style={{ color: statusColor }}
           >
             +{item.points} pts
           </Text>
@@ -140,55 +181,9 @@ export default function ChoreItem({ item, onPress }: ChoreItemProps) {
                 : "play-circle-outline"
           }
           size={28}
-          color={
-            item.completed ? "#4CAF50" : item.inProgress ? "#4A90E2" : "#ccc"
-          }
+          color={iconColor}
         />
       </View>
     </TouchableOpacity>
   );
 }
-
-const styles = StyleSheet.create({
-  choreItem: {
-    backgroundColor: "#fff",
-    padding: 10,
-    borderRadius: 12,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 10,
-    borderWidth: 2,
-    borderColor: "#E0E0E0",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
-    minHeight: 70,
-  },
-  choreInfo: {
-    flexDirection: "column",
-    alignItems: "flex-start",
-    justifyContent: "center",
-    flex: 1,
-  },
-  choreText: {
-    fontSize: 16,
-    color: "#333",
-    textAlign: "left",
-  },
-  choreAction: { flexDirection: "row", alignItems: "center" },
-  completedText: { textDecorationLine: "line-through", color: "#aaa" },
-  pointsText: { fontWeight: "bold", color: "#63B995", marginRight: 12 },
-  miniBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: 2,
-    gap: 6,
-  },
-  miniBadgeText: {
-    fontSize: 12,
-    fontWeight: "600",
-  },
-});
