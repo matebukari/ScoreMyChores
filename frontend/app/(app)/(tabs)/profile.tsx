@@ -9,12 +9,15 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useColorScheme } from "nativewind";
 
 import { useProfileScreen } from "@/hooks/useProfileScreen";
 
 import UserInfoCard from "@/components/profile/UserInfoCard";
 import HouseholdInfoCard from "@/components/profile/HouseholdInfoCard";
 import HouseholdSwitcher from "@/components/profile/HouseholdSwitcher";
+import ThemeToggle from "@/components/profile/ThemeToggle";
+
 import EditNameModal from "@/components/profile/modals/EditNameModal";
 import AvatarPickerModal from "@/components/profile/modals/AvatarPickerModal";
 import ManageMembersModal from "@/components/profile/modals/ManageMembersModal";
@@ -143,6 +146,8 @@ export default function ProfileScreen() {
           switching={switching}
           onSwitch={handleSwitch}
         />
+
+        <ThemeToggle />
 
         <TouchableOpacity style={styles.logoutButton} onPress={handleSignOut}>
           <Text style={styles.logoutText}>Sign Out</Text>
