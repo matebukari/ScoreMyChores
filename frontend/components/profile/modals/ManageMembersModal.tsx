@@ -1,5 +1,13 @@
 import React from "react";
-import { Modal, View, Text, FlatList, TouchableOpacity, ActivityIndicator, StyleSheet } from "react-native";
+import {
+  Modal,
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  ActivityIndicator,
+  useColorScheme,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import UserAvatar from "@/components/ui/UserAvatar";
 
@@ -16,59 +24,112 @@ interface ManageMembersModalProps {
   members: MemberItem[];
   householdMembersMap?: Record<string, "admin" | "member" | string> | null;
   currentUserId?: string | null;
-  onUpdateRole: (targetUserId: string, currentRole: 'admin' | 'member') => void;
+  onUpdateRole: (
+    targetUserId: string,
+    currentRole: "admin" | "member"
+  ) => void;
   updatingRole: string | null;
   onRemoveMember: (targetUserId: string, memberName: string) => void;
   removingMember: string | null;
 }
 
-export default function ManageMembersModal({ 
-  visible, 
-  onClose, 
-  members, 
-  householdMembersMap, 
-  currentUserId, 
-  onUpdateRole, 
+export default function ManageMembersModal({
+  visible,
+  onClose,
+  members,
+  householdMembersMap,
+  currentUserId,
+  onUpdateRole,
   updatingRole,
   onRemoveMember,
   removingMember,
 }: ManageMembersModalProps) {
-  
-  const renderMemberItem = ({ item }: { item: MemberItem }) => {
-    const roleRaw = householdMembersMap?.[item.id] || 'member';
-    const role = roleRaw === 'admin' ? 'admin' : 'member';
-    
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === "dark";
+
+  const renderMemberItem = ({ item, index }: { item: MemberItem; index: number }) => {
+    const roleRaw = householdMembersMap?.[item.id] || "member";
+    const role = roleRaw === "admin" ? "admin" : "member";
+
     const isMe = item.id === currentUserId;
     const name = item.displayName || "Unknown";
 
+    // Fallback key generation if id is missing
+    const uniqueKey = item.id || `member-${index}`;
+
     return (
-      <View style={styles.memberRow}>
-        <View style={styles.memberInfo}>
-          <UserAvatar name={item.displayName} avatar={item.photoURL} size={32} fontSize={14} />
-          <View>
-            <Text style={styles.memberName}>{item.displayName || "Unknown"}</Text>
-            <Text style={styles.memberEmail}>{item.email}</Text>
+      <View
+        key={uniqueKey}
+        /* UPDATED: dark:border-gray-500 for better visibility */
+        className="flex-row justify-between items-center py-3 border-b border-gray-100 dark:border-gray-500"
+      >
+        {/* Left: Avatar & Info */}
+        <View className="flex-row items-center flex-1 gap-3 pr-2">
+          <UserAvatar
+            name={item.displayName}
+            avatar={item.photoURL}
+            size={36}
+            fontSize={14}
+          />
+          <View className="flex-1">
+            <Text
+              numberOfLines={1}
+              className="text-base font-bold text-text-main dark:text-text-inverted"
+            >
+              {name}
+            </Text>
+            <Text
+              numberOfLines={1}
+              className="text-xs text-text-muted dark:text-gray-400"
+            >
+              {item.email || "No email"}
+            </Text>
           </View>
         </View>
-        
-        <View style={styles.actionsContainer}>
+
+        {/* Right: Actions */}
+        <View className="flex-row items-center gap-2">
           {/* Role Badge / Toggle */}
-          <View style={styles.roleContainer}>
-            <Text style={[styles.roleBadge, role === 'admin' ? styles.adminBadge : styles.memberBadge]}>
-              {role === 'admin' ? "ADMIN" : "MEMBER"}
-            </Text>
+          <View className="flex-row items-center gap-1">
+            <View
+              className={`
+                px-2 py-1 rounded
+                ${role === "admin" 
+                  ? "bg-gray-800 dark:bg-gray-700" 
+                  : "bg-gray-200 dark:bg-gray-600"
+                }
+              `}
+            >
+              <Text
+                className={`
+                  text-[10px] font-bold uppercase
+                  ${role === "admin" 
+                    ? "text-white" 
+                    : "text-gray-600 dark:text-gray-300"
+                  }
+                `}
+              >
+                {role === "admin" ? "Admin" : "Member"}
+              </Text>
+            </View>
+
             {!isMe && (
               <TouchableOpacity
                 onPress={() => onUpdateRole(item.id, role)}
                 disabled={!!updatingRole || !!removingMember}
-                style={styles.roleButton}
+                className="p-1"
               >
                 {updatingRole === item.id ? (
-                  <ActivityIndicator size="small" color="#63B995"/>
+                  <ActivityIndicator size="small" color="#63B995" />
                 ) : (
                   <Ionicons
-                    name={role === 'admin' ? "arrow-down-circle-outline" : "arrow-up-circle-outline"}
-                    size={24} color="#63B995"
+                    name={
+                      role === "admin"
+                        ? "arrow-down-circle-outline"
+                        : "arrow-up-circle-outline"
+                    }
+                    size={24}
+                    color="#63B995"
                   />
                 )}
               </TouchableOpacity>
@@ -78,14 +139,18 @@ export default function ManageMembersModal({
           {/* Kick Button */}
           {!isMe && (
             <TouchableOpacity
-              style={styles.removeButton}
+              className="p-2 bg-red-50 dark:bg-red-900/20 rounded-lg ml-1"
               onPress={() => onRemoveMember(item.id, name)}
               disabled={!!removingMember || !!updatingRole}
             >
               {removingMember === item.id ? (
                 <ActivityIndicator size="small" color="#ef5350" />
               ) : (
-                <Ionicons name="trash-outline" size={20} color="#ef5350" />
+                <Ionicons 
+                  name="trash-outline" 
+                  size={20} 
+                  color={isDark ? "#EF4444" : "#ef5350"} 
+                />
               )}
             </TouchableOpacity>
           )}
@@ -95,49 +160,37 @@ export default function ManageMembersModal({
   };
 
   return (
-    <Modal visible={visible} animationType="slide" transparent={true} onRequestClose={onClose}>
-      <View style={styles.modalOverlay}>
-        <View style={[styles.modalContent, { maxHeight: '70%' }]}>
-          <Text style={styles.modalTitle}>Manage Members</Text>
-          <Text style={styles.modalSubtitle}>Promote members to admin or remove privileges.</Text>
+    <Modal
+      visible={visible}
+      animationType="slide"
+      transparent={true}
+      onRequestClose={onClose}
+    >
+      <View className="flex-1 bg-black/50 justify-center items-center p-4">
+        <View className="bg-white dark:bg-card-dark w-full max-w-[340px] max-h-[70%] rounded-2xl p-6 shadow-xl">
+          <Text className="text-xl font-bold mb-1 text-center text-text-main dark:text-text-inverted">
+            Manage Members
+          </Text>
+          <Text className="text-sm text-text-muted dark:text-gray-400 mb-5 text-center">
+            Promote members to admin or remove privileges.
+          </Text>
+
           <FlatList
             data={members}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item, index) => item.id || `member-${index}`}
             renderItem={renderMemberItem}
-            style={{ width: '100%', marginBottom: 15 }}
+            className="w-full mb-4"
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingBottom: 20 }}
           />
-          <View style={styles.modalButtons}>
-            <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={onClose}>
-              <Text style={styles.buttonText}>Close</Text>
-            </TouchableOpacity>
-          </View>
+
+          <TouchableOpacity
+            className="bg-gray-300 dark:bg-gray-600 p-3.5 rounded-xl items-center w-full"
+            onPress={onClose}
+          >
+            <Text className="text-white font-bold text-base">Close</Text>
+          </TouchableOpacity>
         </View>
       </View>
     </Modal>
   );
 }
-
-const styles = StyleSheet.create({
-  modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "center", alignItems: "center" },
-  modalContent: { backgroundColor: "#fff", width: "90%", padding: 25, borderRadius: 20, elevation: 5 },
-  modalTitle: { fontSize: 20, fontWeight: "bold", marginBottom: 15, textAlign: "center" },
-  modalSubtitle: { fontSize: 14, color: "#666", marginBottom: 20, textAlign: "center" },
-  modalButtons: { flexDirection: "row", justifyContent: "space-between" },
-  button: { flex: 1, padding: 15, borderRadius: 10, alignItems: "center", marginHorizontal: 5 },
-  cancelButton: { backgroundColor: "#ccc" },
-  buttonText: { color: "#fff", fontWeight: "bold", fontSize: 16 },
-  memberRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
-  memberInfo: { flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 },
-  memberName: { fontSize: 16, fontWeight: 'bold', color: '#333' },
-  memberEmail: { fontSize: 12, color: '#999' },
-  
-  actionsContainer: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  roleContainer: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  roleBadge: { fontSize: 10, fontWeight: 'bold', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, overflow: 'hidden' },
-  adminBadge: { backgroundColor: '#333', color: '#fff' },
-  memberBadge: { backgroundColor: '#e0e0e0', color: '#666' },
-  roleButton: { padding: 4 },
-  removeButton: { padding: 8, backgroundColor: '#ffebee', borderRadius: 8 }
-});
