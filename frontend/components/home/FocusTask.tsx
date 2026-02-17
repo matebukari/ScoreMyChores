@@ -1,6 +1,7 @@
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { View, Text, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useColorScheme } from "nativewind";
 import { useAuth } from "@/context/AuthContext";
 import { useHousehold } from "@/context/HouseholdContext";
 import UserAvatar from "@/components/ui/UserAvatar";
@@ -13,6 +14,7 @@ interface FocusTaskProps {
 export default function FocusTask({ task, onPress }: FocusTaskProps) {
   const { user } = useAuth();
   const { memberProfiles } = useHousehold();
+  const { colorScheme } = useColorScheme();
 
   // Helper to resolve live user data
   const getLiveProfile = (
@@ -38,40 +40,46 @@ export default function FocusTask({ task, onPress }: FocusTaskProps) {
     return false;
   })();
 
+  // 1. Color Logic
+  const isDark = colorScheme === "dark";
+  const brandColor = "#63B995"; // light-100
+  const infoColor = isDark ? "#4A90E2" : "#2196F3"; // Blue for started state
+
+  // Determine active colors based on state
+  const activeColor = task.inProgress ? infoColor : brandColor;
+
   return (
-    <View style={styles.focusContainer}>
-      <View style={styles.focusHeader}>
-        <Ionicons name="rocket" size={18} color="#63B995" />
-        <Text style={styles.focusLabel}>
+    <View className="mb-6">
+      {/* Header Section */}
+      <View className="flex-row items-center mb-2 gap-1.5">
+        <Ionicons name="rocket" size={18} color={brandColor} />
+        <Text
+          className="text-xs font-extrabold tracking-widest"
+          style={{ color: brandColor }}
+        >
           {task.inProgress ? "CURRENTLY WORKING ON" : "PRIORITY TASK"}
         </Text>
       </View>
 
+      {/* Main Card */}
       <TouchableOpacity
-        style={[
-          styles.focusCard,
-          task.inProgress && { borderColor: "#4A90E2" },
-        ]}
+        className="bg-card dark:bg-dark-100 p-3 px-4 rounded-2xl border-2 flex-row justify-between items-center shadow-sm"
+        style={{ minHeight: 82, borderColor: activeColor }}
         onPress={() => onPress(task)}
         disabled={isLocked}
+        activeOpacity={0.7}
       >
-        <View
-          style={{
-            flex: 1,
-            paddingRight: 10,
-            justifyContent: "center",
-            alignItems: "flex-start",
-          }}
-        >
+        <View className="flex-1 pr-3 justify-center items-start">
           <Text
-            style={[styles.focusTitle, { textAlign: "left" }]}
+            className="text-lg font-bold text-text-main dark:text-text-inverted text-left"
             numberOfLines={2}
           >
             {task.title}
           </Text>
 
+          {/* In Progress Badge */}
           {task.inProgress && (
-            <View style={styles.miniBadge}>
+            <View className="flex-row items-center mt-1 gap-1.5">
               {(() => {
                 const worker = getLiveProfile(
                   task.inProgressBy,
@@ -83,11 +91,14 @@ export default function FocusTask({ task, onPress }: FocusTaskProps) {
                     <UserAvatar
                       name={worker.name}
                       avatar={worker.avatar}
-                      color="#4A90E2"
+                      color={infoColor}
                       size={20}
                       fontSize={10}
                     />
-                    <Text style={[styles.miniBadgeText, { color: "#4A90E2" }]}>
+                    <Text
+                      className="text-xs font-semibold"
+                      style={{ color: infoColor }}
+                    >
                       Started by{" "}
                       {getDisplayName(task.inProgressBy, worker.name)}
                     </Text>
@@ -98,74 +109,23 @@ export default function FocusTask({ task, onPress }: FocusTaskProps) {
           )}
         </View>
 
-        <View style={styles.focusAction}>
-          <Text style={styles.focusPointsText}>+{task.points} pts</Text>
+        {/* Action Side (Points + Icon) */}
+        <View className="flex-row items-center">
+          <Text
+            className="font-bold mr-3 text-base"
+            style={{ color: activeColor }}
+          >
+            +{task.points} pts
+          </Text>
           <Ionicons
             name={
               task.inProgress ? "stop-circle-outline" : "play-circle-outline"
             }
             size={32}
-            color={task.inProgress ? "#4A90E2" : "#63B995"}
+            color={activeColor}
           />
         </View>
       </TouchableOpacity>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  focusContainer: { marginBottom: 25 },
-  focusHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 8,
-    gap: 5,
-  },
-  focusLabel: {
-    fontSize: 12,
-    fontWeight: "800",
-    color: "#63B995",
-    letterSpacing: 1,
-  },
-  focusCard: {
-    backgroundColor: "#fff",
-    padding: 12,
-    borderRadius: 16,
-    borderWidth: 2,
-    borderColor: "#63B995",
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    shadowColor: "#63B995",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-    minHeight: 82,
-  },
-  focusTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#333",
-  },
-  focusPointsText: {
-    fontWeight: "bold",
-    color: "#63B995",
-    marginRight: 12,
-    fontSize: 16,
-  },
-  focusAction: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  miniBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: 2,
-    gap: 6,
-  },
-  miniBadgeText: {
-    fontSize: 12,
-    fontWeight: "600",
-  },
-});
