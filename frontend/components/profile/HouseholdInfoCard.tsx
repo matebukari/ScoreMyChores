@@ -2,7 +2,6 @@ import React from "react";
 import {
   View,
   Text,
-  StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
 } from "react-native";
@@ -33,53 +32,77 @@ export default function HouseholdInfoCard({
   leaving,
   deleting,
 }: HouseholdInfoCardProps) {
-  if (loading) return <ActivityIndicator size="large" color="#63B995" />;
-  if (!household)
+  if (loading) {
     return (
-      <Text style={{ color: "#888", marginBottom: 20 }}>
+      <View className="py-5">
+        <ActivityIndicator size="large" color="#63B995" />
+      </View>
+    );
+  }
+
+  if (!household) {
+    return (
+      <Text className="text-text-dim dark:text-gray-400 mb-5">
         No active household.
       </Text>
     );
+  }
 
   return (
-    <View style={styles.houseCard}>
-      <View style={styles.houseHeader}>
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+    <View className="bg-white dark:bg-card-dark rounded-2xl p-5 mb-4 border border-border-light dark:border-gray-700">
+      {/* Header */}
+      <View className="flex-row items-center justify-between mb-4">
+        <View className="flex-row items-center gap-2">
           <Ionicons name="home" size={24} color="#63B995" />
-          <Text style={styles.houseName}>{household.name}</Text>
+          <Text className="text-xl font-bold text-text-main dark:text-text-inverted">
+            {household.name}
+          </Text>
         </View>
 
-        <View style={styles.pointsBadge}>
+        <View className="flex-row items-center bg-amber-50 dark:bg-amber-900/20 px-2.5 py-1.5 rounded-full border border-amber-100 dark:border-amber-800 gap-1.5">
           <Ionicons name="trophy" size={14} color="#F59E0B" />
-          <Text style={styles.pointsText}>{userPoints} pts</Text>
+          <Text className="text-amber-700 dark:text-amber-400 font-bold text-sm">
+            {userPoints} pts
+          </Text>
         </View>
       </View>
 
-      <View style={styles.divider} />
+      {/* Increased visibility: dark:bg-gray-500 */}
+      <View className="h-px bg-border-light dark:bg-gray-500 my-4" />
 
-      <View style={styles.codeRow}>
+      {/* Invite Code */}
+      <View className="flex-row justify-between items-center">
         <View>
-          <Text style={styles.codeLabel}>Invite Code</Text>
-          <Text style={styles.codeValue}>{household.inviteCode}</Text>
+          <Text className="text-xs text-text-muted dark:text-gray-500 uppercase tracking-widest">
+            Invite Code
+          </Text>
+          <Text className="text-2xl font-bold text-text-main dark:text-text-inverted mt-1 tracking-[2px]">
+            {household.inviteCode}
+          </Text>
         </View>
-        <TouchableOpacity onPress={onShareCode} style={styles.shareButton}>
+        <TouchableOpacity 
+          onPress={onShareCode} 
+          className="p-2.5 bg-gray-100 dark:bg-gray-700 rounded-lg"
+        >
           <Ionicons name="share-outline" size={20} color="#63B995" />
         </TouchableOpacity>
       </View>
 
-      <View style={styles.divider} />
+      {/* Increased visibility: dark:bg-gray-500 */}
+      <View className="h-px bg-border-light dark:bg-gray-500 my-4" />
 
+      {/* Actions */}
       {isAdmin ? (
-        <View style={styles.adminActions}>
+        <View className="flex-row gap-2.5">
           <TouchableOpacity
-            style={styles.manageButton}
+            className="flex-1 bg-gray-800 dark:bg-gray-700 p-3 rounded-xl flex-row items-center justify-center gap-2"
             onPress={onManageMembers}
           >
             <Ionicons name="people-outline" size={20} color="#fff" />
-            <Text style={styles.manageButtonText}>Members</Text>
+            <Text className="text-white font-bold">Members</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.manageButton, styles.deleteButton]}
+            className="flex-1 bg-red-500 dark:bg-red-600 p-3 rounded-xl flex-row items-center justify-center gap-2"
             onPress={onDelete}
             disabled={deleting}
           >
@@ -88,12 +111,12 @@ export default function HouseholdInfoCard({
             ) : (
               <Ionicons name="trash-outline" size={20} color="#fff" />
             )}
-            <Text style={styles.manageButtonText}>Delete</Text>
+            <Text className="text-white font-bold">Delete</Text>
           </TouchableOpacity>
         </View>
       ) : (
         <TouchableOpacity
-          style={[styles.manageButton, styles.leaveButton]}
+          className="w-full bg-red-500 dark:bg-red-600 p-3 rounded-xl flex-row items-center justify-center gap-2"
           onPress={onLeave}
           disabled={leaving}
         >
@@ -102,83 +125,9 @@ export default function HouseholdInfoCard({
           ) : (
             <Ionicons name="log-out-outline" size={20} color="#fff" />
           )}
-          <Text style={styles.manageButtonText}>Leave Household</Text>
+          <Text className="text-white font-bold">Leave Household</Text>
         </TouchableOpacity>
       )}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  houseCard: {
-    backgroundColor: "#fff",
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 15,
-    borderWidth: 1,
-    borderColor: "#e0e0e0",
-  },
-  houseHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 15,
-  },
-  houseName: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#333",
-    marginLeft: 10,
-  },
-  pointsBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFFBEB',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 20,
-    gap: 6,
-    borderWidth: 1,
-    borderColor: '#FEF3C7'
-  },
-  pointsText: {
-    color: '#B45309',
-    fontWeight: 'bold',
-    fontSize: 14
-  },
-  divider: { height: 1, backgroundColor: "#eee", marginVertical: 15 },
-  codeRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  codeLabel: {
-    fontSize: 12,
-    color: "#888",
-    textTransform: "uppercase",
-    letterSpacing: 1,
-  },
-  codeValue: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#333",
-    marginTop: 4,
-    letterSpacing: 2,
-  },
-  shareButton: { padding: 10, backgroundColor: "#f5f5f5", borderRadius: 8 },
-
-  adminActions: { flexDirection: "row", gap: 10 },
-  manageButton: {
-    backgroundColor: "#333",
-    padding: 12,
-    borderRadius: 10,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    flex: 1,
-  },
-  deleteButton: { backgroundColor: "#ef5350" },
-  leaveButton: { backgroundColor: "#ef5350", width: "100%" },
-  manageButtonText: { color: "#fff", fontWeight: "bold" },
-});
