@@ -17,149 +17,83 @@ export default function ScoreCard({ weeklyScore, monthlyScore, completedDays }: 
   const currentDayIndex = (new Date().getDay() + 6) % 7;
 
   return (
-    <View style={styles.scoreCard}>
-      <Text style={styles.greeting}>
+    <View className="bg-light-100 rounded-3xl py-8 px-4 items-center mb-8 mt-5 overflow-hidden shadow-sm">
+      {/* Greeting */}
+      <Text className="text-white/80 text-base mb-1 font-medium">
         Hey, {user?.displayName || user?.email?.split("@")[0]}!
       </Text>
 
+      {/* Pager View (Carousel) */}
       <PagerView
-        style={styles.pagerContainer}
+        style={{ width: '100%', height: 160 }}
         initialPage={0}
         onPageSelected={(e) => setCurrentPage(e.nativeEvent.position)}
       >
         {/* Page 1: Weekly Score */}
-        <View key="1" style={styles.page}>
-          <Text style={styles.label}>THIS WEEK</Text>
-          <Text style={styles.scoreValue}>{weeklyScore}</Text>
+        <View key="1" className="justify-center items-center w-full">
+          <Text className="text-white/60 text-xs font-extrabold tracking-widest mt-2 mb-1">
+            THIS WEEK
+          </Text>
+          <Text className="text-white text-6xl font-bold mb-2">
+            {weeklyScore}
+          </Text>
 
-          <View style={styles.streakRow}>
-            {weekDays.map((day, index) => (
-              <View key={index} style={styles.dayContainer}>
-                <View
-                  style={[
-                    styles.dayCircle,
-                    completedDays.includes(index) && styles.dayActive,
-                    index === currentDayIndex && styles.dayToday,
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.dayText,
-                      completedDays.includes(index) && styles.dayTextActive,
-                    ]}
+          {/* Streak Row */}
+          <View className="flex-row justify-center mt-2 gap-2">
+            {weekDays.map((day, index) => {
+              const isCompleted = completedDays.includes(index);
+              const isToday = index === currentDayIndex;
+
+              return (
+                <View key={index} className="items-center">
+                  <View
+                    className={`
+                      w-8 h-8 rounded-full justify-center items-center
+                      ${isCompleted ? 'bg-gold' : 'bg-white/20'}
+                      ${isToday ? 'border-2 border-white' : ''}  
+                    `}
                   >
-                    {day}
-                  </Text>
+                    <Text
+                      className={`
+                        text-xs font-bold
+                        ${isCompleted ? 'text-light-100' : 'text-white/60'}  
+                      `}
+                    >
+                      {day}
+                    </Text>
+                  </View>
                 </View>
-              </View>
-            ))}
+              );
+            })}
           </View>
         </View>
 
         {/* Page 2: Monthly Score */}
-        <View key="2" style={styles.page}>
-          <Text style={styles.label}>THIS MONTH</Text>
-          <Text style={styles.scoreValue}>{monthlyScore}</Text>
+        <View key="2" className="justify-center items-center w-full">
+          <Text className="text-white/60 text-xs font-extrabold tracking-widest mt-2 mb-1">
+            THIS MONTH
+          </Text>
+          <Text className="text-white text-6xl font-bold mb-2">
+            {monthlyScore}
+          </Text>
           
-          <View style={styles.monthContainer}>
-            <Text style={styles.monthText}>Keep stacking those points!</Text>
+          <View className="h-8 justify-center mt-2">
+            <Text className="text-white/80 text-sm italic">
+              Keep stacking those points!
+            </Text>
           </View>
         </View>
       </PagerView>
 
       {/* Pagination Dots */}
-      <View style={styles.paginationDots}>
-        <View style={[styles.dot, currentPage === 0 && styles.dotActive]} />
-        <View style={[styles.dot, currentPage === 1 && styles.dotActive]} />
+      <View className="flex-row mt-4 gap-2">
+        <View 
+          className={`w-2 h-2 rounded-full ${currentPage === 0 ? 'bg-white' : 'bg-white/30'}`}
+        />
+        <View 
+          className={`w-2 h-2 rounded-full ${currentPage === 1 ? 'bg-white' : 'bg-white/30'}`} 
+        />
       </View>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  scoreCard: {
-    backgroundColor: "#63B995",
-    paddingVertical: 30,
-    paddingHorizontal: 10,
-    borderRadius: 20,
-    alignItems: "center",
-    marginBottom: 30,
-    marginTop: 20,
-    overflow: "hidden", 
-  },
-  greeting: { 
-    color: "rgba(255,255,255,0.8)", 
-    fontSize: 16, 
-    marginBottom: 5 
-  },
-  pagerContainer: {
-    width: "100%",
-    height: 160, // Fixed height for swipeable area
-  },
-  page: {
-    justifyContent: "center",
-    alignItems: "center",
-    width: "100%",
-  },
-  label: {
-    color: "rgba(255,255,255,0.6)",
-    fontSize: 12,
-    fontWeight: "800",
-    letterSpacing: 1,
-    marginTop: 10,
-    marginBottom: 5,
-  },
-  scoreValue: { 
-    color: "#fff", 
-    fontSize: 48, 
-    fontWeight: "bold",
-    marginBottom: 10,
-  },
-  streakRow: {
-    flexDirection: "row",
-    justifyContent: "center",
-    marginTop: 5,
-    gap: 8,
-  },
-  dayContainer: { alignItems: "center" },
-  dayCircle: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: "rgba(255,255,255,0.2)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  dayActive: { backgroundColor: "#FFD700" },
-  dayToday: { borderWidth: 2, borderColor: "#fff" },
-  dayText: { color: "rgba(255,255,255,0.6)", fontSize: 12, fontWeight: "bold" },
-  dayTextActive: { color: "#63B995" },
-  
-  // Monthly specific
-  monthContainer: {
-    height: 30, // Match height of streak row to prevent layout shift
-    justifyContent: 'center',
-    marginTop: 5,
-  },
-  monthText: {
-    color: "rgba(255,255,255,0.8)",
-    fontSize: 14,
-    fontStyle: 'italic',
-  },
-
-  // Pagination
-  paginationDots: {
-    flexDirection: 'row',
-    marginTop: 10,
-    gap: 8,
-  },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: "rgba(255,255,255,0.3)",
-  },
-  dotActive: {
-    backgroundColor: "#FFFFFF",
-  }
-});
