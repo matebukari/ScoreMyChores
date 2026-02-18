@@ -23,11 +23,11 @@ export default function LeaderboardToggle({ timeFrame, onToggle }: LeaderboardTo
   };
 
   return (
-    <View className="flex-row bg-gray-200 dark:bg-gray-800 mx-5 mb-8 rounded-xl p-1">
+    <View className="flex-row bg-gray-200 dark:bg-gray-600 mx-5 mb-8 rounded-xl p-1">
       <TouchableOpacity
         className={`
           flex-1 py-2.5 items-center rounded-lg
-          ${timeFrame === "weekly" ? "bg-white dark:bg-gray-600" : ""}
+          ${timeFrame === "weekly" ? "bg-white dark:bg-gray-800" : ""}
         `}
         style={timeFrame === "weekly" ? activeShadow : undefined}
         onPress={() => onToggle("weekly")}
@@ -48,7 +48,7 @@ export default function LeaderboardToggle({ timeFrame, onToggle }: LeaderboardTo
       <TouchableOpacity
         className={`
           flex-1 py-2.5 items-center rounded-lg
-          ${timeFrame === "monthly" ? "bg-white dark:bg-gray-600" : ""}
+          ${timeFrame === "monthly" ? "bg-white dark:bg-gray-800" : ""}
         `}
         style={timeFrame === "monthly" ? activeShadow : undefined}
         onPress={() => onToggle("monthly")}
