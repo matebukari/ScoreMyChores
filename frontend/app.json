@@ -10,7 +10,7 @@
     "newArchEnabled": true,
     "ios": {
       "googleServicesFile": "./GoogleService-Info.plist",
-      "bundleIdentifier": "com.anonymous.frontend",
+      "bundleIdentifier": "com.matebukari.scoremychores",
       "supportsTablet": true
     },
     "android": {
@@ -24,7 +24,7 @@
       "softwareKeyboardLayoutMode": "resize",
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.frontend"
+      "package": "com.matebukari.scoremychores"
     },
     "web": {
       "output": "static",
@@ -44,7 +44,8 @@
           }
         }
       ],
-      "expo-build-properties"
+      "expo-build-properties",
+      "@react-native-google-signin/google-signin"
     ],
     "experiments": {
       "typedRoutes": true,

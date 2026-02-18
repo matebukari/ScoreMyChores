@@ -14,16 +14,28 @@ import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 import { useColorScheme } from "nativewind";
+import { AntDesign } from "@expo/vector-icons";
 
 export default function SignIn() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  const { signin } = useAuth();
+
+  const { signin, googleSignIn } = useAuth();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { colorScheme } = useColorScheme();
+
+  const handleGoogleSignIn = async () => {
+    try {
+      setIsSubmitting(true);
+      await googleSignIn();
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const handleSignIn = async () => {
     if (!email || !password) {
@@ -124,6 +136,18 @@ export default function SignIn() {
               ) : (
                 <Text className="text-white text-base font-bold">Sign In</Text>
               )}
+            </TouchableOpacity>
+
+            {/* Google Sign In Button */}
+            <TouchableOpacity
+              className="mb-6 bg-white dark:bg-dark-100 border border-gray-200 dark:border-border-subtle rounded-xl py-4 flex-row items-center justify-center shadow-sm elevation-1"
+              onPress={handleGoogleSignIn}
+              disabled={isSubmitting}
+            >
+              <AntDesign name="google" size={20} color={colorScheme === 'dark' ? "white" : "black"} style={{ marginRight: 10 }} />
+              <Text className="text-text-main dark:text-text-inverted text-base font-bold">
+                Sign in with Google
+              </Text>
             </TouchableOpacity>
 
             {/* Footer Link */}
