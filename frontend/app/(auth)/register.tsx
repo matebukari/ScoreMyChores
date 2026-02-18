@@ -4,7 +4,6 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  StyleSheet,
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
@@ -14,6 +13,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
+import { useColorScheme } from "nativewind";
 
 export default function Register() {
   const [username, setUsername] = useState("");
@@ -21,9 +21,11 @@ export default function Register() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
   const { register } = useAuth();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { colorScheme } = useColorScheme();
 
   const handleRegister = async () => {
     if (!username || !email || !password || !confirmPassword) {
@@ -62,40 +64,53 @@ export default function Register() {
   };
 
   return (
-    // 3. Apply Dynamic Padding
-    <View 
-      style={[
-        styles.container, 
-        { 
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "padding"}
+      style={{ flex: 1 }}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 0}
+      className="flex-1 bg-white dark:bg-background-dark"
+    >
+      <View 
+        className="flex-1"
+        style={{ 
           paddingTop: insets.top,
           paddingBottom: insets.bottom,
           paddingLeft: insets.left,
           paddingRight: insets.right
-        }
-      ]}
-    >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={{ flex: 1 }}
+        }}
       >
         <ScrollView 
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={{ 
+            flexGrow: 1, 
+            justifyContent: "center", 
+            paddingHorizontal: 24, 
+            paddingBottom: 20 
+          }}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         >
-          <View style={styles.headerContainer}>
-            <Text style={styles.title}>Create Account</Text>
-            <Text style={styles.subtitle}>Join us to start tracking your tasks</Text>
+          {/* Header */}
+          <View className="mb-8 mt-5">
+            <Text className="text-3xl font-bold text-text-main dark:text-text-inverted mb-2">
+              Create Account
+            </Text>
+            <Text className="text-base text-text-secondary dark:text-gray-400">
+              Join us to start tracking your tasks
+            </Text>
           </View>
 
-          <View style={styles.formContainer}>
+          {/* Form */}
+          <View className="w-full">
             
             {/* Username */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Username</Text>
+            <View className="mb-4">
+              <Text className="text-sm font-semibold text-text-main dark:text-gray-300 mb-2">
+                Username
+              </Text>
               <TextInput
-                style={styles.input}
+                className="bg-gray-50 dark:bg-dark-100 border border-gray-200 dark:border-border-subtle rounded-xl px-4 py-3.5 text-base text-text-main dark:text-text-inverted"
                 placeholder="e.g. ChoreMaster99"
-                placeholderTextColor="#9CA3AF"
+                placeholderTextColor={colorScheme === 'dark' ? "#9CA3AF" : "#9CA3AF"}
                 value={username}
                 onChangeText={setUsername}
                 autoCapitalize="words"
@@ -103,12 +118,14 @@ export default function Register() {
             </View>
 
             {/* Email */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Email Address</Text>
+            <View className="mb-4">
+              <Text className="text-sm font-semibold text-text-main dark:text-gray-300 mb-2">
+                Email Address
+              </Text>
               <TextInput
-                style={styles.input}
+                className="bg-gray-50 dark:bg-dark-100 border border-gray-200 dark:border-border-subtle rounded-xl px-4 py-3.5 text-base text-text-main dark:text-text-inverted"
                 placeholder="you@example.com"
-                placeholderTextColor="#9CA3AF"
+                placeholderTextColor={colorScheme === 'dark' ? "#9CA3AF" : "#9CA3AF"}
                 value={email}
                 onChangeText={setEmail}
                 autoCapitalize="none"
@@ -117,12 +134,14 @@ export default function Register() {
             </View>
 
             {/* Password */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Password</Text>
+            <View className="mb-4">
+              <Text className="text-sm font-semibold text-text-main dark:text-gray-300 mb-2">
+                Password
+              </Text>
               <TextInput
-                style={styles.input}
+                className="bg-gray-50 dark:bg-dark-100 border border-gray-200 dark:border-border-subtle rounded-xl px-4 py-3.5 text-base text-text-main dark:text-text-inverted"
                 placeholder="Minimum 6 characters"
-                placeholderTextColor="#9CA3AF"
+                placeholderTextColor={colorScheme === 'dark' ? "#9CA3AF" : "#9CA3AF"}
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
@@ -130,119 +149,47 @@ export default function Register() {
             </View>
 
             {/* Confirm Password */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Confirm Password</Text>
+            <View className="mb-4">
+              <Text className="text-sm font-semibold text-text-main dark:text-gray-300 mb-2">
+                Confirm Password
+              </Text>
               <TextInput
-                style={styles.input}
+                className="bg-gray-50 dark:bg-dark-100 border border-gray-200 dark:border-border-subtle rounded-xl px-4 py-3.5 text-base text-text-main dark:text-text-inverted"
                 placeholder="Re-enter password"
-                placeholderTextColor="#9CA3AF"
+                placeholderTextColor={colorScheme === 'dark' ? "#9CA3AF" : "#9CA3AF"}
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
                 secureTextEntry
               />
             </View>
 
+            {/* Register Button */}
             <TouchableOpacity
-              style={styles.button}
+              className={`mb-6 bg-light-100 rounded-xl py-4 items-center mt-2.5 shadow-sm shadow-light-100 elevation-4 ${isSubmitting ? 'opacity-70' : ''}`}
               onPress={handleRegister}
               disabled={isSubmitting}
             >
               {isSubmitting ? (
                 <ActivityIndicator color="#fff" />
               ) : (
-                <Text style={styles.buttonText}>Create Account</Text>
+                <Text className="text-white text-base font-bold">Create Account</Text>
               )}
             </TouchableOpacity>
 
-            <View style={styles.footer}>
-              <Text style={styles.footerText}>Already have an account? </Text>
+            {/* Footer Link */}
+            <View className="flex-row justify-center">
+              <Text className="text-text-secondary dark:text-gray-400 text-sm">
+                Already have an account?{" "}
+              </Text>
               <TouchableOpacity onPress={() => router.push("/(auth)/signin")}>
-                <Text style={styles.linkText}>Sign In</Text>
+                <Text className="text-light-100 text-sm font-bold">
+                  Sign In
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
         </ScrollView>
-      </KeyboardAvoidingView>
-    </View>
+      </View>
+    </KeyboardAvoidingView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
-  scrollContent: {
-    flexGrow: 1,
-    justifyContent: "center",
-    paddingHorizontal: 24,
-    paddingBottom: 20,
-  },
-  headerContainer: {
-    marginBottom: 32,
-    marginTop: 20,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: "bold",
-    color: "#1F2937",
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: "#6B7280",
-  },
-  formContainer: {
-    width: "100%",
-  },
-  inputGroup: {
-    marginBottom: 16,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#374151",
-    marginBottom: 8,
-  },
-  input: {
-    backgroundColor: "#F9FAFB",
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: 16,
-    color: "#1F2937",
-  },
-  button: {
-    backgroundColor: "#63B995",
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: "center",
-    marginTop: 10,
-    shadowColor: "#63B995",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  buttonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  footer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    marginTop: 24,
-  },
-  footerText: {
-    color: "#6B7280",
-    fontSize: 14,
-  },
-  linkText: {
-    color: "#63B995",
-    fontSize: 14,
-    fontWeight: "bold",
-  },
-});

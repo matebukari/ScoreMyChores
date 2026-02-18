@@ -115,7 +115,7 @@ export default function SignIn() {
 
             {/* Sign In Button */}
             <TouchableOpacity
-              className={`bg-light-100 rounded-xl py-4 items-center mt-2.5 shadow-sm shadow-light-100 elevation-4 ${isSubmitting ? 'opacity-70' : ''}`}
+              className={`mb-6 bg-light-100 rounded-xl py-4 items-center mt-2.5 shadow-sm shadow-light-100 elevation-4 ${isSubmitting ? 'opacity-70' : ''}`}
               onPress={handleSignIn}
               disabled={isSubmitting}
             >
@@ -127,7 +127,7 @@ export default function SignIn() {
             </TouchableOpacity>
 
             {/* Footer Link */}
-            <View className="flex-row justify-center mt-6">
+            <View className="flex-row justify-center">
               <Text className="text-text-secondary dark:text-gray-400 text-sm">
                 Don't have an account?{" "}
               </Text>
