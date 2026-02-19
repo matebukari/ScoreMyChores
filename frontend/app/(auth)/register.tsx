@@ -14,6 +14,7 @@ import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 import { useColorScheme } from "nativewind";
+import { AntDesign } from "@expo/vector-icons";
 
 export default function Register() {
   const [username, setUsername] = useState("");
@@ -22,7 +23,7 @@ export default function Register() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const { register } = useAuth();
+  const { register, googleSignIn } = useAuth();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { colorScheme } = useColorScheme();
@@ -57,6 +58,18 @@ export default function Register() {
       setIsSubmitting(true);
       await register(email, password, username);
     } catch (error: any) {
+      console.log(error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    try {
+      setIsSubmitting(true);
+      await googleSignIn();
+      // Navigation is handled by the listener in AuthContext
+    } catch (error) {
       console.log(error);
     } finally {
       setIsSubmitting(false);
@@ -165,7 +178,7 @@ export default function Register() {
 
             {/* Register Button */}
             <TouchableOpacity
-              className={`mb-6 bg-light-100 rounded-xl py-4 items-center mt-2.5 shadow-sm shadow-light-100 elevation-4 ${isSubmitting ? 'opacity-70' : ''}`}
+              className={`mb-4 bg-light-100 rounded-xl py-4 items-center mt-2.5 shadow-sm shadow-light-100 elevation-4 ${isSubmitting ? 'opacity-70' : ''}`}
               onPress={handleRegister}
               disabled={isSubmitting}
             >
@@ -174,6 +187,25 @@ export default function Register() {
               ) : (
                 <Text className="text-white text-base font-bold">Create Account</Text>
               )}
+            </TouchableOpacity>
+
+            {/* Divider */}
+            <View className="flex-row items-center mb-4">
+              <View className="flex-1 h-[1px] bg-gray-200 dark:bg-border-subtle" />
+              <Text className="mx-4 text-text-secondary dark:text-gray-500 text-sm">or</Text>
+              <View className="flex-1 h-[1px] bg-gray-200 dark:bg-border-subtle" />
+            </View>
+
+            {/* Google Sign In Button */}
+            <TouchableOpacity
+              className="mb-6 bg-white dark:bg-dark-100 border border-gray-200 dark:border-border-subtle rounded-xl py-4 flex-row items-center justify-center shadow-sm elevation-1"
+              onPress={handleGoogleSignIn}
+              disabled={isSubmitting}
+            >
+              <AntDesign name="google" size={20} color={colorScheme === 'dark' ? "white" : "black"} style={{ marginRight: 10 }} />
+              <Text className="text-text-main dark:text-text-inverted text-base font-bold">
+                Sign up with Google
+              </Text>
             </TouchableOpacity>
 
             {/* Footer Link */}

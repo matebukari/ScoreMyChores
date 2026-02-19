@@ -93,6 +93,7 @@ export default function HouseholdSetup() {
           paddingTop: insets.top,
           paddingLeft: insets.left,
           paddingRight: insets.right,
+          paddingBottom: insets.bottom + 10
         }}
       >
         <ScrollView
