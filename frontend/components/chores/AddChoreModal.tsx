@@ -91,7 +91,6 @@ export default function AddChoreModal({
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "padding"}
           style={{ flex: 1 }}
-          keyboardVerticalOffset={Platform.OS === "ios" ? 20 : 0}
         >
           <View className="flex-1 justify-center items-center">
             <View className="bg-card dark:bg-card-dark w-[90%] p-6 rounded-3xl shadow-xl max-h-[85%]">

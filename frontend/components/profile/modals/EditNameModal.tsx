@@ -49,7 +49,6 @@ export default function EditNameModal({
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "padding"}
           style={{ flex: 1 }}
-          keyboardVerticalOffset={Platform.OS === "ios" ? 20 : 0}
         >
           <View className="flex-1 justify-center items-center p-4">
             <View className="bg-white dark:bg-card-dark w-full max-w-[340px] rounded-2xl p-6 shadow-xl">

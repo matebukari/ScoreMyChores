@@ -84,7 +84,6 @@ export default function HouseholdSetup() {
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "padding"}
       style={{ flex: 1 }}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 0}
       className="flex-1 bg-background dark:bg-background-dark"
     >
       <View 

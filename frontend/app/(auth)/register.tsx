@@ -80,7 +80,6 @@ export default function Register() {
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "padding"}
       style={{ flex: 1 }}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 0}
       className="flex-1 bg-white dark:bg-background-dark"
     >
       <View 
