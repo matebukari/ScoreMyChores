@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>855393255122-pvo7aa097om41vhodgt7u8ga7nnq01mk.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.855393255122-pvo7aa097om41vhodgt7u8ga7nnq01mk</string>
+	<key>ANDROID_CLIENT_ID</key>
+	<string>855393255122-8rt2023q85cthuop5musldj16bse5a78.apps.googleusercontent.com</string>
+	<key>API_KEY</key>
+	<string>AIzaSyAKUS5Wxvv5yHOrtaOcKU1PjVzahApiffI</string>
+	<key>GCM_SENDER_ID</key>
+	<string>855393255122</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.matebukari.scoremychores</string>
+	<key>PROJECT_ID</key>
+	<string>scoremychores</string>
+	<key>STORAGE_BUCKET</key>
+	<string>scoremychores.firebasestorage.app</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:855393255122:ios:9ae9cdda4a0887e72ff70b</string>
+</dict>
+</plist>

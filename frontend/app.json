@@ -42,7 +42,14 @@
         }
       ],
       "expo-build-properties",
-      "@react-native-google-signin/google-signin"
+      "@react-native-google-signin/google-signin",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/icon.png",
+          "color": "#63B995"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

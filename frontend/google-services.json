@@ -1,0 +1,90 @@
+{
+  "project_info": {
+    "project_number": "855393255122",
+    "project_id": "scoremychores",
+    "storage_bucket": "scoremychores.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:855393255122:android:8c4882806c070a892ff70b",
+        "android_client_info": {
+          "package_name": "com.anonymous.frontend"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "855393255122-ot5ev9t7j04jk27iqabtu2907hern01d.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBV-yh_vN1AqFAspir7w9RTMjCV85O0VzI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "855393255122-ot5ev9t7j04jk27iqabtu2907hern01d.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "855393255122-pvo7aa097om41vhodgt7u8ga7nnq01mk.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.matebukari.scoremychores"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:855393255122:android:b0c47c5d0d9751e82ff70b",
+        "android_client_info": {
+          "package_name": "com.matebukari.scoremychores"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "855393255122-8rt2023q85cthuop5musldj16bse5a78.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.matebukari.scoremychores",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "855393255122-ot5ev9t7j04jk27iqabtu2907hern01d.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBV-yh_vN1AqFAspir7w9RTMjCV85O0VzI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "855393255122-ot5ev9t7j04jk27iqabtu2907hern01d.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "855393255122-pvo7aa097om41vhodgt7u8ga7nnq01mk.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.matebukari.scoremychores"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

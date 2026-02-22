@@ -1,3 +1,7 @@
+import * as Notifications from 'expo-notifications';
+import * as Device from 'expo-device';
+import Constants from 'expo-constants';
+import { Platform } from 'react-native';
 import { useContext, createContext, useState, useEffect, ReactNode } from "react";
 import { auth, db } from "../config/firebase";
 import {
@@ -11,10 +15,48 @@ import {
   GoogleAuthProvider,
   signInWithCredential
 } from "firebase/auth";
-import { doc, setDoc, getDoc } from "firebase/firestore";
+import { doc, setDoc, getDoc, updateDoc } from "firebase/firestore";
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { useRouter, useSegments } from "expo-router";
 import Toast from "react-native-toast-message";
+
+async function registerForPushNotificationsAsync(userId: string) {
+  if (Platform.OS === 'android') {
+    await Notifications.setNotificationChannelAsync('default', {
+      name: 'default',
+      importance: Notifications.AndroidImportance.MAX,
+      vibrationPattern: [0, 250, 250, 250],
+      lightColor: '#63B995',
+    });
+  }
+
+  if (Device.isDevice) {
+    const { status: existingStatus } = await Notifications.getPermissionsAsync();
+    let finalStatus = existingStatus;
+    if (existingStatus !== 'granted') {
+      const { status } = await Notifications.requestPermissionsAsync();
+      finalStatus = status;
+    }
+    if (finalStatus !== 'granted') {
+      console.log('Failed to get push token for push notification!');
+      return;
+    }
+    
+    // Gets the projectId from app.json
+    const projectId = Constants.expoConfig?.extra?.eas?.projectId || "ee038744-8a7a-4e7e-8029-c0242305e760";
+    
+    try {
+      const token = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
+      // Save token to this user's Firestore document
+      const userRef = doc(db, "users", userId);
+      await updateDoc(userRef, { expoPushToken: token });
+    } catch (error) {
+      console.error("Error fetching push token:", error);
+    }
+  } else {
+    console.log('Must use physical device for Push Notifications');
+  }
+}
 
 interface AuthContextType {
   user: User | null;
@@ -42,8 +84,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
 
     // 2. Listen for login/logout changes
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setUser(user);
+
+      // If user just logged in, register their device!
+      if (user) {
+        await registerForPushNotificationsAsync(user.uid);
+      }
+
       setLoading(false);
     });
     return unsubscribe;
