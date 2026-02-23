@@ -49,7 +49,7 @@ async function registerForPushNotificationsAsync(userId: string) {
       const token = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
       // Save token to this user's Firestore document
       const userRef = doc(db, "users", userId);
-      await updateDoc(userRef, { expoPushToken: token });
+      await setDoc(userRef, { expoPushToken: token }, { merge: true });
     } catch (error) {
       console.error("Error fetching push token:", error);
     }
