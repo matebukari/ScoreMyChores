@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { View, Text } from "react-native";
 import PagerView from "react-native-pager-view";
 import { useAuth } from "@/context/AuthContext";
+import { useHousehold } from "@/context/HouseholdContext";
 
 interface ScoreCardProps {
   weeklyScore: number;
@@ -15,16 +16,22 @@ export default function ScoreCard({
   completedDays,
 }: ScoreCardProps) {
   const { user } = useAuth();
+  const { memberProfiles } = useHousehold();
   const [currentPage, setCurrentPage] = useState(0);
 
   const weekDays = ["M", "T", "W", "T", "F", "S", "S"];
   const currentDayIndex = (new Date().getDay() + 6) % 7;
 
+  // Resolve the most accurate name (prefers household override -> global firestore -> auth -> email)
+  const effectiveName = user?.uid && memberProfiles[user?.uid] 
+    ? memberProfiles[user.uid].displayName 
+    : (user?.displayName || user?.email?.split("@")[0]);
+
   return (
     <View className="bg-light-100 rounded-3xl py-8 px-4 items-center mb-8 mt-5 overflow-hidden shadow-sm">
       {/* Greeting */}
       <Text className="text-white/80 text-base mb-1 font-medium">
-        Hey, {user?.displayName || user?.email?.split("@")[0]}!
+        Hey, {effectiveName}!
       </Text>
 
       {/* Pager View (Carousel) */}

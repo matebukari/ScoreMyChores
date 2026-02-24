@@ -133,7 +133,8 @@ export const notifyOnLeaderboardOvertake = onDocumentCreated("activities/{activi
     let overtakerName = "Someone";
     const overtakerDoc = await db.collection("users").doc(newActivityUserId).get();
     if (overtakerDoc.exists) {
-        overtakerName = overtakerDoc.data()?.displayName || "Someone";
+        const data = overtakerDoc.data();
+        overtakerName = data?.householdSettings?.[householdId]?.displayName || data?.displayName || "Someone";
     }
 
     // 7. Get push tokens for the overtaken users and notify them
@@ -182,11 +183,18 @@ export const notifyOnChoreInProgress = onDocumentUpdated("chores/{choreId}", asy
     const householdId = afterChore.householdId;
     const claimingUserId = afterChore.inProgressBy;
     const choreTitle = afterChore.title;
-    const claimerName = afterChore.inProgressByName || "Someone";
 
     if (!householdId || !claimingUserId) return null;
 
     try {
+      // Fetch the user's latest accurate name
+      let claimerName = "Someone";
+      const claimerDoc = await db.collection("users").doc(claimingUserId).get();
+      if (claimerDoc.exists) {
+          const data = claimerDoc.data();
+          claimerName = data?.householdSettings?.[householdId]?.displayName || data?.displayName || "Someone";
+      }
+
       // 1. Get Household details
       const houseDoc = await db.collection("households").doc(householdId).get();
       if (!houseDoc.exists) return null;
@@ -251,13 +259,20 @@ export const notifyOnChoreCompleted = onDocumentCreated("activities/{activityId}
 
   const householdId = newActivity.householdId;
   const completerId = newActivity.userId;
-  const completerName = newActivity.userName || "Someone";
   const choreTitle = newActivity.choreTitle;
   const points = newActivity.points || 0;
 
   if (!householdId || !completerId) return null;
 
   try {
+    // Fetch the user's latest accurate name
+    let completerName = "Someone";
+    const completerDoc = await db.collection("users").doc(completerId).get();
+    if (completerDoc.exists) {
+        const data = completerDoc.data();
+        completerName = data?.householdSettings?.[householdId]?.displayName || data?.displayName || "Someone";
+    }
+
     // 1. Get Household details
     const houseDoc = await db.collection("households").doc(householdId).get();
     if (!houseDoc.exists) return null;
