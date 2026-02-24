@@ -239,3 +239,71 @@ export const notifyOnChoreInProgress = onDocumentUpdated("chores/{choreId}", asy
 
   return null;
 });
+
+export const notifyOnChoreCompleted = onDocumentCreated("activities/{activityId}", async (event) => {
+  const snap = event.data;
+  if (!snap) return null;
+
+  const newActivity = snap.data();
+  
+  // We only want to notify when a chore is actually completed
+  if (newActivity.type !== 'chore_completion') return null;
+
+  const householdId = newActivity.householdId;
+  const completerId = newActivity.userId;
+  const completerName = newActivity.userName || "Someone";
+  const choreTitle = newActivity.choreTitle;
+  const points = newActivity.points || 0;
+
+  if (!householdId || !completerId) return null;
+
+  try {
+    // 1. Get Household details
+    const houseDoc = await db.collection("households").doc(householdId).get();
+    if (!houseDoc.exists) return null;
+    
+    const houseData = houseDoc.data();
+    const members = houseData?.members || {};
+    const householdName = houseData?.name || "your household";
+
+    // 2. Find everyone EXCEPT the person who completed the chore
+    const memberIds = Object.keys(members).filter((id) => id !== completerId);
+    if (memberIds.length === 0) return null;
+
+    // 3. Get their Expo Push Tokens from their user profiles
+    const tokens: string[] = [];
+    const usersSnap = await db
+      .collection("users")
+      .where(admin.firestore.FieldPath.documentId(), "in", memberIds)
+      .get();
+
+    usersSnap.forEach((doc) => {
+      const userData = doc.data();
+      if (userData.expoPushToken && Expo.isExpoPushToken(userData.expoPushToken)) {
+        tokens.push(userData.expoPushToken);
+      }
+    });
+
+    if (tokens.length === 0) return null;
+
+    // 4. Create the notification messages
+    const messages = tokens.map(token => ({
+      to: token,
+      sound: "default" as const,
+      title: `Chore Completed! 🧹`,
+      body: `${completerName} just finished "${choreTitle}" in ${householdName} and earned ${points} points!`,
+      data: { route: "/chores" }, 
+    }));
+
+    // 5. Send them via Expo
+    const chunks = expo.chunkPushNotifications(messages as any);
+    for (const chunk of chunks) {
+      await expo.sendPushNotificationsAsync(chunk);
+    }
+
+    return null;
+  } catch (error) {
+    console.error("Error sending chore completed notifications:", error);
+    return null;
+  }
+});
