@@ -1,4 +1,4 @@
-import { onDocumentCreated } from "firebase-functions/v2/firestore";
+import { onDocumentCreated, onDocumentUpdated } from "firebase-functions/v2/firestore";
 import * as admin from "firebase-admin";
 import { Expo } from "expo-server-sdk";
 import { db, expo } from "../config/firebase"
@@ -168,4 +168,74 @@ export const notifyOnLeaderboardOvertake = onDocumentCreated("activities/{activi
     console.error("Error sending overtake notifications:", error);
     return null;
   }
+});
+
+export const notifyOnChoreInProgress = onDocumentUpdated("chores/{choreId}", async (event) => {
+  const snap = event.data;
+  if (!snap) return null;
+
+  const beforeChore = snap.before.data();
+  const afterChore = snap.after.data();
+
+  // Check if it was NOT in-progress before, but IS in-progress now
+  if (!beforeChore.inProgress && afterChore.inProgress) {
+    const householdId = afterChore.householdId;
+    const claimingUserId = afterChore.inProgressBy;
+    const choreTitle = afterChore.title;
+    const claimerName = afterChore.inProgressByName || "Someone";
+
+    if (!householdId || !claimingUserId) return null;
+
+    try {
+      // 1. Get Household details
+      const houseDoc = await db.collection("households").doc(householdId).get();
+      if (!houseDoc.exists) return null;
+      
+      const houseData = houseDoc.data();
+      const members = houseData?.members || {};
+      const householdName = houseData?.name || "your household";
+
+      // 2. Find everyone EXCEPT the person who claimed the chore
+      const memberIds = Object.keys(members).filter((id) => id !== claimingUserId);
+      if (memberIds.length === 0) return null;
+
+      // 3. Get their Expo Push Tokens from their user profiles
+      const tokens: string[] = [];
+      const usersSnap = await db
+        .collection("users")
+        .where(admin.firestore.FieldPath.documentId(), "in", memberIds)
+        .get();
+
+      usersSnap.forEach((doc) => {
+        const userData = doc.data();
+        if (userData.expoPushToken && Expo.isExpoPushToken(userData.expoPushToken)) {
+          tokens.push(userData.expoPushToken);
+        }
+      });
+
+      if (tokens.length === 0) return null;
+
+      // 4. Create the notification messages
+      const messages = tokens.map(token => ({
+        to: token,
+        sound: "default" as const,
+        title: `Chore Claimed! ⏳`,
+        body: `${claimerName} just started working on "${choreTitle}" in ${householdName}.`,
+        data: { route: "/chores" }, 
+      }));
+
+      // 5. Send them via Expo
+      const chunks = expo.chunkPushNotifications(messages as any);
+      for (const chunk of chunks) {
+        await expo.sendPushNotificationsAsync(chunk);
+      }
+
+      return null;
+    } catch (error) {
+      console.error("Error sending chore claimed notifications:", error);
+      return null;
+    }
+  }
+
+  return null;
 });
