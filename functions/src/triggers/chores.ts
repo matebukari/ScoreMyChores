@@ -307,3 +307,73 @@ export const notifyOnChoreCompleted = onDocumentCreated("activities/{activityId}
     return null;
   }
 });
+
+export const notifyOnNewMemberJoined = onDocumentUpdated("households/{householdId}", async (event) => {
+  const snap = event.data;
+  if (!snap) return null;
+
+  const beforeData = snap.before.data();
+  const afterData = snap.after.data();
+
+  const beforeMembers = beforeData.members || {};
+  const afterMembers = afterData.members || {};
+
+  const beforeMemberIds = Object.keys(beforeMembers);
+  const afterMemberIds = Object.keys(afterMembers);
+
+  // Check if someone new was added to the members map
+  const newMemberIds = afterMemberIds.filter(id => !beforeMemberIds.includes(id));
+
+  // If no new members were added, exit early
+  if (newMemberIds.length === 0) return null;
+
+  const householdName = afterData.name || "your household";
+
+  try {
+    for (const newMemberId of newMemberIds) {
+      // 1. Get the new member's name
+      const newMemberDoc = await db.collection("users").doc(newMemberId).get();
+      const newMemberName = newMemberDoc.data()?.displayName || "Someone";
+
+      // 2. Find everyone to notify (all members EXCEPT the new person)
+      const usersToNotifyIds = afterMemberIds.filter(id => id !== newMemberId);
+      if (usersToNotifyIds.length === 0) continue;
+
+      // 3. Get their Expo Push Tokens
+      const tokens: string[] = [];
+      const usersSnap = await db
+        .collection("users")
+        .where(admin.firestore.FieldPath.documentId(), "in", usersToNotifyIds)
+        .get();
+
+      usersSnap.forEach((doc) => {
+        const userData = doc.data();
+        if (userData.expoPushToken && Expo.isExpoPushToken(userData.expoPushToken)) {
+          tokens.push(userData.expoPushToken);
+        }
+      });
+
+      if (tokens.length === 0) continue;
+
+      // 4. Create the notification messages
+      const messages = tokens.map(token => ({
+        to: token,
+        sound: "default" as const,
+        title: `New Household Member! 👋`,
+        body: `${newMemberName} just joined ${householdName}. Say hi!`,
+        data: { route: "/profile" }, // Routing them to the profile/household management screen
+      }));
+
+      // 5. Send them via Expo
+      const chunks = expo.chunkPushNotifications(messages as any);
+      for (const chunk of chunks) {
+        await expo.sendPushNotificationsAsync(chunk);
+      }
+    }
+
+    return null;
+  } catch (error) {
+    console.error("Error sending new member notification:", error);
+    return null;
+  }
+});
